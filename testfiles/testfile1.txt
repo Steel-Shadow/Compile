@@ -93,8 +93,5 @@ int main() {
     const int PI = 3 + 1 - A;
 
     printf("21371421\n");
-    printf("Hello World!\n");
-    printf("Hello World!%d\n", 5);
-
     return 0;
 }

@@ -1,5 +1,4 @@
-// #include <stdio.h>
-// #include "libsysy/libsysy.h"
+#include "libsysy/libsysy.h"
 
 const int A = 1;
 const int B[2] = {2, 3}, C[1][1] = {{1}};
@@ -96,8 +95,6 @@ int main() {
     const int PI = 3 + 1 - A;
 
     printf("21371421\n");
-    printf("Hello World!\n");
-    printf("Hello World!%d\n", 5);
 
     return 0;
 }
