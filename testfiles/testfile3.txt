@@ -1,11 +1,9 @@
-const int A = 1;
-const int B[2] = {2, 3}, C[1][1] = {{1}};
+const int A[1] = {0};
+const int B[2] = {0, 0}, C[1][1] = {{0}};
 
-int a;
+int a[2];
 int b[2], c[1][1];
-
-int d = 1;
-int e[2] = {1}, f[1][1] = {{1}};
+int d[2] = {0}, e[1][1] = {{0}};
 
 void void_func() {}
 
@@ -14,7 +12,7 @@ void void_return() {
 }
 
 int f1(int parameter) {
-    int b;
+    int a, b;
     int array[2];
     b = getint();
     b + 1;
@@ -72,25 +70,7 @@ int main() {
     f1(2);
     f2(+-!(a == 0), b, c);
 
-    // // 数组传参
-    // int arr1[2] = {3, 4};
-    // f3(arr1);
-
-    // // 部分传参
-    // int arr2[2][2] = {{1, 2}, {3, 4}};
-    // f3(arr2[1]);
-
-    // 条件表达式
-    if (1)
-        ;
-
-    if (1 + 1 < 2 || a > 2 || a <= 2 && 1 >= 2)
-        ;
-
-    if (5 == 6 || 8 != 9 && 1 == 2 > 3)
-        ;
-
-    const int PI = 3 + 1 - A;
+    const int PI = 3 + 1;
 
     printf("21371421\n");
     return 0;

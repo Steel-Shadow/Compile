@@ -1,0 +1,17 @@
+int main() {
+    int A = 1;
+    int B = 2, C = 3;
+    int a;
+    a = 1;
+
+    1 * 2;
+
+    a * (2 + 3 - 3) * 3 / 4;
+
+    int x = 1 == 1 * 7 < 5;
+
+    const int PI = 3 + 1 - A;
+
+    printf("21371421\n");
+    return 0;
+}
