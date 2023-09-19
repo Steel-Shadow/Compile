@@ -4,3 +4,4 @@ doc
 *.o
 *.exe
 *.zip
+build

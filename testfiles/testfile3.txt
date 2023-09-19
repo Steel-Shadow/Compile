@@ -14,7 +14,6 @@ void void_return() {
 int f1(int parameter) {
     int a, b;
     int array[2];
-    b = getint();
     b + 1;
     a = b + 1;
 
