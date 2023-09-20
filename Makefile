@@ -1,6 +1,6 @@
 # target macros
 TARGET := project
-MAIN_SRC := main.cpp
+MAIN_SRC := main.c
 
 # compile macros
 DIRS := lib # FILL: only the dirs which contain the src files, in this case, `src` should be added

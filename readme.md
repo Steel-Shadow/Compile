@@ -1,3 +1,7 @@
-1. 是否存在 声明 
-2. 是否存在 函数声明
-3. 
+Build on Linux/WSL (Makefile):
+
+```
+make
+```
+
+Use CMake in the following work.

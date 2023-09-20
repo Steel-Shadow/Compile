@@ -34,7 +34,7 @@ $(TARGET): $(OBJS)
 
 # 清理生成的文件
 clean:
-	del $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS)
 
 # 定义伪目标，用于防止与同名文件冲突
 .PHONY: all clean

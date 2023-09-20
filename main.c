@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "libsysy.h"
+#include "lib/libsysy.h"
 
 const int A = 1;
 
