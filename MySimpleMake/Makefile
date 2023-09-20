@@ -1,11 +1,18 @@
 # 编译器
 CC = clang
 
+# 目标文件和可执行文件
+TARGET = main
+
+OBJS = main.o lib\libsysy.o
+
+INCLUDE = lib
+
 # 设置不同编译器的编译选项
 ifeq ($(CC), cl)
-    CFLAGS += /Wall /g
+    CFLAGS += /Wall
 else ifeq ($(CC), clang)
-    CFLAGS += -Wextra -g
+  CFLAGS += -Wextra -g 
 	CFLAGS += --target=x86_64-w64-mingw32
 else ifeq ($(CC), gcc)
 # -Wall
@@ -13,11 +20,6 @@ else ifeq ($(CC), gcc)
 else
     $(error Unsupported compiler: $(CC))
 endif
-
-
-# 目标文件和可执行文件
-TARGET = main.exe
-OBJS = main.o libsysy\libsysy.o
 
 # 默认目标
 all: $(TARGET)
@@ -28,7 +30,7 @@ $(TARGET): $(OBJS)
 
 # 编译每个源文件
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(INCLUDE)
 
 # 清理生成的文件
 clean:
