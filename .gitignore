@@ -1,2 +1,8 @@
 .vscode
+.vs
+.idea
+
 doc
+cmake-build-debug
+build
+test
