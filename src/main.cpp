@@ -3,9 +3,10 @@
 
 int main() {
     // 打开文件以进行读写
-    Lexer::compile("testfile.txt", "output.txt");
+    Lexer lexer;
+    lexer.compile("testfile.txt", "output.txt");
 
-    while (Lexer::getInstance().next());
+    while (lexer.next());
     return 0;
 }
 

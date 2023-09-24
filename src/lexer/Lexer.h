@@ -2,6 +2,8 @@
 // Created by Steel_Shadow on 2023/9/21.
 //
 // C++单例模式真复杂，分离头文件和源代码！
+// 2023年9月24日20:05:42
+// 初入C++就敢上手设计模式，算了。我是**
 
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
@@ -17,14 +19,12 @@
 #include <map>
 #include <unordered_map>
 #include <list>
+#include <sstream>
 
 typedef std::string LexType;
 
 class Lexer {
 private:
-    //Singleton: init in compile(...)
-    static Lexer lexer;
-
     std::ifstream *inFilePtr{};
     std::ofstream *outFilePtr{};
 
@@ -42,26 +42,16 @@ private:
 
     inline static auto &reserveWords = buildReserveWords();
 
-    // Singleton 构造函数和析构函数私有，以防止外部直接创建或删除实例
-    Lexer() {}
-
-
 public:
-    static Lexer getInstance();
-
-    static void compile(const char *i, const char *o);
+    void compile(const char *i, const char *o);
 
     bool next();
 
     char nextChar();
 
-    const std::string &getToken();
-
-    std::string getLexType();
-
-    const LinkedHashMap<std::string, LexType> &getReserveWords();
-
     void reserve();
+
+    void retract();
 };
 
 

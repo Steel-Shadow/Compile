@@ -2,17 +2,14 @@
 // Created by Steel_Shadow on 2023/9/21.
 //
 
-#include <sstream>
 #include "Lexer.h"
-
-Lexer Lexer::lexer;
 
 // outFilePtr can be none
 void Lexer::compile(const char *inFile, const char *outFile) {
-    lexer.inFilePtr = new std::ifstream(inFile);
-    lexer.outFilePtr = new std::ofstream(outFile);
+    inFilePtr = new std::ifstream(inFile);
+    outFilePtr = new std::ofstream(outFile);
 
-    if (!*lexer.inFilePtr) {
+    if (!*inFilePtr) {
         std::cerr << "Read testfile.txt fail!" << std::endl;
         throw std::runtime_error("Read testfile.txt fail!");
     }
@@ -21,17 +18,18 @@ void Lexer::compile(const char *inFile, const char *outFile) {
 // also return EOF
 // todo: I should rm the warning
 char Lexer::nextChar() {
-    //todo:可能出错
-    if (column++ == line.length()) {
+    if (column == line.length()) {
         row++;
         column = 0;
 
-        if (!std::getline(*lexer.inFilePtr, line)) {
-            return EOF;
+        if (!std::getline(*inFilePtr, line)) {
+            c = EOF;
+            return c;
         }
+        c = '\n';
+        return '\n';
     }
-
-    c = line[column];
+    c = line[column++];
     return c;
 }
 
@@ -55,24 +53,24 @@ bool Lexer::next() {
         }
         num = std::stoi(token);
         lexType = "INTCON";
+        retract();
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
             token += c;
         }
         reserve();
+        retract();
     } else if (c == '/') { //q1
         nextChar();
 
         if (c == '/') { //q2
             while (nextChar() != '\n');
-            nextChar(); //q3
             // line comment //
             token = "";
             lexType = "";
         } else if (c == '*') { //q5
             q5:
             while (nextChar() != '*');
-            q6:
             while (nextChar()) {
                 if (c == '*');
                 else if (c == '/') {
@@ -84,9 +82,11 @@ bool Lexer::next() {
             // block comment /**/
             token = "";
             lexType = "";
+            retract();
         } else {
             token = "/"; //q4
             lexType = "DIV";
+            retract();
         }
     } else if (c == '\"') {
         // STRCON
@@ -120,10 +120,13 @@ bool Lexer::next() {
 
 #ifdef LEXER_OUTPUT
     std::cout << lexType << " " << token << std::endl;
+    *outFilePtr << lexType << " " << token << std::endl;
 #endif
 
     return true;
 }
+
+void Lexer::retract() { column--; }
 
 void Lexer::reserve() {
     if (reserveWords.containsKey(token)) {
@@ -131,14 +134,6 @@ void Lexer::reserve() {
     } else {
         lexType = "IDENFR";
     }
-}
-
-const std::string &Lexer::getToken() {
-    return token;
-}
-
-LexType Lexer::getLexType() {
-    return lexType;
 }
 
 LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
@@ -183,12 +178,4 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
     map->put("}", "RBRACE");
 
     return *map;
-}
-
-const LinkedHashMap<std::string, LexType> &Lexer::getReserveWords() {
-    return reserveWords;
-}
-
-Lexer Lexer::getInstance() {
-    return lexer;
 }
