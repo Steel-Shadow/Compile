@@ -7,26 +7,32 @@
 #define COMPILER_LEXER_H
 
 #include "config.h"
-#include "LexType.h"
+#include "Error.h"
 #include "LinkedHashMap.h"
 
 #include <fstream>
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <map>
 #include <unordered_map>
 #include <list>
 
+typedef std::string LexType;
+
 class Lexer {
 private:
+    //Singleton: init in compile(...)
     static Lexer lexer;
 
-    std::ifstream *infile{};
-    std::ofstream *outfile{};
+    std::ifstream *inFilePtr{};
+    std::ofstream *outFilePtr{};
 
     char c{};
     int position{};
-    int column{};
-    int row{};
+    int column{}; //count from 0
+    int row{}; // count from 1
+    std::string line{};
 
     std::string token{};
     LexType lexType{};
@@ -34,25 +40,28 @@ private:
 
     static LinkedHashMap<std::string, LexType> &buildReserveWords();
 
-    inline static const auto &reserveWords = buildReserveWords();
+    inline static auto &reserveWords = buildReserveWords();
 
     // Singleton 构造函数和析构函数私有，以防止外部直接创建或删除实例
     Lexer() {}
 
 
 public:
-    static Lexer &getInstance();
+    static Lexer getInstance();
 
-    static void start(const char *i, const char *o);
+    static void compile(const char *i, const char *o);
 
     bool next();
 
+    char nextChar();
+
     const std::string &getToken();
 
-    LexType getLexType();
+    std::string getLexType();
 
     const LinkedHashMap<std::string, LexType> &getReserveWords();
 
+    void reserve();
 };
 
 

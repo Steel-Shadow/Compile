@@ -53,13 +53,6 @@ public:
         }
     };
 
-    void iterate() {
-        // 使用迭代器循环遍历LinkedHashMap
-        for (auto it = this->begin(); it != this->end(); ++it) {
-            std::cout << it->first << " => " << it->second << std::endl;
-        }
-    };
-
     // 添加一个迭代器方法，返回std::list的迭代器
     typename std::list<std::pair<K, V>>::iterator begin() {
         return data.begin();
