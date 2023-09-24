@@ -34,7 +34,7 @@ private:
 
     static LinkedHashMap<std::string, LexType> &buildReserveWords();
 
-    inline static auto &reserveWords = buildReserveWords();
+    inline static const auto &reserveWords = buildReserveWords();
 
     // Singleton 构造函数和析构函数私有，以防止外部直接创建或删除实例
     Lexer() {}
