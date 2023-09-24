@@ -47,6 +47,14 @@ private:
 
     LinkedHashMap<std::string, LexType> reserveWords;
 
+    char nextChar();
+
+    void reserve();
+
+    void retract();
+
+    void output();
+
 public:
     // Singleton begin
     static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
@@ -56,17 +64,7 @@ public:
     void operator=(Lexer const &) = delete;
     // Singleton end
 
-    static void compile(const std::string &inFile, const std::string &outFile = "");
-
     bool next();
-
-    char nextChar();
-
-    void reserve();
-
-    void retract();
-
-    void output();
 };
 
 
