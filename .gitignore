@@ -3,6 +3,9 @@
 .idea
 
 doc
-cmake-build-debug
+cmake-build-*
 build
 test
+
+*.exe
+*.zip

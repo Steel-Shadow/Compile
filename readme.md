@@ -1,3 +1,4 @@
+```
 单词名称	类别码
 Ident	IDENFR
 IntConst	INTCON
@@ -37,3 +38,4 @@ void	VOIDTK
 ]	RBRACK
 {	LBRACE
 }	RBRACE
+```

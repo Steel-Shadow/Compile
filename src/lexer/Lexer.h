@@ -4,6 +4,8 @@
 // C++单例模式真复杂，分离头文件和源代码！
 // 2023年9月24日20:05:42
 // 初入C++就敢上手设计模式，算了。我是**
+// 2023年9月25日13:12:51
+// 不过如此！
 
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
@@ -25,8 +27,12 @@ typedef std::string LexType;
 
 class Lexer {
 private:
-    std::ifstream *inFilePtr{};
-    std::ofstream *outFilePtr{};
+    static Lexer *instance;
+
+    Lexer(const std::string &inFile, const std::string &outFile);
+
+    std::ifstream inFileStream;
+    std::ofstream outFileStream;
 
     char c{};
     int column{}; //count from 0
@@ -37,12 +43,20 @@ private:
     LexType lexType{};
     int num{};
 
-    static LinkedHashMap<std::string, LexType> &buildReserveWords();
+    static LinkedHashMap<std::string, LexType> buildReserveWords();
 
-    inline static auto &reserveWords = buildReserveWords();
+    LinkedHashMap<std::string, LexType> reserveWords;
 
 public:
-    void compile(const char *i, const char *o);
+    // Singleton begin
+    static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
+
+    Lexer(Lexer const &) = delete;
+
+    void operator=(Lexer const &) = delete;
+    // Singleton end
+
+    static void compile(const std::string &inFile, const std::string &outFile = "");
 
     bool next();
 

@@ -1,5 +1,7 @@
 aux_source_directory(. SRC_LIST)
 
+aux_source_directory(${PROJECT_SOURCE_DIR}/include INCLUDE_LIST)
+
 aux_source_directory(error ERROR_LIST)
 aux_source_directory(lexer LEXER_LIST)
 

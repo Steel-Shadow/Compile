@@ -4,25 +4,38 @@
 
 #include "Lexer.h"
 
-// outFilePtr can be none
-void Lexer::compile(const char *inFile, const char *outFile) {
-    inFilePtr = new std::ifstream(inFile);
-    outFilePtr = new std::ofstream(outFile);
+Lexer *Lexer::instance = nullptr;
 
-    if (!*inFilePtr) {
+Lexer *Lexer::getInstance(const std::string &i, const std::string &o) {
+    if (instance == nullptr) {
+        instance = new Lexer(i, o);
+
+    }
+    if (!instance->inFileStream) {
         std::cerr << "Read testfile.txt fail!" << std::endl;
         throw std::runtime_error("Read testfile.txt fail!");
     }
+    return instance;
+}
+
+Lexer::Lexer(const std::string &i, const std::string &o) {
+    inFileStream = std::ifstream(i);
+    outFileStream = std::ofstream(o);
+    reserveWords = buildReserveWords();
+}
+
+// outFileStream can be none
+void Lexer::compile(const std::string &inFile, const std::string &outFile) {
+    getInstance(inFile, outFile);
 }
 
 // also return EOF
-// todo: I should rm the warning
 char Lexer::nextChar() {
     if (column == line.length()) {
         row++;
         column = 0;
 
-        if (!std::getline(*inFilePtr, line)) {
+        if (!std::getline(inFileStream, line)) {
             c = EOF;
             return c;
         }
@@ -130,7 +143,7 @@ void Lexer::reserve() {
     }
 }
 
-LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
+LinkedHashMap<std::string, LexType> Lexer::buildReserveWords() {
     auto map = new LinkedHashMap<std::string, LexType>;
     // IDENFR
     // INTCON
@@ -176,6 +189,8 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
 
 void Lexer::output() {
     if (lexType.empty() && token.empty()) { return; }
+#ifdef DEBUG
     std::cout << lexType << " " << token << std::endl;
-    *outFilePtr << lexType << " " << token << std::endl;
+#endif
+    outFileStream << lexType << " " << token << std::endl;
 }
