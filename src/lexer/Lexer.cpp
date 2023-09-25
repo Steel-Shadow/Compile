@@ -26,8 +26,7 @@ char Lexer::nextChar() {
             c = EOF;
             return c;
         }
-        c = '\n';
-        return '\n';
+        line += '\n'; // getline has no '\n'
     }
     c = line[column++];
     return c;
@@ -62,7 +61,7 @@ bool Lexer::next() {
         retract();
     } else if (c == '/') { //q1
         nextChar();
-
+        //todo: block comment bug
         if (c == '/') { //q2
             while (nextChar() != '\n');
             // line comment //
@@ -71,18 +70,17 @@ bool Lexer::next() {
         } else if (c == '*') { //q5
             q5:
             while (nextChar() != '*');
-            while (nextChar()) {
+            do {
                 if (c == '*');
                 else if (c == '/') {
                     break; //q7
                 } else {
                     goto q5;
                 }
-            }
+            } while (nextChar());
             // block comment /**/
             token = "";
             lexType = "";
-            retract();
         } else {
             token = "/"; //q4
             lexType = "DIV";
@@ -105,17 +103,19 @@ bool Lexer::next() {
 
         lexType = "STRCON";
     } else {
-        // IDENFR
+        // special operator +-*/ && &
         for (const auto &i: reserveWords) {
-            LexType i_token = i.second;
-            if (line.substr(column).find(token) == 0) {
-                column += static_cast<int >(i_token.length());
+            std::string str = i.first;
+            LexType type = i.second;
 
-                token = i.first;
+            if (line.substr(column - 1, str.length()) == str) {
+                column += static_cast<int>(str.length()) - 1;
+
+                token = str;
+                lexType = type;
                 break;
             }
         }
-        reserve();
     }
 
 #ifdef LEXER_OUTPUT

@@ -29,7 +29,6 @@ private:
     std::ofstream *outFilePtr{};
 
     char c{};
-    int position{};
     int column{}; //count from 0
     int row{}; // count from 1
     std::string line{};
