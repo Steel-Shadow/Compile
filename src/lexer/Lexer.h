@@ -51,6 +51,8 @@ public:
     void reserve();
 
     void retract();
+
+    void output();
 };
 
 

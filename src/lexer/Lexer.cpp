@@ -61,7 +61,6 @@ bool Lexer::next() {
         retract();
     } else if (c == '/') { //q1
         nextChar();
-        //todo: block comment bug
         if (c == '/') { //q2
             while (nextChar() != '\n');
             // line comment //
@@ -118,11 +117,6 @@ bool Lexer::next() {
         }
     }
 
-#ifdef LEXER_OUTPUT
-    std::cout << lexType << " " << token << std::endl;
-    *outFilePtr << lexType << " " << token << std::endl;
-#endif
-
     return true;
 }
 
@@ -140,7 +134,7 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
     auto map = new LinkedHashMap<std::string, LexType>;
     // IDENFR
     // INTCON
-    // c
+    // STRCON
     map->put("main", "MAINTK");
     map->put("const", "CONSTTK");
     map->put("int", "INTTK");
@@ -148,7 +142,6 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
     map->put("continue", "CONTINUETK");
     map->put("if", "IFTK");
     map->put("else", "ELSETK");
-    map->put("!", "NOT");
     map->put("&&", "AND");
     map->put("||", "OR");
     map->put("for", "FORTK");
@@ -167,6 +160,7 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
     map->put(">", "GRE");
     map->put("==", "EQL");
     map->put("!=", "NEQ");
+    map->put("!", "NOT");
     map->put("=", "ASSIGN");
     map->put(";", "SEMICN");
     map->put(",", "COMMA");
@@ -178,4 +172,10 @@ LinkedHashMap<std::string, LexType> &Lexer::buildReserveWords() {
     map->put("}", "RBRACE");
 
     return *map;
+}
+
+void Lexer::output() {
+    if (lexType.empty() && token.empty()) { return; }
+    std::cout << lexType << " " << token << std::endl;
+    *outFilePtr << lexType << " " << token << std::endl;
 }
