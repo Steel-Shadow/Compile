@@ -58,6 +58,7 @@ bool Lexer::next() {
         while (isdigit(nextChar())) {
             token += c;
         }
+        // error: bad number
         num = std::stoi(token);
         lexType = "INTCON";
         retract();
@@ -105,7 +106,7 @@ bool Lexer::next() {
                 } else {
                     Error::raise_error();
                 }
-            } else;
+            } else; // error: bad char in format string
         }
 
         lexType = "STRCON";
