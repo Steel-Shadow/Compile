@@ -7,21 +7,40 @@
 
 #include "Error.h"
 #include "Lexer.h"
+#include <iostream>
 
 class Parser {
 private:
     static Parser *instance;
 
-    Parser() = default;
+    explicit Parser(std::ofstream *o);
+
+    std::ofstream *outFileStream;
+
 
 public:
     // Singleton
-    static Parser *getInstance();
+    static Parser *getInstance(std::ofstream *o = nullptr);
 
     Parser(Parser const &) = delete;
 
     void operator=(Parser const &) = delete;
     // Singleton
+
+    // CompUnit→{Decl}{FuncDef}MainFuncDef
+    void CompUnit();
+
+    // Decl→ConstDecl|VarDecl
+    void Decl();
+
+    // FuncDef→FuncTypeIdent'('[FuncFParams]')'Block
+    void FuncDef();
+
+    // MainFuncDef→'int''main''('')'Block
+    void MainFuncDef();
+
+    // ConstDecl→'const'BTypeConstDef{','ConstDef}';'
+    void ConstDecl();
 };
 
 

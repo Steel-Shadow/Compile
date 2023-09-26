@@ -10,6 +10,7 @@
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
 
+#include "LexType.h"
 #include "Error.h"
 #include "LinkedHashMap.h"
 
@@ -22,16 +23,16 @@
 #include <list>
 #include <sstream>
 
-typedef std::string LexType;
+//typedef std::string LexType;
 
 class Lexer {
 private:
     static Lexer *instance;
 
-    Lexer(const std::string &inFile, const std::string &outFile);
+    Lexer(std::ifstream *i, std::ofstream *o);
 
-    std::ifstream inFileStream;
-    std::ofstream outFileStream;
+    std::ifstream *inFileStream;
+    std::ofstream *outFileStream;
 
     char c{};
     int column{}; //count from 0
@@ -52,12 +53,14 @@ private:
 
     void retract();
 
+    static inline std::string lexTypeToStr(LexType lexType);
+
     void output();
 
 public:
     // Singleton
     // parameter is only needed on the first call
-    static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
+    static Lexer *getInstance(std::ifstream *i = nullptr, std::ofstream *o = nullptr);
 
     Lexer(Lexer const &) = delete;
 

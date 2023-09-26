@@ -6,22 +6,17 @@
 
 Lexer *Lexer::instance = nullptr;
 
-Lexer *Lexer::getInstance(const std::string &i, const std::string &o) {
+Lexer::Lexer(std::ifstream *i, std::ofstream *o) :
+        inFileStream(i), outFileStream(o) {
+    reserveWords = buildReserveWords();
+}
+
+Lexer *Lexer::getInstance(std::ifstream *i, std::ofstream *o) {
     if (instance == nullptr) {
         instance = new Lexer(i, o);
     }
 
     return instance;
-}
-
-Lexer::Lexer(const std::string &i, const std::string &o) {
-    inFileStream = std::ifstream(i);
-    outFileStream = std::ofstream(o);
-    reserveWords = buildReserveWords();
-    if (!inFileStream) {
-        std::cerr << "Read testfile.txt fail!" << std::endl;
-        throw std::runtime_error("Read testfile.txt fail!");
-    }
 }
 
 // also return EOF
@@ -30,7 +25,7 @@ char Lexer::nextChar() {
         row++;
         column = 0;
 
-        if (!std::getline(inFileStream, line)) {
+        if (!std::getline(*inFileStream, line)) {
             c = EOF;
             return c;
         }
@@ -59,7 +54,7 @@ bool Lexer::next() {
         }
         // error: bad number
         num = std::stoi(token);
-        lexType = "INTCON";
+        lexType = LexType::INTCON;
         retract();
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
@@ -73,7 +68,7 @@ bool Lexer::next() {
             while (nextChar() != '\n');
             // line comment //
             token = "";
-            lexType = "";
+            lexType = LexType::COMMENT;
         } else if (c == '*') { //q5
             q5:
             while (nextChar() != '*');
@@ -87,10 +82,10 @@ bool Lexer::next() {
             } while (nextChar());
             // block comment /**/
             token = "";
-            lexType = "";
+            lexType = LexType::COMMENT;
         } else {
             token = "/"; //q4
-            lexType = "DIV";
+            lexType = LexType::DIV;
             retract();
         }
     } else if (c == '\"') {
@@ -108,7 +103,7 @@ bool Lexer::next() {
             } else; // error: bad char in format string
         }
 
-        lexType = "STRCON";
+        lexType = LexType::STRCON;
     } else {
         // special operator +-*/ && &
         for (const auto &i: reserveWords) {
@@ -135,7 +130,7 @@ void Lexer::reserve() {
     if (reserveWords.containsKey(token)) {
         lexType = reserveWords.get(token);
     } else {
-        lexType = "IDENFR";
+        lexType = LexType::IDENFR;
     }
 }
 
@@ -144,49 +139,132 @@ LinkedHashMap<std::string, LexType> Lexer::buildReserveWords() {
     // IDENFR
     // INTCON
     // STRCON
-    map->put("main", "MAINTK");
-    map->put("const", "CONSTTK");
-    map->put("int", "INTTK");
-    map->put("break", "BREAKTK");
-    map->put("continue", "CONTINUETK");
-    map->put("if", "IFTK");
-    map->put("else", "ELSETK");
-    map->put("&&", "AND");
-    map->put("||", "OR");
-    map->put("for", "FORTK");
-    map->put("getint", "GETINTTK");
-    map->put("printf", "PRINTFTK");
-    map->put("return", "RETURNTK");
-    map->put("+", "PLUS");
-    map->put("-", "MINU");
-    map->put("void", "VOIDTK");
-    map->put("*", "MULT");
-    map->put("/", "DIV");
-    map->put("%", "MOD");
-    map->put("<=", "LEQ");
-    map->put("<", "LSS");
-    map->put(">=", "GEQ");
-    map->put(">", "GRE");
-    map->put("==", "EQL");
-    map->put("!=", "NEQ");
-    map->put("!", "NOT");
-    map->put("=", "ASSIGN");
-    map->put(";", "SEMICN");
-    map->put(",", "COMMA");
-    map->put("(", "LPARENT");
-    map->put(")", "RPARENT");
-    map->put("[", "LBRACK");
-    map->put("]", "RBRACK");
-    map->put("{", "LBRACE");
-    map->put("}", "RBRACE");
+    map->put("main", LexType::MAINTK);
+    map->put("const", LexType::CONSTTK);
+    map->put("int", LexType::INTTK);
+    map->put("break", LexType::BREAKTK);
+    map->put("continue", LexType::CONTINUETK);
+    map->put("if", LexType::IFTK);
+    map->put("else", LexType::ELSETK);
+    map->put("&&", LexType::AND);
+    map->put("||", LexType::OR);
+    map->put("for", LexType::FORTK);
+    map->put("getint", LexType::GETINTTK);
+    map->put("printf", LexType::PRINTFTK);
+    map->put("return", LexType::RETURNTK);
+    map->put("+", LexType::PLUS);
+    map->put("-", LexType::MINU);
+    map->put("void", LexType::VOIDTK);
+    map->put("*", LexType::MULT);
+    map->put("/", LexType::DIV);
+    map->put("%", LexType::MOD);
+    map->put("<=", LexType::LEQ);
+    map->put("<", LexType::LSS);
+    map->put(">=", LexType::GEQ);
+    map->put(">", LexType::GRE);
+    map->put("==", LexType::EQL);
+    map->put("!=", LexType::NEQ);
+    map->put("!", LexType::NOT);
+    map->put("=", LexType::ASSIGN);
+    map->put(";", LexType::SEMICN);
+    map->put(",", LexType::COMMA);
+    map->put("(", LexType::LPARENT);
+    map->put(")", LexType::RPARENT);
+    map->put("[", LexType::LBRACK);
+    map->put("]", LexType::RBRACK);
+    map->put("{", LexType::LBRACE);
+    map->put("}", LexType::RBRACE);
 
     return *map;
 }
 
+std::string Lexer::lexTypeToStr(LexType lexType) {
+    switch (lexType) {
+        case LexType::COMMENT:
+            return "COMMENT";
+        case LexType::IDENFR:
+            return "IDENFR";
+        case LexType::INTCON:
+            return "INTCON";
+        case LexType::STRCON:
+            return "STRCON";
+        case LexType::MAINTK:
+            return "MAINTK";
+        case LexType::CONSTTK:
+            return "CONSTTK";
+        case LexType::INTTK:
+            return "INTTK";
+        case LexType::BREAKTK:
+            return "BREAKTK";
+        case LexType::CONTINUETK:
+            return "CONTINUETK";
+        case LexType::IFTK:
+            return "IFTK";
+        case LexType::ELSETK:
+            return "ELSETK";
+        case LexType::AND:
+            return "AND";
+        case LexType::OR:
+            return "OR";
+        case LexType::FORTK:
+            return "FORTK";
+        case LexType::GETINTTK:
+            return "GETINTTK";
+        case LexType::PRINTFTK:
+            return "PRINTFTK";
+        case LexType::RETURNTK:
+            return "RETURNTK";
+        case LexType::PLUS:
+            return "PLUS";
+        case LexType::MINU:
+            return "MINU";
+        case LexType::VOIDTK:
+            return "VOIDTK";
+        case LexType::MULT:
+            return "MULT";
+        case LexType::DIV:
+            return "DIV";
+        case LexType::MOD:
+            return "MOD";
+        case LexType::LEQ:
+            return "LEQ";
+        case LexType::LSS:
+            return "LSS";
+        case LexType::GEQ:
+            return "GEQ";
+        case LexType::GRE:
+            return "GRE";
+        case LexType::EQL:
+            return "EQL";
+        case LexType::NEQ:
+            return "NEQ";
+        case LexType::NOT:
+            return "NOT";
+        case LexType::ASSIGN:
+            return "ASSIGN";
+        case LexType::SEMICN:
+            return "SEMICN";
+        case LexType::COMMA:
+            return "COMMA";
+        case LexType::LPARENT:
+            return "LPARENT";
+        case LexType::RPARENT:
+            return "RPARENT";
+        case LexType::LBRACK:
+            return "LBRACK";
+        case LexType::RBRACK:
+            return "RBRACK";
+        case LexType::LBRACE:
+            return "LBRACE";
+        case LexType::RBRACE:
+            return "RBRACE";
+    }
+}
+
 void Lexer::output() {
-    if (lexType.empty() && token.empty()) { return; }
+    if (lexType == LexType::COMMENT) { return; }
 #ifdef DEBUG
-    std::cout << lexType << " " << token << std::endl;
+    std::cout << Lexer::lexTypeToStr(lexType) << " " << token << std::endl;
 #endif
-    outFileStream << lexType << " " << token << std::endl;
+    *outFileStream << Lexer::lexTypeToStr(lexType) << " " << token << std::endl;
 }
