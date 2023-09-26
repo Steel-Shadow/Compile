@@ -53,7 +53,7 @@ bool Lexer::next() {
             token += c;
         }
         // error: bad number
-        num = std::stoi(token);
+        lexValue.INTCON = std::stoi(token);
         lexType = LexType::INTCON;
         retract();
     } else if (c == '_' || isalpha(c)) {
@@ -122,6 +122,11 @@ bool Lexer::next() {
 
     output();
     return true;
+}
+
+std::pair<LexType, LexValue> Lexer::preRead(int n) {
+// todo:
+// return nullptr;
 }
 
 void Lexer::retract() { column--; }

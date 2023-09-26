@@ -7,20 +7,22 @@
 
 #include "Error.h"
 #include "Lexer.h"
+#include "SynType.h"
 #include <iostream>
 
 class Parser {
 private:
     static Parser *instance;
 
-    explicit Parser(std::ofstream *o);
+    explicit Parser(std::ofstream *o, Lexer &lexer);
+
+    Lexer &lexer;
 
     std::ofstream *outFileStream;
 
-
 public:
     // Singleton
-    static Parser *getInstance(std::ofstream *o = nullptr);
+    static Parser *getInstance(Lexer &lexer, std::ofstream *o = nullptr);
 
     Parser(Parser const &) = delete;
 

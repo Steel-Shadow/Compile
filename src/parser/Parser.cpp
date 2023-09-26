@@ -6,17 +6,19 @@
 
 Parser *Parser::instance = nullptr;
 
-Parser::Parser(std::ofstream *o) : outFileStream(o) {}
+Parser::Parser(std::ofstream *o, Lexer &lexer) : outFileStream(o), lexer(lexer) {}
 
-Parser *Parser::getInstance(std::ofstream *o) {
+Parser *Parser::getInstance(Lexer &lexer, std::ofstream *o) {
     if (instance == nullptr) {
-        instance = new Parser(o);
+        instance = new Parser(o, lexer);
     }
 
     return instance;
 }
 
 void Parser::CompUnit() {
+//    todo: parser
+//    while()
     Decl();
     FuncDef();
     MainFuncDef();

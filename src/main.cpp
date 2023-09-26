@@ -14,8 +14,11 @@ void compile(const std::string &inFile, const std::string &outFile) {
         throw std::runtime_error("Writing testfile.txt fails!");
     }
 
-    Lexer::getInstance(i, o)->next();
-    Parser::getInstance(o)->CompUnit();
+    auto lexer = Lexer::getInstance(i, o);
+    auto parser = Parser::getInstance(*lexer, o);
+
+    lexer->next();
+    parser->CompUnit();
 }
 
 int main() {

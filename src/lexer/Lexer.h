@@ -23,7 +23,15 @@
 #include <list>
 #include <sstream>
 
-//typedef std::string LexType;
+union LexValue {
+    constexpr LexValue() {}
+
+    ~LexValue() {}
+
+    std::string IDENFR;
+    int INTCON{};
+    std::string STRCON;
+};
 
 class Lexer {
 private:
@@ -41,7 +49,17 @@ private:
 
     std::string token{};
     LexType lexType{};
-    int num{};
+
+    // union is quite special!
+    union LexValue {
+        constexpr LexValue() {}
+
+        ~LexValue() {}
+
+        std::string IDENFR;
+        int INTCON{};
+        std::string STRCON;
+    } lexValue{};
 
     static LinkedHashMap<std::string, LexType> buildReserveWords();
 
@@ -68,7 +86,11 @@ public:
     // Singleton
 
     bool next();
-};
 
+    // n is the depth of pre-reading
+    // 0 for now
+    std::pair<LexType, LexValue> preRead(int n);
+
+};
 
 #endif //COMPILER_LEXER_H
