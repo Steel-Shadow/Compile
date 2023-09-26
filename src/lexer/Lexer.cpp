@@ -9,10 +9,6 @@ Lexer *Lexer::instance = nullptr;
 Lexer *Lexer::getInstance(const std::string &i, const std::string &o) {
     if (instance == nullptr) {
         instance = new Lexer(i, o);
-        if (!instance->inFileStream) {
-            std::cerr << "Read testfile.txt fail!" << std::endl;
-            throw std::runtime_error("Read testfile.txt fail!");
-        }
     }
 
     return instance;
@@ -22,6 +18,10 @@ Lexer::Lexer(const std::string &i, const std::string &o) {
     inFileStream = std::ifstream(i);
     outFileStream = std::ofstream(o);
     reserveWords = buildReserveWords();
+    if (!inFileStream) {
+        std::cerr << "Read testfile.txt fail!" << std::endl;
+        throw std::runtime_error("Read testfile.txt fail!");
+    }
 }
 
 // also return EOF
@@ -40,7 +40,6 @@ char Lexer::nextChar() {
     return c;
 }
 
-// no need to retract
 bool Lexer::next() {
     // Ident
     // IntConst

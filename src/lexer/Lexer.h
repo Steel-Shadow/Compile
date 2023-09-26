@@ -10,7 +10,6 @@
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
 
-#include "config.h"
 #include "Error.h"
 #include "LinkedHashMap.h"
 
@@ -56,13 +55,14 @@ private:
     void output();
 
 public:
-    // Singleton begin
+    // Singleton
+    // parameter is only needed on the first call
     static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
 
     Lexer(Lexer const &) = delete;
 
     void operator=(Lexer const &) = delete;
-    // Singleton end
+    // Singleton
 
     bool next();
 };
