@@ -3,9 +3,14 @@
 //
 
 #include "Error.h"
-#include <iostream>
+#include "Lexer.h"
 
 void Error::raise_error() {
-    // TODO: 错误处理 Error
-    std::cerr << "TODO: raise Error" << std::endl;
+    std::cout << "Error at "
+              << Lexer::getInstance()->row[0] + 1
+              << ","
+              << Lexer::getInstance()->column[0]
+              << "---------------------------------------"
+              << std::endl;
+    exit(-1);
 }

@@ -5,8 +5,9 @@
 #ifndef COMPILER_ERROR_H
 #define COMPILER_ERROR_H
 
+#include <iostream>
 
-class Error {
+class Error : std::exception {
 public:
     static void raise_error();
 };

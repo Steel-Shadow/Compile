@@ -1,79 +1,29 @@
-编译单元CompUnit→{Decl}{FuncDef}MainFuncDef//1.是否存在Decl2.是否存在FuncDef 
+# 重构 LexType
+开发 Parser 考虑建造语法树时，如果使用 std::string 作为节点标识符，效率太低。
 
-声明Decl→ConstDecl|VarDecl//覆盖两种声明
+之前的 Lexer 为了方便输出，直接将 LexType 定义为 std::string。
 
-常量声明ConstDecl→'const'BTypeConstDef{','ConstDef}';'//1.花括号内重复0 次2.花括号内重复多次
+现将 LexType(添加 COMMENT 为注释，不区分行注释和块注释)和 SynType 重构为枚举类。
+两者都是 NodeType (语法树节点类型)。 
 
-基本类型BType→'int'//存在即可
+```c++
+// old
+typedef std::string LexType;
+// new
+enum class NodeType {/*...*/}
+```
 
-常数定义ConstDef→Ident{'['ConstExp']'}'='ConstInitVal//包含普通变量、一维数组、二维数组共三种情况
+# Lexer 预读优化
 
-常量初值ConstInitVal→ConstExp |'{'[ConstInitVal{','ConstInitVal}]'}'//1.常表达式初值2.一维数组初值3.二维数组初值
+实际处理中， Lexer 无需额外扫描。 Lexer 应当领先 Parser 若干个 token(具体领先数量依据设计而定，均存储于 Lexer 内部)。
 
-变量声明VarDecl→BTypeVarDef{','VarDef}';'//1.花括号内重复0次2.花括号内重复多次
+Lexer 调用 next ，读取 token 替代最新预读词，其它存储的 token 依次更新。
 
-变量定义VarDef→Ident{'['ConstExp']'}//包含普通变量、一维数组、二维数组定义
-|Ident{'['ConstExp']'}'='InitVal
+由此优化， Lexer 仅会扫描全文一遍，预读不会影响性能。
 
-变量初值InitVal→Exp|'{'[InitVal{','InitVal}]'}'//1.表达式初值2.一维数组初值3.二维数组初值
+# C++ 坑
 
-函数定义FuncDef→FuncTypeIdent'('[FuncFParams]')'Block//1.无形参2.有形参
+Singleton 中，单例变量初始化要放在源文件(不可头文件)
 
-主函数定义MainFuncDef→'int''main''('')'Block//存在main函数
-
-函数类型FuncType→'void'|'int'//覆盖两种类型的函数
-
-函数形参表FuncFParams→FuncFParam{','FuncFParam}//1.花括号内重复0次2.花括号内重复多次
-
-函数形参FuncFParam→BTypeIdent['['']'{'['ConstExp']'}]//1.普通变量2.一维数组变量3.二维数组变量
-
-语句块Block→'{'{BlockItem}'}'//1.花括号内重复0次2.花括号内重复多次
-
-语句块项BlockItem→Decl|Stmt//覆盖两种语句块项
-
-语句Stmt→LVal'='Exp';'//每种类型的语句都要覆盖
-
-|[Exp]';'//有无Exp两种情况
-|Block 
-|'if''('Cond')'Stmt['else'Stmt]//1.有else2.无else 
-|'for''('[ForStmt]';'[Cond]';'[ForStmt]')'Stmt//1.无缺省2.缺省第一个ForStmt3.缺省Cond4.缺省第二个ForStmt
-
-|'break'';'|'continue'';'
-|'return'[Exp]';'//1.有Exp2.无Exp 
-|LVal'=''getint''('')'';'
-|'printf''('FormatString{','Exp}')'';'//1.有Exp2.无Exp
-
-语句ForStmt→LVal'='Exp//存在即可
-
-表达式Exp→AddExp注：SysY表达式是int型表达式//存在即可
-
-条件表达式Cond→LOrExp//存在即可
-
-左值表达式LVal→Ident{'['Exp']'}//1.普通变量2.一维数组3.二维数组
-基本表达式PrimaryExp→'('Exp')'|LVal|Number//三种情况均需覆盖
-
-数值Number→IntConst//存在即可
-
-一元表达式UnaryExp→PrimaryExp|Ident'('[FuncRParams]')'//3种情况均需覆盖,函数调用也需要覆盖FuncRParams的不同情况
-
-|UnaryOpUnaryExp//存在即可
-
-单目运算符UnaryOp→'+'|'−'|'!'注：'!'仅出现在条件表达式中//三种均需覆盖
-
-函数实参表FuncRParams→Exp{','Exp}//1.花括号内重复0次2.花括号内重复多次3.Exp需要覆盖数组传参和部分数组传参
-
-乘除模表达式MulExp→UnaryExp|MulExp('*'|'/'|'%')UnaryExp//1.UnaryExp
-2.*3./4.%均需覆盖
-
-加减表达式AddExp→MulExp|AddExp('+'|'−')MulExp//1.MulExp2.+需覆盖3.-需覆盖
-
-关系表达式RelExp→AddExp|RelExp('<'|'>'|'<='|'>=')AddExp//1.AddExp
-2.<3.>4.<=5.>=均需覆盖
-
-相等性表达式EqExp→RelExp|EqExp('=='|'!=')RelExp//1.RelExp2.==3.!=均需覆盖
-
-逻辑与表达式LAndExp→EqExp|LAndExp'&&'EqExp//1.EqExp2.&&均需覆盖
-
-逻辑或表达式LOrExp→LAndExp|LOrExp'||'LAndExp//1.LAndExp2.||均需覆盖
-
-常量表达式ConstExp→AddExp注：使用的Ident必须是常量//存在即可
+[Union 中 gcc clang 编译器实现“错误”](https://stackoverflow.com/questions/70428563/unions-default-constructor-is-implicitly-deleted)
+C++标准没说清楚，编译器厂商实现不一样！

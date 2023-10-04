@@ -10,87 +10,83 @@
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
 
-#include "LexType.h"
+#include "NodeType.h"
 #include "Error.h"
 #include "LinkedHashMap.h"
 
-#include <fstream>
-#include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
-#include <map>
-#include <unordered_map>
-#include <list>
-#include <sstream>
+#include <utility>
 
-union LexValue {
-    constexpr LexValue() {}
-
-    ~LexValue() {}
-
-    std::string IDENFR;
-    int INTCON{};
-    std::string STRCON;
-};
+typedef std::string Token;
+typedef std::pair<NodeType, Token> Word;
 
 class Lexer {
 private:
     static Lexer *instance;
 
-    Lexer(std::ifstream *i, std::ofstream *o);
+    Lexer(const std::string &inFile, const std::string &outFile);
 
-    std::ifstream *inFileStream;
-    std::ofstream *outFileStream;
+    std::ofstream outFileStream;
+    std::string fileContents;
 
-    char c{};
-    int column{}; //count from 0
-    int row{}; // count from 1
-    std::string line{};
+    // pre-reading deep
+    static constexpr size_t deep = 3;
 
-    std::string token{};
-    LexType lexType{};
+    char c{}; // c = fileContents[pos[deep-1] - 1]
+    int pos[deep]{}; // count from 1
 
-    // union is quite special!
-    union LexValue {
-        constexpr LexValue() {}
+public:
+    int column[deep]{}; // count from 1
+    int row[deep]{}; // count from 0
+private:
 
-        ~LexValue() {}
+    // synchronize output of parser and lexer
+    bool first = true;
+    NodeType lastLexType{};
+    Token lastToken{};
 
-        std::string IDENFR;
-        int INTCON{};
-        std::string STRCON;
-    } lexValue{};
+private:
+    Word words[deep];
+    NodeType &lexType = words[0].first;
+    Token &token = words[0].second;
 
-    static LinkedHashMap<std::string, LexType> buildReserveWords();
+    inline static LinkedHashMap<std::string, NodeType> buildReserveWords();
 
-    LinkedHashMap<std::string, LexType> reserveWords;
+    LinkedHashMap<std::string, NodeType> reserveWords;
 
     char nextChar();
 
-    void reserve();
+    void reserve(const Token &t, NodeType &l);
 
     void retract();
 
-    static inline std::string lexTypeToStr(LexType lexType);
-
     void output();
+
+    void updateWords(NodeType l, Token t);
 
 public:
     // Singleton
     // parameter is only needed on the first call
-    static Lexer *getInstance(std::ifstream *i = nullptr, std::ofstream *o = nullptr);
+    static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
 
     Lexer(Lexer const &) = delete;
 
     void operator=(Lexer const &) = delete;
     // Singleton
 
-    bool next();
+    Word next();
 
     // n is the depth of pre-reading
     // 0 for now
-    std::pair<LexType, LexValue> preRead(int n);
+    Word peek(int n = 0);
 
+    bool findAssignBeforeSemicolon();
+
+    NodeType *getLexTypePtr() const;
+
+    std::ofstream &getOutFileStream();
 };
 
 #endif //COMPILER_LEXER_H

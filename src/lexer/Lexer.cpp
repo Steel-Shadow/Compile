@@ -6,14 +6,32 @@
 
 Lexer *Lexer::instance = nullptr;
 
-Lexer::Lexer(std::ifstream *i, std::ofstream *o) :
-        inFileStream(i), outFileStream(o) {
+Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
     reserveWords = buildReserveWords();
+
+    auto inFileStream = std::ifstream(inFile);
+    outFileStream = std::ofstream(outFile);
+
+    if (!inFileStream) {
+        throw std::runtime_error("Reading " + inFile + " fails!");
+    }
+    if (!outFileStream && !outFile.empty()) {
+        throw std::runtime_error("Writing " + outFile + " fails!");
+    }
+
+    std::stringstream buffer;
+    buffer << inFileStream.rdbuf();
+    inFileStream.close();
+    fileContents = buffer.str();
+
+    for (int i = 0; i < deep; ++i) {
+        next();
+    }
 }
 
-Lexer *Lexer::getInstance(std::ifstream *i, std::ofstream *o) {
+Lexer *Lexer::getInstance(const std::string &inFile, const std::string &outFile) {
     if (instance == nullptr) {
-        instance = new Lexer(i, o);
+        instance = new Lexer(inFile, outFile);
     }
 
     return instance;
@@ -21,54 +39,55 @@ Lexer *Lexer::getInstance(std::ifstream *i, std::ofstream *o) {
 
 // also return EOF
 char Lexer::nextChar() {
-    if (column == line.length()) {
-        row++;
-        column = 0;
+    c = fileContents[pos[deep - 1]];
 
-        if (!std::getline(*inFileStream, line)) {
-            c = EOF;
-            return c;
-        }
-        line += '\n'; // getline has no '\n'
-    }
-    c = line[column++];
+    pos[deep - 1]++;
+
+    if (c == '\n') {
+        row[deep - 1]++;
+        column[deep - 1] = 0;
+    } else { column[deep - 1]++; }
+
     return c;
 }
 
-bool Lexer::next() {
+// stop if you read NodeType::Lex_END
+// or the file will be read in loop
+Word Lexer::next() {
     // Ident
     // IntConst
     // FormatString
-    // 单词类别码 单词的字符/字符串形式(中间仅用一个空格间隔)
     while (isspace(nextChar()));
 
-    if (c == EOF) {
-        return false;
+    if (pos[deep - 1] > fileContents.length()) {
+        updateWords(NodeType::LEX_END, "");
+        output();
+        return words[0];
     }
 
-    token = std::string(1, c);
+    NodeType l;
+    Token t = std::string(1, c);
 
     if (c >= '0' && c <= '9') {
         while (isdigit(nextChar())) {
-            token += c;
+            t += c;
         }
         // error: bad number
-        lexValue.INTCON = std::stoi(token);
-        lexType = LexType::INTCON;
+        l = NodeType::INTCON;
         retract();
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
-            token += c;
+            t += c;
         }
-        reserve();
+        reserve(t, l);
         retract();
     } else if (c == '/') { //q1
         nextChar();
         if (c == '/') { //q2
             while (nextChar() != '\n');
             // line comment //
-            token = "";
-            lexType = LexType::COMMENT;
+            t = "";
+            l = NodeType::COMMENT;
         } else if (c == '*') { //q5
             q5:
             while (nextChar() != '*');
@@ -81,195 +100,160 @@ bool Lexer::next() {
                 }
             } while (nextChar());
             // block comment /**/
-            token = "";
-            lexType = LexType::COMMENT;
+            t = "";
+            l = NodeType::COMMENT;
         } else {
-            token = "/"; //q4
-            lexType = LexType::DIV;
+            t = "/"; //q4
+            l = NodeType::DIV;
             retract();
         }
     } else if (c == '\"') {
         // STRCON
         while (nextChar()) {
-            token += c;
+            t += c;
             if (c == '\"') {
                 break;
             } else if (c == '\\') {
                 if (nextChar() == 'n') {
-                    token += 'n';
+                    t += 'n';
                 } else {
                     Error::raise_error();
                 }
             } else; // error: bad char in format string
         }
 
-        lexType = LexType::STRCON;
+        l = NodeType::STRCON;
     } else {
         // special operator +-*/ && &
         for (const auto &i: reserveWords) {
             std::string str = i.first;
-            LexType type = i.second;
+            NodeType type = i.second;
 
-            if (line.substr(column - 1, str.length()) == str) {
-                column += static_cast<int>(str.length()) - 1;
+            if (fileContents.substr(pos[deep - 1] - 1, str.length()) == str) {
+                pos[deep - 1] += static_cast<int>(str.length()) - 1;
 
-                token = str;
-                lexType = type;
+                t = str;
+                l = type;
                 break;
             }
         }
     }
 
-    output();
-    return true;
-}
-
-std::pair<LexType, LexValue> Lexer::preRead(int n) {
-// todo:
-// return nullptr;
-}
-
-void Lexer::retract() { column--; }
-
-void Lexer::reserve() {
-    if (reserveWords.containsKey(token)) {
-        lexType = reserveWords.get(token);
+    if (l != NodeType::COMMENT) {
+        updateWords(l, t);
+        output();
     } else {
-        lexType = LexType::IDENFR;
+        next();
+    }
+
+    return words[0];
+}
+
+Word Lexer::peek(int n) {
+    return words[n];
+}
+
+void Lexer::retract() { pos[deep - 1]--; }
+
+void Lexer::reserve(const Token &t, NodeType &l) {
+    if (reserveWords.containsKey(t)) {
+        l = reserveWords.get(t);
+    } else {
+        l = NodeType::IDENFR;
     }
 }
 
-LinkedHashMap<std::string, LexType> Lexer::buildReserveWords() {
-    auto map = new LinkedHashMap<std::string, LexType>;
+LinkedHashMap<std::string, NodeType> Lexer::buildReserveWords() {
+    auto map = new LinkedHashMap<std::string, NodeType>;
     // IDENFR
     // INTCON
     // STRCON
-    map->put("main", LexType::MAINTK);
-    map->put("const", LexType::CONSTTK);
-    map->put("int", LexType::INTTK);
-    map->put("break", LexType::BREAKTK);
-    map->put("continue", LexType::CONTINUETK);
-    map->put("if", LexType::IFTK);
-    map->put("else", LexType::ELSETK);
-    map->put("&&", LexType::AND);
-    map->put("||", LexType::OR);
-    map->put("for", LexType::FORTK);
-    map->put("getint", LexType::GETINTTK);
-    map->put("printf", LexType::PRINTFTK);
-    map->put("return", LexType::RETURNTK);
-    map->put("+", LexType::PLUS);
-    map->put("-", LexType::MINU);
-    map->put("void", LexType::VOIDTK);
-    map->put("*", LexType::MULT);
-    map->put("/", LexType::DIV);
-    map->put("%", LexType::MOD);
-    map->put("<=", LexType::LEQ);
-    map->put("<", LexType::LSS);
-    map->put(">=", LexType::GEQ);
-    map->put(">", LexType::GRE);
-    map->put("==", LexType::EQL);
-    map->put("!=", LexType::NEQ);
-    map->put("!", LexType::NOT);
-    map->put("=", LexType::ASSIGN);
-    map->put(";", LexType::SEMICN);
-    map->put(",", LexType::COMMA);
-    map->put("(", LexType::LPARENT);
-    map->put(")", LexType::RPARENT);
-    map->put("[", LexType::LBRACK);
-    map->put("]", LexType::RBRACK);
-    map->put("{", LexType::LBRACE);
-    map->put("}", LexType::RBRACE);
+    map->put("main", NodeType::MAINTK);
+    map->put("const", NodeType::CONSTTK);
+    map->put("int", NodeType::INTTK);
+    map->put("break", NodeType::BREAKTK);
+    map->put("continue", NodeType::CONTINUETK);
+    map->put("if", NodeType::IFTK);
+    map->put("else", NodeType::ELSETK);
+    map->put("&&", NodeType::AND);
+    map->put("||", NodeType::OR);
+    map->put("for", NodeType::FORTK);
+    map->put("getint", NodeType::GETINTTK);
+    map->put("printf", NodeType::PRINTFTK);
+    map->put("return", NodeType::RETURNTK);
+    map->put("+", NodeType::PLUS);
+    map->put("-", NodeType::MINU);
+    map->put("void", NodeType::VOIDTK);
+    map->put("*", NodeType::MULT);
+    map->put("/", NodeType::DIV);
+    map->put("%", NodeType::MOD);
+    map->put("<=", NodeType::LEQ);
+    map->put("<", NodeType::LSS);
+    map->put(">=", NodeType::GEQ);
+    map->put(">", NodeType::GRE);
+    map->put("==", NodeType::EQL);
+    map->put("!=", NodeType::NEQ);
+    map->put("!", NodeType::NOT);
+    map->put("=", NodeType::ASSIGN);
+    map->put(";", NodeType::SEMICN);
+    map->put(",", NodeType::COMMA);
+    map->put("(", NodeType::LPARENT);
+    map->put(")", NodeType::RPARENT);
+    map->put("[", NodeType::LBRACK);
+    map->put("]", NodeType::RBRACK);
+    map->put("{", NodeType::LBRACE);
+    map->put("}", NodeType::RBRACE);
 
     return *map;
 }
 
-std::string Lexer::lexTypeToStr(LexType lexType) {
-    switch (lexType) {
-        case LexType::COMMENT:
-            return "COMMENT";
-        case LexType::IDENFR:
-            return "IDENFR";
-        case LexType::INTCON:
-            return "INTCON";
-        case LexType::STRCON:
-            return "STRCON";
-        case LexType::MAINTK:
-            return "MAINTK";
-        case LexType::CONSTTK:
-            return "CONSTTK";
-        case LexType::INTTK:
-            return "INTTK";
-        case LexType::BREAKTK:
-            return "BREAKTK";
-        case LexType::CONTINUETK:
-            return "CONTINUETK";
-        case LexType::IFTK:
-            return "IFTK";
-        case LexType::ELSETK:
-            return "ELSETK";
-        case LexType::AND:
-            return "AND";
-        case LexType::OR:
-            return "OR";
-        case LexType::FORTK:
-            return "FORTK";
-        case LexType::GETINTTK:
-            return "GETINTTK";
-        case LexType::PRINTFTK:
-            return "PRINTFTK";
-        case LexType::RETURNTK:
-            return "RETURNTK";
-        case LexType::PLUS:
-            return "PLUS";
-        case LexType::MINU:
-            return "MINU";
-        case LexType::VOIDTK:
-            return "VOIDTK";
-        case LexType::MULT:
-            return "MULT";
-        case LexType::DIV:
-            return "DIV";
-        case LexType::MOD:
-            return "MOD";
-        case LexType::LEQ:
-            return "LEQ";
-        case LexType::LSS:
-            return "LSS";
-        case LexType::GEQ:
-            return "GEQ";
-        case LexType::GRE:
-            return "GRE";
-        case LexType::EQL:
-            return "EQL";
-        case LexType::NEQ:
-            return "NEQ";
-        case LexType::NOT:
-            return "NOT";
-        case LexType::ASSIGN:
-            return "ASSIGN";
-        case LexType::SEMICN:
-            return "SEMICN";
-        case LexType::COMMA:
-            return "COMMA";
-        case LexType::LPARENT:
-            return "LPARENT";
-        case LexType::RPARENT:
-            return "RPARENT";
-        case LexType::LBRACK:
-            return "LBRACK";
-        case LexType::RBRACK:
-            return "RBRACK";
-        case LexType::LBRACE:
-            return "LBRACE";
-        case LexType::RBRACE:
-            return "RBRACE";
+void Lexer::output() {
+    if (first) {
+        first = false;
+        lastLexType = lexType;
+        lastToken = token;
+    } else {
+        if (!(lastLexType == NodeType::LEX_EMPTY || lastLexType == NodeType::LEX_END)) {
+
+#ifdef MY_DEBUG
+            std::cout << typeToStr(lastLexType) << " " << lastToken << std::endl;
+#endif
+            outFileStream << typeToStr(lastLexType) << " " << lastToken << std::endl;
+        }
+
+        lastLexType = lexType;
+        lastToken = token;
     }
 }
 
-void Lexer::output() {
-    if (lexType == LexType::COMMENT) { return; }
-#ifdef DEBUG
-    std::cout << Lexer::lexTypeToStr(lexType) << " " << token << std::endl;
-#endif
-    *outFileStream << Lexer::lexTypeToStr(lexType) << " " << token << std::endl;
+void Lexer::updateWords(NodeType l, Token t) {
+    for (int i = 0; i < deep - 1; ++i) {
+        words[i] = words[i + 1];
+        pos[i] = pos[i + 1];
+        column[i] = column[i + 1];
+        row[i] = row[i + 1];
+    }
+    words[deep - 1].first = l;
+    words[deep - 1].second = std::move(t);
+}
+
+NodeType *Lexer::getLexTypePtr() const {
+    return &lexType;
+}
+
+std::ofstream &Lexer::getOutFileStream() {
+    return outFileStream;
+}
+
+// distinguish between Exp and LVal in Stmt
+// It's wrong if Cond is a kind of Exp, but our work doesn't require it.
+bool Lexer::findAssignBeforeSemicolon() {
+    for (int t = pos[0] - 1;
+         t < fileContents.length() && fileContents[t] != ';';
+         ++t) {
+        if (fileContents[t] == '=') {
+            return true;
+        }
+    }
+    return false;
 }

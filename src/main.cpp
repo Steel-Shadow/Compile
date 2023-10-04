@@ -1,27 +1,17 @@
 #include "lexer/Lexer.h"
 #include "parser/Parser.h" // conflict with mingw Parser.h
 
-void compile(const std::string &inFile, const std::string &outFile) {
-    auto *i = new std::ifstream(inFile);
-    auto *o = new std::ofstream(outFile);
+using namespace std;
 
-    if (!*i) {
-        std::cerr << "Reading testfile.txt fails!" << std::endl;
-        throw std::runtime_error("Reading testfile.txt fails!");
-    }
-    if (!*o) {
-        std::cerr << "Writing testfile.txt fails!" << std::endl;
-        throw std::runtime_error("Writing testfile.txt fails!");
-    }
+void compile(const string &inFile, const string &outFile) {
+    auto lexer = Lexer::getInstance(inFile, outFile);
+    auto parser = Parser::getInstance(*lexer);
 
-    auto lexer = Lexer::getInstance(i, o);
-    auto parser = Parser::getInstance(*lexer, o);
-
-    lexer->next();
-    parser->CompUnit();
+    Node *node = parser->CompUnit();
 }
 
-int main() {
-    compile("testfile.txt", "output.txt");
+int main(int argc, char *argv[]) {
+//    compile("testfile.txt", "output.txt");
+    compile(argv[1], argv[2]);
     return 0;
 }
