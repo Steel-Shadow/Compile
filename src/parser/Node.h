@@ -10,11 +10,9 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <variant>
 
-union Value {
-    std::string *str{};
-    int i;
-};
+typedef std::variant<std::string, int> Value;
 
 class Node {
 private:
@@ -26,14 +24,11 @@ private:
 public:
     explicit Node(NodeType type);
 
-
     NodeType getType();
 
     Value getValue();
 
-    void setValue(std::string &&str);
-
-    void setValue(int i);
+    void setValue(const Value &v);
 
     void singleLex(NodeType t);
 

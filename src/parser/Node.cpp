@@ -18,10 +18,8 @@ Node::~Node() {
     }
     children.clear();
 
-    if (type == NodeType::INTCON) {
-        values.erase(this);
-    } else if (type == NodeType::STRCON || type == NodeType::IDENFR) {
-        delete values[this].str;
+    if (type == NodeType::INTCON || type == NodeType::STRCON ||
+        type == NodeType::IDENFR) {
         values.erase(this);
     }
 }
@@ -30,20 +28,12 @@ NodeType Node::getType() {
     return type;
 }
 
-void Node::setValue(std::string &&str) {
-    Value v;
-    v.str = &str;
-    values[this] = v;
-}
-
-void Node::setValue(int i) {
-    Value v;
-    v.i = i;
-    values[this] = v;
-}
-
 Value Node::getValue() {
     return values[this];
+}
+
+void Node::setValue(const Value &v) {
+    values[this] = v;
 }
 
 void Node::singleLex(NodeType t) {

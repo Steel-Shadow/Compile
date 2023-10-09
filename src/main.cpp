@@ -11,7 +11,10 @@ void compile(const string &inFile, const string &outFile) {
 }
 
 int main(int argc, char *argv[]) {
-//    compile("testfile.txt", "output.txt");
-    compile(argv[1], argv[2]);
+    if (argc == 3) {
+        compile(argv[1], argv[2]);
+    } else {
+        compile("testfile.txt", "output.txt");
+    }
     return 0;
 }

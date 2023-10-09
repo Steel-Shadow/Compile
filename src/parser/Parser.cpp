@@ -409,7 +409,13 @@ void Parser::PrintStmt(Node *n) {
     lexer.next();
 
     n->singleLex(NodeType::LPARENT);
-    n->singleLex(NodeType::STRCON);
+
+    if (lexer.peek().first == NodeType::STRCON) {
+        auto str = new Node(NodeType::STRCON);
+        str->setValue(lexer.peek().second);
+        n->addChild(str);
+        lexer.next();
+    } else { Error::raise_error(); }
 
     while (curLexType == NodeType::COMMA) {
         n->addChild(new Node(NodeType::COMMA));
