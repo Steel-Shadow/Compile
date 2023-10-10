@@ -7,8 +7,6 @@
 #include <sstream>
 #include <iostream>
 
-Lexer *Lexer::instance = nullptr;
-
 Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
     reserveWords = buildReserveWords();
 
@@ -24,7 +22,6 @@ Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
 
     std::stringstream buffer;
     buffer << inFileStream.rdbuf();
-    inFileStream.close();
     fileContents = buffer.str();
 
     for (int i = 0; i < deep; ++i) {
@@ -32,11 +29,8 @@ Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
     }
 }
 
-Lexer *Lexer::getInstance(const std::string &inFile, const std::string &outFile) {
-    if (instance == nullptr) {
-        instance = new Lexer(inFile, outFile);
-    }
-
+Lexer &Lexer::getInstance(const std::string &inFile, const std::string &outFile) {
+    static auto instance = Lexer(inFile, outFile);
     return instance;
 }
 
@@ -240,8 +234,8 @@ void Lexer::updateWords(NodeType l, Token t) {
     words[deep - 1].second = std::move(t);
 }
 
-NodeType *Lexer::getLexTypePtr() const {
-    return &lexType;
+NodeType &Lexer::getLexType() const {
+    return lexType;
 }
 
 std::ofstream &Lexer::getOutFileStream() {
@@ -259,4 +253,12 @@ bool Lexer::findAssignBeforeSemicolon() {
         }
     }
     return false;
+}
+
+const int *Lexer::getColumn() const {
+    return column;
+}
+
+const int *Lexer::getRow() const {
+    return row;
 }

@@ -10,8 +10,6 @@
 
 class Parser {
 private:
-    static Parser *instance;
-
     explicit Parser(Lexer &lexer);
 
     Lexer &lexer;
@@ -19,7 +17,7 @@ private:
 
 public:
     // Singleton
-    static Parser *getInstance(Lexer &lexer);
+    static Parser &getInstance(Lexer &lexer);
 
     Parser(Parser const &) = delete;
 

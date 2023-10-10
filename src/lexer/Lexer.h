@@ -16,8 +16,6 @@ typedef std::pair<NodeType, Token> Word;
 
 class Lexer {
 private:
-    static Lexer *instance;
-
     Lexer(const std::string &inFile, const std::string &outFile);
 
     std::ofstream outFileStream;
@@ -28,18 +26,14 @@ private:
 
     char c{}; // c = fileContents[pos[deep-1] - 1]
     int pos[deep]{}; // count from 1
-
-public:
     int column[deep]{}; // count from 1
     int row[deep]{}; // count from 0
-private:
 
     // synchronize output of parser and lexer
     bool first = true;
     NodeType lastLexType{};
     Token lastToken{};
 
-private:
     Word words[deep];
     NodeType &lexType = words[0].first;
     Token &token = words[0].second;
@@ -61,7 +55,7 @@ private:
 public:
     // Singleton
     // parameter is only needed on the first call
-    static Lexer *getInstance(const std::string &inFile = "", const std::string &outFile = "");
+    static Lexer &getInstance(const std::string &inFile = "", const std::string &outFile = "");
 
     Lexer(Lexer const &) = delete;
 
@@ -76,9 +70,13 @@ public:
 
     bool findAssignBeforeSemicolon();
 
-    NodeType *getLexTypePtr() const;
+    NodeType &getLexType() const;
 
     std::ofstream &getOutFileStream();
+
+    const int *getColumn() const;
+
+    const int *getRow() const;
 };
 
 #endif //COMPILER_LEXER_H

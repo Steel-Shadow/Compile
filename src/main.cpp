@@ -4,10 +4,9 @@
 using namespace std;
 
 void compile(const string &inFile, const string &outFile) {
-    auto lexer = Lexer::getInstance(inFile, outFile);
-    auto parser = Parser::getInstance(*lexer);
-
-    parser->CompUnit();
+    Parser::getInstance(
+            Lexer::getInstance(inFile, outFile)
+    ).CompUnit();
 }
 
 int main(int argc, char *argv[]) {

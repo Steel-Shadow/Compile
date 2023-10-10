@@ -30,7 +30,7 @@ public:
 
     void setValue(const Value &v);
 
-    void singleLex(NodeType t);
+    Node*singleLex(NodeType t);
 
     void addChild(Node *node);
 

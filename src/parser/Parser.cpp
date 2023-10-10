@@ -8,17 +8,12 @@
 
 #include <iostream>
 
-Parser *Parser::instance = nullptr;
-
 Parser::Parser(Lexer &lexer) :
         lexer(lexer),
-        curLexType(*lexer.getLexTypePtr()) {}
+        curLexType(lexer.getLexType()) {}
 
-Parser *Parser::getInstance(Lexer &lexer) {
-    if (instance == nullptr) {
-        instance = new Parser(lexer);
-    }
-
+Parser &Parser::getInstance(Lexer &lexer) {
+    static auto instance = Parser(lexer);
     return instance;
 }
 
@@ -412,7 +407,7 @@ void Parser::PrintStmt(Node *n) {
 
     n->singleLex(NodeType::LPARENT);
 
-    if (lexer.peek().first == NodeType::STRCON) {
+    if (curLexType == NodeType::STRCON) {
         auto str = new Node(NodeType::STRCON);
         str->setValue(lexer.peek().second);
         n->addChild(str);
@@ -521,12 +516,15 @@ Node *Parser::PrimaryExp() {
     return n;
 }
 
-// todo: Set int value for Number or INTCON? Set for Number now.
 Node *Parser::Number() {
     auto n = new Node(NodeType::Number);
 
-    n->setValue(std::stoi(lexer.peek().second));
-    n->singleLex(NodeType::INTCON);
+    if (curLexType == NodeType::INTCON) {
+        auto intCon = new Node(NodeType::INTCON);
+        intCon->setValue(lexer.peek().second);
+        n->addChild(intCon);
+        lexer.next();
+    } else { Error::raise_error(); }
 
     output(NodeType::Number);
     return n;

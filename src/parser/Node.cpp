@@ -38,9 +38,15 @@ void Node::setValue(const Value &v) {
     values[this] = v;
 }
 
-void Node::singleLex(NodeType t) {
-    if (Lexer::getInstance()->peek().first == t) {
-        addChild(new Node(t));
-        Lexer::getInstance()->next();
-    } else { Error::raise_error(); }
+// todo: 不要添加多余符号，此时我思考到需要重构
+Node *Node::singleLex(NodeType t) {
+    if (Lexer::getInstance().peek().first == t) {
+        auto x = new Node(t);
+        addChild(x);
+        Lexer::getInstance().next();
+        return x;
+    } else {
+        Error::raise_error();
+        return nullptr;
+    }
 }
