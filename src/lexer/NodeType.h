@@ -5,8 +5,9 @@
 #ifndef COMPILER_NODETYPE_H
 #define COMPILER_NODETYPE_H
 
-#include "Error.h"
 #include <string>
+
+#include "error/Error.h"
 
 enum class NodeType {
     // LexType

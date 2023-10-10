@@ -5,9 +5,9 @@
 #ifndef COMPILER_LINKEDHASHMAP_H
 #define COMPILER_LINKEDHASHMAP_H
 
-#include <iostream>
 #include <list>
 #include <unordered_map>
+#include <stdexcept>
 
 template<typename K, typename V>
 class LinkedHashMap {

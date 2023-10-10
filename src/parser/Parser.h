@@ -5,10 +5,8 @@
 #ifndef COMPILER_PARSER_H
 #define COMPILER_PARSER_H
 
-#include "Error.h"
-#include "Lexer.h"
-#include "NodeType.h"
 #include "Node.h"
+#include "lexer/Lexer.h"
 
 class Parser {
 private:

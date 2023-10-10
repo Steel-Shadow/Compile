@@ -5,12 +5,12 @@
 #ifndef COMPILER_NODE_H
 #define COMPILER_NODE_H
 
-#include "NodeType.h"
-#include "Lexer.h"
 #include <vector>
 #include <unordered_map>
 #include <string>
 #include <variant>
+
+#include "lexer/NodeType.h"
 
 typedef std::variant<std::string, int> Value;
 

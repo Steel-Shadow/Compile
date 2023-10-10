@@ -1,23 +1,15 @@
 //
 // Created by Steel_Shadow on 2023/9/21.
 //
-// C++单例模式真复杂，分离头文件和源代码！
-// 2023年9月24日20:05:42
-// 初入C++就敢上手设计模式，算了。我是**
-// 2023年9月25日13:12:51
-// 不过如此！
 
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
 
 #include "NodeType.h"
-#include "Error.h"
 #include "LinkedHashMap.h"
 
-#include <sstream>
-#include <fstream>
 #include <string>
-#include <utility>
+#include <fstream>
 
 typedef std::string Token;
 typedef std::pair<NodeType, Token> Word;

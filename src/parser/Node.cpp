@@ -4,6 +4,8 @@
 
 #include "Node.h"
 
+#include "lexer/Lexer.h"
+
 std::unordered_map<Node *, Value> Node::values;
 
 void Node::addChild(Node *node) {

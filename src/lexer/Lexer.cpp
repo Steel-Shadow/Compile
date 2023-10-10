@@ -4,6 +4,9 @@
 
 #include "Lexer.h"
 
+#include <sstream>
+#include <iostream>
+
 Lexer *Lexer::instance = nullptr;
 
 Lexer::Lexer(const std::string &inFile, const std::string &outFile) {

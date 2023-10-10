@@ -3,7 +3,10 @@
 //
 
 #include "Error.h"
-#include "Lexer.h"
+
+#include <iostream>
+
+#include "lexer/Lexer.h"
 
 void Error::raise_error() {
     std::cout << "Error at "

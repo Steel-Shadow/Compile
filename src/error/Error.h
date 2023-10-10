@@ -5,7 +5,7 @@
 #ifndef COMPILER_ERROR_H
 #define COMPILER_ERROR_H
 
-#include <iostream>
+#include <exception>
 
 class Error : std::exception {
 public:

@@ -6,6 +6,8 @@
 
 #include "Parser.h"
 
+#include <iostream>
+
 Parser *Parser::instance = nullptr;
 
 Parser::Parser(Lexer &lexer) :
