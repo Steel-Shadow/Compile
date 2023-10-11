@@ -1,12 +1,11 @@
 #include "lexer/Lexer.h"
-#include "parser/Parser.h" // conflict with mingw Parser.h
+#include "parser/CompUnit.h"
 
 using namespace std;
 
 void compile(const string &inFile, const string &outFile) {
-    Parser::getInstance(
-            Lexer::getInstance(inFile, outFile)
-    ).CompUnit();
+    Lexer::getInstance(inFile, outFile);
+    CompUnit();
 }
 
 int main(int argc, char *argv[]) {
