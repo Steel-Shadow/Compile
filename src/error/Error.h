@@ -7,7 +7,7 @@
 
 #include <exception>
 
-class Error : std::exception {
+class Error : public std::exception {
 public:
     static void raise_error();
 };

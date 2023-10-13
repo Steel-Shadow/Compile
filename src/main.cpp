@@ -1,11 +1,10 @@
 #include "lexer/Lexer.h"
 #include "parser/CompUnit.h"
 
-using namespace std;
 
-void compile(const string &inFile, const string &outFile) {
+void compile(const std::string &inFile, const std::string &outFile) {
     Lexer::getInstance(inFile, outFile);
-    CompUnit();
+    auto compUnit = CompUnit::parse();
 }
 
 int main(int argc, char *argv[]) {

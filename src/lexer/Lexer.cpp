@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "error/Error.h"
+
 Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
     reserveWords = buildReserveWords();
 

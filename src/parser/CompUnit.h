@@ -11,16 +11,14 @@
 #include "decl/Decl.h"
 #include "func/Func.h"
 
-using namespace std;
-
 // CompUnit → {Decl} {FuncDef} MainFuncDef
 class CompUnit {
-    vector<unique_ptr<Decl> > decls;
-    vector<unique_ptr<FuncDef>> funcDefs;
-    unique_ptr<MainFuncDef> mainFuncDef;
+    std::vector<std::unique_ptr<Decl> > decls;
+    std::vector<std::unique_ptr<FuncDef>> funcDefs;
+    std::unique_ptr<MainFuncDef> mainFuncDef;
 
 public:
-    CompUnit();
+    static std::unique_ptr<CompUnit> parse();
 };
 
 #endif //COMPILER_COMPUNIT_H

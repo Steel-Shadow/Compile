@@ -10,22 +10,14 @@
 
 namespace Parser {
     // [lexer curLexType] are only for shorter code in parser, not necessary.
-    auto &lexer = Lexer::getInstance();
+    extern Lexer &lexer;
     // [lexer curLexType] are only for shorter code in parser, not necessary.
-    auto curLexType = lexer.getLexType();
-
-    std::string Ident();
+    extern NodeType &curLexType;
 
     void singleLex(NodeType type);
 
     // don't use/print in <BlockItem>, <Decl>, <BType>
     void output(NodeType type);
-};
-
-// Only int.
-class Btype {
-public:
-    Btype();
 };
 
 #endif //COMPILER_PARSER_H

@@ -9,25 +9,27 @@
 
 using namespace Parser;
 
-CompUnit::CompUnit() {
+std::unique_ptr<CompUnit> CompUnit::parse() {
+    auto n = std::make_unique<CompUnit>();
+
     while (curLexType == NodeType::CONSTTK || curLexType == NodeType::INTTK) {
         if (lexer.peek(1).first == NodeType::IDENFR && lexer.peek(2).first == NodeType::LPARENT
             || curLexType == NodeType::INTTK && lexer.peek(1).first == NodeType::MAINTK) {
             break;
         }
-        decls.push_back(make_unique<Decl>(Decl()));
+        n->decls.push_back(Decl::parse());
     }
 
     while (curLexType == NodeType::VOIDTK || curLexType == NodeType::INTTK) {
         if (curLexType == NodeType::INTTK && lexer.peek(1).first == NodeType::MAINTK) {
             break;
         }
-        funcDefs.push_back(make_unique<FuncDef>(FuncDef()));
+        n->funcDefs.push_back(FuncDef::parse());
     }
 
-    if (curLexType == NodeType::INTTK) {
-        mainFuncDef = make_unique<MainFuncDef>(MainFuncDef());
-    } else { Error::raise_error(); }
+    n->mainFuncDef = MainFuncDef::parse();
 
     output(NodeType::CompUnit);
+
+    return n;
 }

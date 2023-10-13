@@ -4,22 +4,13 @@
 
 #include "Parser.h"
 
+#include "error/Error.h"
 #include <iostream>
 
-Btype::Btype() {
-    Parser::singleLex(NodeType::INTTK);
-}
+//todo: bad practice! can't determine in main!
+Lexer &Parser::lexer = Lexer::getInstance("testfile.txt", "output.txt");
 
-std::string Parser::Ident() {
-    std::string ident;
-
-    if (curLexType == NodeType::IDENFR) {
-        ident = lexer.peek().second;
-        lexer.next();
-    } else { Error::raise_error(); }
-
-    return ident;
-}
+NodeType &Parser::curLexType = lexer.getLexType();
 
 void Parser::singleLex(NodeType type) {
     if (curLexType == type) {

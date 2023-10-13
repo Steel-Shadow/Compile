@@ -6,38 +6,34 @@
 #define COMPILER_DECL_H
 
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "parser/expr/Exp.h"
-#include "InitVal.h"
+#include "Def.h"
+#include "parser/stmt/Stmt.h"
 
-using namespace std;
-
-// ConstDef → Ident { '[' ConstExp ']' } '=' ConstInitVal
-// VarDef → Ident { '[' ConstExp ']' } | Ident { '[' ConstExp ']' } '=' InitVal
-class Def {
-    bool isConst;
-
-    string ident;
-    vector<unique_ptr<Exp>> dims;
-    unique_ptr<InitVal> initVal;
-
+class Btype {
+    NodeType type;
 public:
-    explicit Def(bool isConst);
+    static std::unique_ptr<Btype> parse();
 };
 
 // Decl → ConstDecl | VarDecl
-// ConstDecl→'const' BType ConstDef {','ConstDef}';'
+// ConstDecl → 'const' BType ConstDef {','ConstDef}';'
 // VarDecl → BType VarDef { ',' VarDef } ';'
-class Decl {
-    bool isConst;
+class Decl : public BlockItem {
+    bool cons;
 
-    vector<unique_ptr<Def>> defs;
+    std::unique_ptr<Btype> btype;
+    std::vector<std::unique_ptr<Def>> defs;
 
 public:
-    Decl();
+    static std::unique_ptr<Decl> parse();
 };
 
+// wrap string
+class Ident {
+public :
+    static std::string parse();
+};
 
 #endif //COMPILER_DECL_H
