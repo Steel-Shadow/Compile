@@ -3,11 +3,12 @@
 //
 
 #include "Func.h"
-#include "parser/decl/Decl.h"
-#include "parser/Parser.h"
 #include "error/Error.h"
 
+#include "Compiler.h"
+
 using namespace Parser;
+using namespace Lexer;
 
 std::unique_ptr<FuncDef> FuncDef::parse() {
     auto n = std::make_unique<FuncDef>();
@@ -46,7 +47,7 @@ std::unique_ptr<FuncType> FuncType::parse() {
 
     if (curLexType == NodeType::VOIDTK || curLexType == NodeType::INTTK) {
         n->type = curLexType;
-        lexer.next();
+        Lexer::next();
     } else { Error::raise_error(); }
 
     output(NodeType::FuncType);
@@ -59,7 +60,7 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
     n->funcFParams.push_back(FuncFParam::parse());
 
     while (curLexType == NodeType::COMMA) {
-        lexer.next();
+        Lexer::next();
         n->funcFParams.push_back(FuncFParam::parse());
     }
 
@@ -75,12 +76,12 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
 
     // ['[' ']' { '[' ConstExp ']' }]
     if (curLexType == NodeType::LBRACK) {
-        lexer.next();
+        Lexer::next();
 
         singleLex(NodeType::RBRACK);
 
         while (curLexType == NodeType::LBRACK) {
-            lexer.next();
+            Lexer::next();
 
             n->dims.push_back(Exp::parse(true));
             singleLex(NodeType::RBRACK);
@@ -96,7 +97,7 @@ std::unique_ptr<FuncRParams> FuncRParams::parse() {
 
     n->params.push_back(Exp::parse(false));
     while (curLexType == NodeType::COMMA) {
-        lexer.next();
+        Lexer::next();
 
         n->params.push_back(Exp::parse(false));
     }

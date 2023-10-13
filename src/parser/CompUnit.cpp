@@ -5,23 +5,24 @@
 #include "CompUnit.h"
 
 #include "lexer/Lexer.h"
-#include "parser/Parser.h"
+#include "Compiler.h"
 
+using namespace Lexer;
 using namespace Parser;
 
 std::unique_ptr<CompUnit> CompUnit::parse() {
     auto n = std::make_unique<CompUnit>();
 
     while (curLexType == NodeType::CONSTTK || curLexType == NodeType::INTTK) {
-        if (lexer.peek(1).first == NodeType::IDENFR && lexer.peek(2).first == NodeType::LPARENT
-            || curLexType == NodeType::INTTK && lexer.peek(1).first == NodeType::MAINTK) {
+        if (Lexer::peek(1).first == NodeType::IDENFR && Lexer::peek(2).first == NodeType::LPARENT
+            || curLexType == NodeType::INTTK && Lexer::peek(1).first == NodeType::MAINTK) {
             break;
         }
         n->decls.push_back(Decl::parse());
     }
 
     while (curLexType == NodeType::VOIDTK || curLexType == NodeType::INTTK) {
-        if (curLexType == NodeType::INTTK && lexer.peek(1).first == NodeType::MAINTK) {
+        if (curLexType == NodeType::INTTK && Lexer::peek(1).first == NodeType::MAINTK) {
             break;
         }
         n->funcDefs.push_back(FuncDef::parse());

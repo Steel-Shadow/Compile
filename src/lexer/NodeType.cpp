@@ -125,7 +125,7 @@ std::string typeToStr(NodeType type) {
         case NodeType::Stmt:
             return "Stmt";
         case NodeType::ForStmt:
-            return "BigForStmt";
+            return "ForStmt";
         case NodeType::Exp:
             return "Exp";
         case NodeType::Cond:

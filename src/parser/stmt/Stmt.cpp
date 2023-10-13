@@ -4,10 +4,11 @@
 
 #include "Stmt.h"
 #include "lexer/NodeType.h"
-#include "parser/Parser.h"
 #include "parser/decl/Decl.h"
 #include "error/Error.h"
+#include "Compiler.h"
 
+using namespace Lexer;
 using namespace Parser;
 
 std::unique_ptr<Block> Block::parse() {
@@ -19,7 +20,7 @@ std::unique_ptr<Block> Block::parse() {
         n->blockItems.push_back(BlockItem::parse());
     }
 
-    lexer.next();
+    Lexer::next();
 
     output(NodeType::Block);
     return n;
@@ -65,11 +66,11 @@ std::unique_ptr<Stmt> Stmt::parse() {
             n = PrintStmt::parse();
             break;
         case NodeType::SEMICN:
-            lexer.next();
+            Lexer::next();
             break;
         case NodeType::IDENFR:
             //find '=' to distinguish LVal and Exp
-            if (lexer.findAssignBeforeSemicolon()) {
+            if (Lexer::findAssignBeforeSemicolon()) {
                 n = LValStmt::parse();
             } else {
                 n = ExpStmt::parse();
@@ -87,15 +88,15 @@ std::unique_ptr<Stmt> Stmt::parse() {
 std::unique_ptr<IfStmt> IfStmt::parse() {
     auto n = std::make_unique<IfStmt>();
 
-    lexer.next();
+    Lexer::next();
     singleLex(NodeType::LPARENT);
 
-    n->cond = Cond::parse(false);
+    n->cond = Cond::parse();
     singleLex(NodeType::RPARENT);
     n->ifStmt = Stmt::parse();
 
     if (curLexType == NodeType::ELSETK) {
-        lexer.next();
+        Lexer::next();
         n->ifStmt = Stmt::parse();
     }
 
@@ -105,7 +106,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
 std::unique_ptr<BigForStmt> BigForStmt::parse() {
     auto n = std::make_unique<BigForStmt>();
 
-    lexer.next();
+    Lexer::next();
     singleLex(NodeType::LPARENT);
 
     if (curLexType != NodeType::SEMICN) {
@@ -114,7 +115,7 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
     singleLex(NodeType::SEMICN);
 
     if (curLexType != NodeType::SEMICN) {
-        n->cond = Cond::parse(false);
+        n->cond = Cond::parse();
     }
     singleLex(NodeType::SEMICN);
 
@@ -139,13 +140,13 @@ std::unique_ptr<ForStmt> ForStmt::parse() {
 }
 
 std::unique_ptr<BreakStmt> BreakStmt::parse() {
-    lexer.next();
+    Lexer::next();
     singleLex(NodeType::SEMICN);
     return std::make_unique<BreakStmt>();
 }
 
 std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
-    lexer.next();
+    Lexer::next();
     singleLex(NodeType::SEMICN);
     return std::make_unique<ContinueStmt>();
 }
@@ -153,9 +154,14 @@ std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
 std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
     auto n = std::make_unique<ReturnStmt>();
 
-    lexer.next();
-    n->exp = Exp::parse(false);
-    singleLex(NodeType::SEMICN);
+    Lexer::next();
+
+    if (curLexType == NodeType::SEMICN) {
+        Lexer::next();
+    } else {
+        n->exp = Exp::parse(false);
+        singleLex(NodeType::SEMICN);
+    }
 
     return n;
 }
@@ -163,17 +169,17 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
 std::unique_ptr<PrintStmt> PrintStmt::parse() {
     auto n = std::make_unique<PrintStmt>();
 
-    lexer.next();
+    Lexer::next();
 
     singleLex(NodeType::LPARENT);
 
     if (curLexType == NodeType::STRCON) {
-        n->formatString = lexer.peek().second;
-        lexer.next();
+        n->formatString = Lexer::peek().second;
+        Lexer::next();
     } else { Error::raise_error(); }
 
     while (curLexType == NodeType::COMMA) {
-        lexer.next();
+        Lexer::next();
         n->exps.push_back(Exp::parse(false));
     }
 

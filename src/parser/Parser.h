@@ -6,14 +6,10 @@
 #define COMPILER_PARSER_H
 
 #include "lexer/NodeType.h"
-#include "lexer/Lexer.h"
 
+// Specific parser method is distributed in respective class.
 namespace Parser {
-    // [lexer curLexType] are only for shorter code in parser, not necessary.
-    extern Lexer &lexer;
-    // [lexer curLexType] are only for shorter code in parser, not necessary.
-    extern NodeType &curLexType;
-
+    // check the type and Lexer::next()
     void singleLex(NodeType type);
 
     // don't use/print in <BlockItem>, <Decl>, <BType>

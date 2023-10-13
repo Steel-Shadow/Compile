@@ -9,7 +9,26 @@
 
 #include "error/Error.h"
 
-Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
+std::ofstream Lexer::outFileStream{};
+std::string Lexer::fileContents{};
+
+
+char Lexer::c{}; // c = fileContents[pos[deep-1] - 1]
+int Lexer::pos[deep]{}; // count from 1
+int Lexer::column[deep]{}; // count from 1
+int Lexer::row[deep]{}; // count from 0
+
+bool Lexer::first = true;
+NodeType Lexer::lastLexType{};
+Token Lexer::lastToken{};
+
+Word Lexer::words[deep];
+NodeType &Lexer::curLexType = words[0].first;
+Token &Lexer::curToken = words[0].second;
+
+LinkedHashMap<std::string, NodeType>Lexer::reserveWords;
+
+void Lexer::init(const std::string &inFile, const std::string &outFile) {
     reserveWords = buildReserveWords();
 
     auto inFileStream = std::ifstream(inFile);
@@ -29,11 +48,6 @@ Lexer::Lexer(const std::string &inFile, const std::string &outFile) {
     for (int i = 0; i < deep; ++i) {
         next();
     }
-}
-
-Lexer &Lexer::getInstance(const std::string &inFile, const std::string &outFile) {
-    static auto instance = Lexer(inFile, outFile);
-    return instance;
 }
 
 // also return EOF
@@ -209,8 +223,8 @@ LinkedHashMap<std::string, NodeType> Lexer::buildReserveWords() {
 void Lexer::output() {
     if (first) {
         first = false;
-        lastLexType = lexType;
-        lastToken = token;
+        lastLexType = curLexType;
+        lastToken = curToken;
     } else {
         if (!(lastLexType == NodeType::LEX_EMPTY || lastLexType == NodeType::LEX_END)) {
 
@@ -220,8 +234,8 @@ void Lexer::output() {
             outFileStream << typeToStr(lastLexType) << " " << lastToken << std::endl;
         }
 
-        lastLexType = lexType;
-        lastToken = token;
+        lastLexType = curLexType;
+        lastToken = curToken;
     }
 }
 
@@ -236,14 +250,6 @@ void Lexer::updateWords(NodeType l, Token t) {
     words[deep - 1].second = std::move(t);
 }
 
-NodeType &Lexer::getLexType() const {
-    return lexType;
-}
-
-std::ofstream &Lexer::getOutFileStream() {
-    return outFileStream;
-}
-
 // distinguish between Exp and LVal in Stmt
 // It's wrong if Cond is a kind of Exp, but our work doesn't require it.
 bool Lexer::findAssignBeforeSemicolon() {
@@ -255,12 +261,4 @@ bool Lexer::findAssignBeforeSemicolon() {
         }
     }
     return false;
-}
-
-const int *Lexer::getColumn() const {
-    return column;
-}
-
-const int *Lexer::getRow() const {
-    return row;
 }

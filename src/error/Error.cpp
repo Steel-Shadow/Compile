@@ -10,9 +10,9 @@
 
 void Error::raise_error() {
     std::cout << "Error at "
-              << Lexer::getInstance().getRow()[0] + 1
+              << Lexer::row[0] + 1
               << ","
-              << Lexer::getInstance().getColumn()[0]
+              << Lexer::column[0]
               << "---------------------------------------"
               << std::endl;
     exit(-1);

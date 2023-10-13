@@ -4,10 +4,11 @@
 
 #include "InitVal.h"
 
-#include "parser/Parser.h"
 #include "parser/expr/Exp.h"
+#include "Compiler.h"
 
 using namespace Parser;
+using namespace Lexer;
 
 std::unique_ptr<InitVal> InitVal::parse(bool cons) {
     std::unique_ptr<InitVal> n;
@@ -44,7 +45,7 @@ std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
         n->array.push_back(InitVal::parse(cons));
 
         while (curLexType == NodeType::COMMA) {
-            lexer.next();
+            Lexer::next();
             n->array.push_back(InitVal::parse(cons));
         }
     }

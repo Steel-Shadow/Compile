@@ -5,42 +5,41 @@
 #ifndef COMPILER_LEXER_H
 #define COMPILER_LEXER_H
 
-#include "NodeType.h"
-#include "LinkedHashMap.h"
-
 #include <string>
 #include <fstream>
+
+#include "NodeType.h"
+#include "LinkedHashMap.h"
 
 typedef std::string Token;
 typedef std::pair<NodeType, Token> Word;
 
-class Lexer {
-private:
-    Lexer(const std::string &inFile, const std::string &outFile);
+namespace Lexer {
+    void init(const std::string &inFile, const std::string &outFile);
 
-    std::ofstream outFileStream;
-    std::string fileContents;
+    extern std::ofstream outFileStream;
+    extern std::string fileContents;
 
     // pre-reading deep
     static constexpr size_t deep = 3;
 
-    char c{}; // c = fileContents[pos[deep-1] - 1]
-    int pos[deep]{}; // count from 1
-    int column[deep]{}; // count from 1
-    int row[deep]{}; // count from 0
+    extern char c; // c = fileContents[pos[deep-1] - 1]
+    extern int pos[deep]; // count from 1
+    extern int column[deep]; // count from 1
+    extern int row[deep]; // count from 0
 
     // synchronize output of parser and lexer
-    bool first = true;
-    NodeType lastLexType{};
-    Token lastToken{};
+    extern bool first;
+    extern NodeType lastLexType;
+    extern Token lastToken;
 
-    Word words[deep];
-    NodeType &lexType = words[0].first;
-    Token &token = words[0].second;
+    extern Word words[deep];
+    extern NodeType &curLexType;
+    extern Token &curToken;
 
-    inline static LinkedHashMap<std::string, NodeType> buildReserveWords();
+    LinkedHashMap<std::string, NodeType> buildReserveWords();
 
-    LinkedHashMap<std::string, NodeType> reserveWords;
+    extern LinkedHashMap<std::string, NodeType> reserveWords;
 
     char nextChar();
 
@@ -52,16 +51,6 @@ private:
 
     void updateWords(NodeType l, Token t);
 
-public:
-    // Singleton
-    // parameter is only needed on the first call
-    static Lexer &getInstance(const std::string &inFile = "", const std::string &outFile = "");
-
-    Lexer(Lexer const &) = delete;
-
-    void operator=(Lexer const &) = delete;
-    // Singleton
-
     Word next();
 
     // n is the depth of pre-reading
@@ -69,14 +58,6 @@ public:
     Word peek(int n = 0);
 
     bool findAssignBeforeSemicolon();
-
-    NodeType &getLexType() const;
-
-    std::ofstream &getOutFileStream();
-
-    const int *getColumn() const;
-
-    const int *getRow() const;
 };
 
 #endif //COMPILER_LEXER_H

@@ -3,19 +3,21 @@
 //
 #include "Exp.h"
 #include "parser/decl/Decl.h"
-#include "parser/Parser.h"
 #include "error/Error.h"
 #include "parser/func/Func.h"
 
+#include "Compiler.h"
+
 using namespace Parser;
+using namespace Lexer;
 
 std::unique_ptr<LVal> LVal::parse() {
     auto n = std::make_unique<LVal>();
     n->ident = Ident::parse();
 
     while (curLexType == NodeType::LBRACK) {
-        lexer.next();
-        n->dims.push_back(Exp::parse(false)); //todo: Check all const settings!
+        Lexer::next();
+        n->dims.push_back(Exp::parse(false));
         singleLex(NodeType::RBRACK);
     }
 
@@ -23,12 +25,11 @@ std::unique_ptr<LVal> LVal::parse() {
     return n;
 }
 
-std::unique_ptr<PrimaryExp> PrimaryExp::parse(bool cons) {
+std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     auto n = std::make_unique<PrimaryExp>();
-    n->cons = cons;
 
     if (curLexType == NodeType::LPARENT) {
-        n = PareExp::parse(cons);
+        n = PareExp::parse();
     } else if (curLexType == NodeType::IDENFR) {
         n = LVal::parse();
     } else if (curLexType == NodeType::INTCON) {
@@ -39,12 +40,11 @@ std::unique_ptr<PrimaryExp> PrimaryExp::parse(bool cons) {
     return n;
 }
 
-std::unique_ptr<PareExp> PareExp::parse(bool cons) {
+std::unique_ptr<PareExp> PareExp::parse() {
     auto n = std::make_unique<PareExp>();
-    n->cons = cons;
 
-    lexer.next();
-    n->exp = Exp::parse(cons);
+    Lexer::next();
+    n->exp = Exp::parse(false);
     singleLex(NodeType::RPARENT);
 
     return n;
@@ -54,15 +54,15 @@ std::unique_ptr<Number> Number::parse() {
     auto n = std::make_unique<Number>();
 
     if (curLexType == NodeType::INTCON) {
-        n->intConst = std::stoi(lexer.peek().second);
-        lexer.next();
+        n->intConst = std::stoi(Lexer::peek().second);
+        Lexer::next();
     } else { Error::raise_error(); }
 
     output(NodeType::Number);
     return n;
 }
 
-std::unique_ptr<UnaryExp> UnaryExp::parse(bool cons) {
+std::unique_ptr<UnaryExp> UnaryExp::parse() {
     auto n = std::make_unique<UnaryExp>();
 
     bool getBaseUnaryExp = false;
@@ -74,7 +74,7 @@ std::unique_ptr<UnaryExp> UnaryExp::parse(bool cons) {
             case NodeType::NOT:
                 // UnaryOp → '+' | '−' | '!'
                 n->unaryOps.push_back(curLexType);
-                lexer.next();
+                Lexer::next();
 
                 output(NodeType::UnaryOp);
                 break;
@@ -82,8 +82,10 @@ std::unique_ptr<UnaryExp> UnaryExp::parse(bool cons) {
             case NodeType::LPARENT:
             case NodeType::INTCON:
                 // PrimaryExp → '(' Exp ')' | LVal | Number
-                n->baseUnaryExp = PrimaryExp::parse(cons);
+                n->baseUnaryExp = PrimaryExp::parse();
                 getBaseUnaryExp = true;
+
+                output(NodeType::UnaryExp);
                 break;
 
             case NodeType::IDENFR:
@@ -91,18 +93,22 @@ std::unique_ptr<UnaryExp> UnaryExp::parse(bool cons) {
                 // LVal → Ident {'[' Exp ']'}
 
                 // Ident '(' [FuncRParams] ')'
-                if (lexer.peek(1).first == NodeType::LPARENT) {
+                if (Lexer::peek(1).first == NodeType::LPARENT) {
                     n->baseUnaryExp = FuncCall::parse();
                 } else {
-                    n->baseUnaryExp = PrimaryExp::parse(cons);
+                    n->baseUnaryExp = PrimaryExp::parse();
                 }
                 getBaseUnaryExp = true;
+
+                output(NodeType::UnaryExp);
                 break;
 
             default:
                 Error::raise_error();
         }
+    }
 
+    for (int i = 0; i < n->unaryOps.size(); i++) {
         output(NodeType::UnaryExp);
     }
 

@@ -3,10 +3,11 @@
 //
 #include "Def.h"
 
-#include "parser/Parser.h"
 #include "Decl.h"
+#include "Compiler.h"
 
 using namespace Parser;
+using namespace Lexer;
 
 std::unique_ptr<Def> Def::parse(bool cons) {
     auto n = std::make_unique<Def>();
@@ -14,7 +15,7 @@ std::unique_ptr<Def> Def::parse(bool cons) {
     n->ident = Ident::parse();
 
     while (curLexType == NodeType::LBRACK) {
-        lexer.next();
+        Lexer::next();
 
         n->dims.push_back(Exp::parse(true));
 
@@ -22,7 +23,7 @@ std::unique_ptr<Def> Def::parse(bool cons) {
     }
 
     if (cons || curLexType == NodeType::ASSIGN) {
-        lexer.next();
+        Lexer::next();
         n->initVal = InitVal::parse(cons);
     }
 

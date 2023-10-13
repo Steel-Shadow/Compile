@@ -1,9 +1,8 @@
 #include "lexer/Lexer.h"
 #include "parser/CompUnit.h"
 
-
 void compile(const std::string &inFile, const std::string &outFile) {
-    Lexer::getInstance(inFile, outFile);
+    Lexer::init(inFile, outFile);
     auto compUnit = CompUnit::parse();
 }
 

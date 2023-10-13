@@ -2,9 +2,9 @@
 
 ## 预读优化
 
-实际处理中， Lexer 无需额外扫描。 Lexer 应当领先 Parser 若干个 token(具体领先数量依据设计而定，均存储于 Lexer 内部)。
+实际处理中， Lexer 无需额外扫描。 Lexer 应当领先 Parser 若干个 curToken(具体领先数量依据设计而定，均存储于 Lexer 内部)。
 
-Lexer 调用 next ，读取 token 替代最新预读词，其它存储的 token 依次更新。
+Lexer 调用 next ，读取 curToken 替代最新预读词，其它存储的 curToken 依次更新。
 
 由此优化， Lexer 仅会扫描全文一遍，预读不会影响性能。
 
