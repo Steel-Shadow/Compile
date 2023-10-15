@@ -8,12 +8,11 @@
 #include "Compiler.h"
 
 using namespace Parser;
-using namespace Lexer;
 
 std::unique_ptr<InitVal> InitVal::parse(bool cons) {
     std::unique_ptr<InitVal> n;
 
-    if (curLexType == NodeType::LBRACE) {
+    if (Lexer::curLexType == NodeType::LBRACE) {
         n = ArrayInitVal::parse(cons);
     } else {
         n = ExpInitVal::parse(cons);
@@ -41,10 +40,10 @@ std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
     n->cons = cons;
     singleLex(NodeType::LBRACE);
 
-    if (curLexType != NodeType::RBRACE) {
+    if (Lexer::curLexType != NodeType::RBRACE) {
         n->array.push_back(InitVal::parse(cons));
 
-        while (curLexType == NodeType::COMMA) {
+        while (Lexer::curLexType == NodeType::COMMA) {
             Lexer::next();
             n->array.push_back(InitVal::parse(cons));
         }

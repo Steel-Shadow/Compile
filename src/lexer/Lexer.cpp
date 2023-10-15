@@ -223,7 +223,7 @@ LinkedHashMap<std::string, NodeType> Lexer::buildReserveWords() {
 void Lexer::output() {
     if (first) {
         first = false;
-        lastLexType = curLexType;
+        lastLexType = Lexer::curLexType;
         lastToken = curToken;
     } else {
         if (!(lastLexType == NodeType::LEX_EMPTY || lastLexType == NodeType::LEX_END)) {
@@ -234,7 +234,7 @@ void Lexer::output() {
             outFileStream << typeToStr(lastLexType) << " " << lastToken << std::endl;
         }
 
-        lastLexType = curLexType;
+        lastLexType = Lexer::curLexType;
         lastToken = curToken;
     }
 }

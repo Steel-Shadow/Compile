@@ -4,10 +4,7 @@
 #include "Exp.h"
 #include "Compiler.h"
 
-#include "Compiler.h"
-
 using namespace Parser;
-using namespace Lexer;
 
 std::unique_ptr<Exp> Exp::parse(bool cons) {
     auto n = std::make_unique<Exp>();

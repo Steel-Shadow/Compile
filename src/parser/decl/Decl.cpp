@@ -8,12 +8,11 @@
 #include "Compiler.h"
 
 using namespace Parser;
-using namespace Lexer;
 
 std::unique_ptr<Decl> Decl::parse() {
     auto n = std::make_unique<Decl>();
 
-    if (curLexType == NodeType::CONSTTK) {
+    if (Lexer::curLexType == NodeType::CONSTTK) {
         Lexer::next();
         n->cons = true;
     } else { n->cons = false; }
@@ -22,7 +21,7 @@ std::unique_ptr<Decl> Decl::parse() {
 
     n->defs.push_back(Def::parse(n->cons));
 
-    while (curLexType == NodeType::COMMA) {
+    while (Lexer::curLexType == NodeType::COMMA) {
         Lexer::next();
         n->defs.push_back(Def::parse(n->cons));
     }
@@ -50,7 +49,7 @@ std::unique_ptr<Btype> Btype::parse() {
 std::string Ident::parse() {
     std::string ident;
 
-    if (curLexType == NodeType::IDENFR) {
+    if (Lexer::curLexType == NodeType::IDENFR) {
         ident = Lexer::peek().second;
         Lexer::next();
     } else { Error::raise_error(); }

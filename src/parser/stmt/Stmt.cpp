@@ -8,7 +8,6 @@
 #include "error/Error.h"
 #include "Compiler.h"
 
-using namespace Lexer;
 using namespace Parser;
 
 std::unique_ptr<Block> Block::parse() {
@@ -16,7 +15,7 @@ std::unique_ptr<Block> Block::parse() {
 
     singleLex(NodeType::LBRACE);
 
-    while (curLexType != NodeType::RBRACE) {
+    while (Lexer::curLexType != NodeType::RBRACE) {
         n->blockItems.push_back(BlockItem::parse());
     }
 
@@ -30,7 +29,7 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
     std::unique_ptr<BlockItem> n;
 
     // Maybe error when neither Decl nor Stmt. But it's too complicated.
-    if (curLexType == NodeType::CONSTTK || curLexType == NodeType::INTTK) {
+    if (Lexer::curLexType == NodeType::CONSTTK || Lexer::curLexType == NodeType::INTTK) {
         n = Decl::parse();
     } else {
         n = Stmt::parse();
@@ -43,7 +42,7 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
 std::unique_ptr<Stmt> Stmt::parse() {
     std::unique_ptr<Stmt> n;
 
-    switch (curLexType) {
+    switch (Lexer::curLexType) {
         case NodeType::LBRACE:
             n = Block::parse();
             break;
@@ -95,7 +94,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
     singleLex(NodeType::RPARENT);
     n->ifStmt = Stmt::parse();
 
-    if (curLexType == NodeType::ELSETK) {
+    if (Lexer::curLexType == NodeType::ELSETK) {
         Lexer::next();
         n->ifStmt = Stmt::parse();
     }
@@ -109,17 +108,17 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
     Lexer::next();
     singleLex(NodeType::LPARENT);
 
-    if (curLexType != NodeType::SEMICN) {
+    if (Lexer::curLexType != NodeType::SEMICN) {
         n->init = ForStmt::parse();
     }
     singleLex(NodeType::SEMICN);
 
-    if (curLexType != NodeType::SEMICN) {
+    if (Lexer::curLexType != NodeType::SEMICN) {
         n->cond = Cond::parse();
     }
     singleLex(NodeType::SEMICN);
 
-    if (curLexType != NodeType::RPARENT) {
+    if (Lexer::curLexType != NodeType::RPARENT) {
         n->iter = ForStmt::parse();
     }
     singleLex(NodeType::RPARENT);
@@ -156,7 +155,7 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
 
     Lexer::next();
 
-    if (curLexType == NodeType::SEMICN) {
+    if (Lexer::curLexType == NodeType::SEMICN) {
         Lexer::next();
     } else {
         n->exp = Exp::parse(false);
@@ -173,12 +172,12 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
 
     singleLex(NodeType::LPARENT);
 
-    if (curLexType == NodeType::STRCON) {
+    if (Lexer::curLexType == NodeType::STRCON) {
         n->formatString = Lexer::peek().second;
         Lexer::next();
     } else { Error::raise_error(); }
 
-    while (curLexType == NodeType::COMMA) {
+    while (Lexer::curLexType == NodeType::COMMA) {
         Lexer::next();
         n->exps.push_back(Exp::parse(false));
     }
@@ -195,7 +194,7 @@ std::unique_ptr<LValStmt> LValStmt::parse() {
     auto lVal = LVal::parse();
     singleLex(NodeType::ASSIGN);
 
-    if (curLexType == NodeType::GETINTTK) {
+    if (Lexer::curLexType == NodeType::GETINTTK) {
         n = GetintStmt::parse();
         n->lVal = std::move(lVal);
     } else {

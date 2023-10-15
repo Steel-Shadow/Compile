@@ -9,13 +9,12 @@
 #include "Compiler.h"
 
 using namespace Parser;
-using namespace Lexer;
 
 std::unique_ptr<LVal> LVal::parse() {
     auto n = std::make_unique<LVal>();
     n->ident = Ident::parse();
 
-    while (curLexType == NodeType::LBRACK) {
+    while (Lexer::curLexType == NodeType::LBRACK) {
         Lexer::next();
         n->dims.push_back(Exp::parse(false));
         singleLex(NodeType::RBRACK);
@@ -28,11 +27,11 @@ std::unique_ptr<LVal> LVal::parse() {
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     auto n = std::make_unique<PrimaryExp>();
 
-    if (curLexType == NodeType::LPARENT) {
+    if (Lexer::curLexType == NodeType::LPARENT) {
         n = PareExp::parse();
-    } else if (curLexType == NodeType::IDENFR) {
+    } else if (Lexer::curLexType == NodeType::IDENFR) {
         n = LVal::parse();
-    } else if (curLexType == NodeType::INTCON) {
+    } else if (Lexer::curLexType == NodeType::INTCON) {
         n = Number::parse();
     }
 
@@ -53,7 +52,7 @@ std::unique_ptr<PareExp> PareExp::parse() {
 std::unique_ptr<Number> Number::parse() {
     auto n = std::make_unique<Number>();
 
-    if (curLexType == NodeType::INTCON) {
+    if (Lexer::curLexType == NodeType::INTCON) {
         n->intConst = std::stoi(Lexer::peek().second);
         Lexer::next();
     } else { Error::raise_error(); }
@@ -68,12 +67,12 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
     bool getBaseUnaryExp = false;
     while (!getBaseUnaryExp) {
         // UnaryExp → {UnaryOp} ( PrimaryExp | Ident '(' [FuncRParams] ')' )
-        switch (curLexType) {
+        switch (Lexer::curLexType) {
             case NodeType::PLUS:
             case NodeType::MINU:
             case NodeType::NOT:
                 // UnaryOp → '+' | '−' | '!'
-                n->unaryOps.push_back(curLexType);
+                n->unaryOps.push_back(Lexer::curLexType);
                 Lexer::next();
 
                 output(NodeType::UnaryOp);
@@ -121,7 +120,7 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
     n->ident = Ident::parse();
     singleLex(NodeType::LPARENT);
 
-    if (curLexType != NodeType::RPARENT) {
+    if (Lexer::curLexType != NodeType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
     }
 

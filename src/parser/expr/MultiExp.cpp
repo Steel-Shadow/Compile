@@ -7,7 +7,6 @@
 #include "Compiler.h"
 
 using namespace Parser;
-using namespace Lexer;
 
 std::unique_ptr<Cond> Cond::parse() {
     auto n = std::make_unique<Cond>();
@@ -24,8 +23,9 @@ std::unique_ptr<MulExp> MulExp::parse() {
     n->first = UnaryExp::parse();
     output(NodeType::MulExp);
 
-    while (curLexType == NodeType::MULT || curLexType == NodeType::DIV || curLexType == NodeType::MOD) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::MULT || Lexer::curLexType == NodeType::DIV ||
+           Lexer::curLexType == NodeType::MOD) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(UnaryExp::parse());
         output(NodeType::MulExp);
@@ -40,8 +40,8 @@ std::unique_ptr<AddExp> AddExp::parse() {
     n->first = MulExp::parse();
     output(NodeType::AddExp);
 
-    while (curLexType == NodeType::PLUS || curLexType == NodeType::MINU) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::PLUS || Lexer::curLexType == NodeType::MINU) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(MulExp::parse());
         output(NodeType::AddExp);
@@ -56,9 +56,9 @@ std::unique_ptr<RelExp> RelExp::parse() {
     n->first = AddExp::parse();
     output(NodeType::RelExp);
 
-    while (curLexType == NodeType::LSS || curLexType == NodeType::GRE ||
-           curLexType == NodeType::LEQ || curLexType == NodeType::GEQ) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::LSS || Lexer::curLexType == NodeType::GRE ||
+           Lexer::curLexType == NodeType::LEQ || Lexer::curLexType == NodeType::GEQ) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(AddExp::parse());
         output(NodeType::RelExp);
@@ -73,8 +73,8 @@ std::unique_ptr<EqExp> EqExp::parse() {
     n->first = RelExp::parse();
     output(NodeType::EqExp);
 
-    while (curLexType == NodeType::EQL || curLexType == NodeType::NEQ) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::EQL || Lexer::curLexType == NodeType::NEQ) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(RelExp::parse());
         output(NodeType::EqExp);
@@ -89,8 +89,8 @@ std::unique_ptr<LAndExp> LAndExp::parse() {
     n->first = EqExp::parse();
     output(NodeType::LAndExp);
 
-    while (curLexType == NodeType::AND) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::AND) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(EqExp::parse());
         output(NodeType::LAndExp);
@@ -105,8 +105,8 @@ std::unique_ptr<LOrExp> LOrExp::parse() {
     n->first = LAndExp::parse();
     output(NodeType::LOrExp);
 
-    while (curLexType == NodeType::OR) {
-        n->ops.push_back(curLexType);
+    while (Lexer::curLexType == NodeType::OR) {
+        n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(LAndExp::parse());
         output(NodeType::LOrExp);
