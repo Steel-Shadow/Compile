@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "error/Error.h"
+#include "config.h"
 
 std::ofstream Lexer::outFileStream{};
 std::string Lexer::fileContents{};
@@ -228,10 +229,12 @@ void Lexer::output() {
     } else {
         if (!(lastLexType == NodeType::LEX_EMPTY || lastLexType == NodeType::LEX_END)) {
 
-#ifdef MY_DEBUG
+#ifdef STDOUT_PRINT_LEXER
             std::cout << typeToStr(lastLexType) << " " << lastToken << std::endl;
 #endif
+#ifdef FILE_PRINT_LEXER
             outFileStream << typeToStr(lastLexType) << " " << lastToken << std::endl;
+#endif
         }
 
         lastLexType = Lexer::curLexType;
