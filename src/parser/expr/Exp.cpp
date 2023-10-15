@@ -2,7 +2,8 @@
 // Created by Steel_Shadow on 2023/10/11.
 //
 #include "Exp.h"
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 

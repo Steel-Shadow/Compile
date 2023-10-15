@@ -4,9 +4,9 @@
 
 #include "Parser.h"
 
-#include "error/Error.h"
 #include <iostream>
-#include "Compiler.h"
+#include "error/Error.h"
+#include "lexer/Lexer.h"
 
 void Parser::singleLex(NodeType type) {
     if (Lexer::curLexType == type) {

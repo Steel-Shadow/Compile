@@ -5,7 +5,8 @@
 #include "Func.h"
 #include "error/Error.h"
 
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 

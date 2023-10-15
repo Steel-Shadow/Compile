@@ -5,7 +5,8 @@
 #include "InitVal.h"
 
 #include "parser/expr/Exp.h"
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 

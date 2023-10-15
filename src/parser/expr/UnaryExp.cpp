@@ -2,11 +2,13 @@
 // Created by Steel_Shadow on 2023/10/12.
 //
 #include "Exp.h"
+
 #include "parser/decl/Decl.h"
 #include "error/Error.h"
 #include "parser/func/Func.h"
 
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 
@@ -53,7 +55,7 @@ std::unique_ptr<Number> Number::parse() {
     auto n = std::make_unique<Number>();
 
     if (Lexer::curLexType == NodeType::INTCON) {
-        n->intConst = std::stoi(Lexer::peek().second);
+        n->intConst = std::stoi(Lexer::curToken);
         Lexer::next();
     } else { Error::raise_error(); }
 

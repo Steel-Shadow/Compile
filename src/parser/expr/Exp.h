@@ -63,7 +63,7 @@ public:
 
 // Number → IntConst
 class Number : public PrimaryExp {
-    int intConst;
+    int intConst{};
 
 public:
     static std::unique_ptr<Number> parse();

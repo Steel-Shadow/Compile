@@ -1,10 +1,10 @@
 //
 // Created by Steel_Shadow on 2023/10/12.
 //
-#include "lexer/NodeType.h"
 #include "Exp.h"
 
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 

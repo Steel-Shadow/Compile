@@ -14,6 +14,6 @@ namespace Parser {
 
     // don't use/print in <BlockItem>, <Decl>, <BType>
     void output(NodeType type);
-};
+}
 
 #endif //COMPILER_PARSER_H

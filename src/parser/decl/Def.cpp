@@ -4,7 +4,8 @@
 #include "Def.h"
 
 #include "Decl.h"
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 

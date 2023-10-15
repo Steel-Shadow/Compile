@@ -58,6 +58,6 @@ namespace Lexer {
     Word peek(int n = 0);
 
     bool findAssignBeforeSemicolon();
-};
+}
 
 #endif //COMPILER_LEXER_H

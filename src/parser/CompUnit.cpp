@@ -5,8 +5,7 @@
 #include "CompUnit.h"
 
 #include "lexer/Lexer.h"
-#include "Compiler.h"
-
+#include "parser/Parser.h"
 
 using namespace Parser;
 

@@ -5,7 +5,8 @@
 
 #include "Def.h"
 #include "error/Error.h"
-#include "Compiler.h"
+#include "lexer/Lexer.h"
+#include "parser/Parser.h"
 
 using namespace Parser;
 
@@ -50,7 +51,7 @@ std::string Ident::parse() {
     std::string ident;
 
     if (Lexer::curLexType == NodeType::IDENFR) {
-        ident = Lexer::peek().second;
+        ident = Lexer::curToken;
         Lexer::next();
     } else { Error::raise_error(); }
 

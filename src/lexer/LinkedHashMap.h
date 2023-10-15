@@ -53,7 +53,7 @@ public:
         }
     };
 
-    // 添加一个迭代器方法，返回std::list的迭代器
+    // iterator for std::list
     typename std::list<std::pair<K, V>>::iterator begin() {
         return data.begin();
     };

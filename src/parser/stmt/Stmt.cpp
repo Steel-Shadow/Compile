@@ -3,10 +3,12 @@
 //
 
 #include "Stmt.h"
+
 #include "lexer/NodeType.h"
 #include "parser/decl/Decl.h"
 #include "error/Error.h"
-#include "Compiler.h"
+#include "parser/Parser.h"
+#include "lexer/Lexer.h"
 
 using namespace Parser;
 
@@ -173,7 +175,7 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     singleLex(NodeType::LPARENT);
 
     if (Lexer::curLexType == NodeType::STRCON) {
-        n->formatString = Lexer::peek().second;
+        n->formatString = Lexer::curToken;
         Lexer::next();
     } else { Error::raise_error(); }
 
