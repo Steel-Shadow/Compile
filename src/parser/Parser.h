@@ -5,12 +5,12 @@
 #ifndef COMPILER_PARSER_H
 #define COMPILER_PARSER_H
 
-#include "lexer/NodeType.h"
+#include "lexer/Lexer.h"
 
 // Specific parser method is distributed in respective class.
 namespace Parser {
     // check the type and Lexer::next()
-    void singleLex(NodeType type);
+    void singleLex(NodeType type, int row = Lexer::curRow);
 
     // don't use/print in <BlockItem>, <Decl>, <BType>
     void output(NodeType type);

@@ -1,6 +1,6 @@
-aux_source_directory(${PROJECT_SOURCE_DIR}/include INCLUDE_SOURCES)
+#aux_source_directory(${PROJECT_SOURCE_DIR}/include INCLUDE_SOURCES)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/test)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # only for show *.h in IDE
 file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
@@ -17,4 +17,5 @@ add_executable(
 )
 
 # include *.h
-target_include_directories(${PROJECT_NAME} PRIVATE . ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE .)
+#target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)

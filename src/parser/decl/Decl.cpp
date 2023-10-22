@@ -5,7 +5,6 @@
 
 #include "Def.h"
 #include "error/Error.h"
-#include "lexer/Lexer.h"
 #include "parser/Parser.h"
 
 using namespace Parser;
@@ -20,14 +19,16 @@ std::unique_ptr<Decl> Decl::parse() {
 
     n->btype = Btype::parse();
 
+    int row = Lexer::curRow;
     n->defs.push_back(Def::parse(n->cons));
 
     while (Lexer::curLexType == NodeType::COMMA) {
         Lexer::next();
+        row = Lexer::curRow;
         n->defs.push_back(Def::parse(n->cons));
     }
 
-    singleLex(NodeType::SEMICN);
+    singleLex(NodeType::SEMICN, row);
 
     if (n->cons) {
         output(NodeType::ConstDecl);
@@ -47,13 +48,17 @@ std::unique_ptr<Btype> Btype::parse() {
     return n;
 }
 
+NodeType Btype::getType() const {
+    return type;
+}
+
 std::string Ident::parse() {
     std::string ident;
 
     if (Lexer::curLexType == NodeType::IDENFR) {
         ident = Lexer::curToken;
         Lexer::next();
-    } else { Error::raise_error(); }
+    } else { Error::raise(); }
 
     return ident;
 }

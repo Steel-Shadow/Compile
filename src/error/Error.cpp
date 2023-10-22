@@ -6,14 +6,26 @@
 
 #include <iostream>
 
-#include "lexer/Lexer.h"
+#include "config.h"
 
-void Error::raise_error() {
-    std::cout << "Error at "
-              << Lexer::row[0] + 1
-              << ","
-              << Lexer::column[0]
+std::ofstream Error::errorFileStream;
+
+void Error::raise(char code, int row) {
+#ifdef STDOUT_ERROR
+    std::cout << row << " " << code << std::endl;
+#endif
+#ifdef FILE_PRINT_ERROR
+    errorFileStream << row << " " << code << std::endl;
+#endif
+}
+
+// My error, which is not defined in course tasks.
+void Error::raise(const std::string &mes) {
+#ifdef STDOUT_ERROR
+    std::cout << "Error: " << mes << " "
+              << Lexer::curRow << "," << Lexer::column[0]
               << "---------------------------------------"
               << std::endl;
-    exit(-1);
+//    exit(-1);
+#endif
 }

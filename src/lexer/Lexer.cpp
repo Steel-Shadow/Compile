@@ -4,63 +4,55 @@
 
 #include "Lexer.h"
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <utility>
 
-#include "error/Error.h"
 #include "config.h"
+#include "error/Error.h"
 
-std::ofstream Lexer::outFileStream{};
-std::string Lexer::fileContents{};
+std::ofstream Lexer::outFileStream;
+std::string Lexer::fileContents;
 
+char c; // c = fileContents[posTemp - 1]
 
-char Lexer::c{}; // c = fileContents[pos[deep-1] - 1]
-int Lexer::pos[deep]{}; // count from 1
-int Lexer::column[deep]{}; // count from 1
-int Lexer::row[deep]{}; // count from 0
+int Lexer::pos[deep]; // count from 1
+int posTemp;
 
-bool Lexer::first = true;
-NodeType Lexer::lastLexType{};
-Token Lexer::lastToken{};
+int Lexer::column[deep];  // count from 1
+int columnTemp;
 
-Word Lexer::words[deep];
+int Lexer::row[deep];     // count from 1.
+int rowTemp{1};
+
+int &Lexer::curRow = Lexer::row[0];
+
+// synchronize output of parser and lexer
+bool firstOutput = true;
+NodeType lastLexType;
+Token lastToken;
+
+Word Lexer::words[Lexer::deep];
 NodeType &Lexer::curLexType = words[0].first;
 Token &Lexer::curToken = words[0].second;
 
-LinkedHashMap<std::string, NodeType>Lexer::reserveWords;
-
-void Lexer::init(const std::string &inFile, const std::string &outFile) {
-    reserveWords = buildReserveWords();
-
-    auto inFileStream = std::ifstream(inFile);
-    outFileStream = std::ofstream(outFile);
-
-    if (!inFileStream) {
-        throw std::runtime_error("Reading " + inFile + " fails!");
-    }
-    if (!outFileStream && !outFile.empty()) {
-        throw std::runtime_error("Writing " + outFile + " fails!");
-    }
-
-    std::stringstream buffer;
-    buffer << inFileStream.rdbuf();
-    fileContents = buffer.str();
-
-    for (int i = 0; i < deep; ++i) {
-        next();
-    }
-}
+LinkedHashMap<std::string, NodeType> reserveWords;
 
 // also return EOF
 char Lexer::nextChar() {
-    c = fileContents[pos[deep - 1]];
-
-    pos[deep - 1]++;
+    if (posTemp >= fileContents.size()) {
+        c = EOF;
+        return EOF;
+    }
 
     if (c == '\n') {
-        row[deep - 1]++;
-        column[deep - 1] = 0;
-    } else { column[deep - 1]++; }
+        rowTemp++;
+        columnTemp = 1;
+    } else {
+        columnTemp++;
+    }
+
+    c = fileContents[posTemp++];
 
     return c;
 }
@@ -71,93 +63,96 @@ Word Lexer::next() {
     // Ident
     // IntConst
     // FormatString
-    while (isspace(nextChar()));
 
-    if (pos[deep - 1] > fileContents.length()) {
+    if (posTemp > fileContents.length()) {
         updateWords(NodeType::LEX_END, "");
         output();
         return words[0];
     }
 
-    NodeType l;
-    Token t = std::string(1, c);
+    NodeType lexType;
+    Token token = std::string(1, c);
 
     if (c >= '0' && c <= '9') {
         while (isdigit(nextChar())) {
-            t += c;
+            token += c;
         }
         // error: bad number
-        l = NodeType::INTCON;
-        retract();
+        lexType = NodeType::INTCON;
+//        retract();
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
-            t += c;
+            token += c;
         }
-        reserve(t, l);
-        retract();
-    } else if (c == '/') { //q1
+        reserve(token, lexType);
+//        retract();
+    } else if (c == '/') {  // q1
         nextChar();
-        if (c == '/') { //q2
+        if (c == '/') {  // q2
             while (nextChar() != '\n');
             // line comment //
-            t = "";
-            l = NodeType::COMMENT;
-        } else if (c == '*') { //q5
+            token = "";
+            lexType = NodeType::COMMENT;
+        } else if (c == '*') {  // q5
             q5:
             while (nextChar() != '*');
             do {
                 if (c == '*');
                 else if (c == '/') {
-                    break; //q7
+                    break; // q7
                 } else {
                     goto q5;
                 }
             } while (nextChar());
             // block comment /**/
-            t = "";
-            l = NodeType::COMMENT;
+            token = "";
+            lexType = NodeType::COMMENT;
+            nextChar();
         } else {
-            t = "/"; //q4
-            l = NodeType::DIV;
-            retract();
+            token = "/";  // q4
+            lexType = NodeType::DIV;
+//            retract();
         }
     } else if (c == '\"') {
         // STRCON
-        while (nextChar()) {
-            t += c;
+        while (nextChar() != EOF) {
+            token += c;
             if (c == '\"') {
                 break;
-            } else if (c == '\\') {
-                if (nextChar() == 'n') {
-                    t += 'n';
-                } else {
-                    Error::raise_error();
-                }
-            } else; // error: bad char in format string
+            }  // error: bad char in format string
         }
 
-        l = NodeType::STRCON;
+        lexType = NodeType::STRCON;
+        nextChar();
     } else {
         // special operator +-*/ && &
         for (const auto &i: reserveWords) {
             std::string str = i.first;
             NodeType type = i.second;
 
-            if (fileContents.substr(pos[deep - 1] - 1, str.length()) == str) {
-                pos[deep - 1] += static_cast<int>(str.length()) - 1;
+            if (fileContents.substr(posTemp - 1, str.length()) == str) {
+                posTemp += static_cast<int>(str.length());
+                columnTemp += static_cast<int>(str.length());
+                c = fileContents[posTemp - 1];
 
-                t = str;
-                l = type;
+                token = str;
+                lexType = type;
                 break;
             }
         }
     }
 
-    if (l != NodeType::COMMENT) {
-        updateWords(l, t);
-        output();
-    } else {
+    if (lexType == NodeType::COMMENT) {
+        while (isspace(c)) {
+            nextChar();
+        }
         next();
+    } else {
+        updateWords(lexType, token);
+        output();
+        while (isspace(c)) {
+            nextChar();
+        }
     }
 
     return words[0];
@@ -167,8 +162,6 @@ Word Lexer::peek(int n) {
     return words[n];
 }
 
-void Lexer::retract() { pos[deep - 1]--; }
-
 void Lexer::reserve(const Token &t, NodeType &l) {
     if (reserveWords.containsKey(t)) {
         l = reserveWords.get(t);
@@ -177,7 +170,7 @@ void Lexer::reserve(const Token &t, NodeType &l) {
     }
 }
 
-LinkedHashMap<std::string, NodeType> Lexer::buildReserveWords() {
+LinkedHashMap<std::string, NodeType> buildReserveWords() {
     auto map = new LinkedHashMap<std::string, NodeType>;
     // IDENFR
     // INTCON
@@ -222,18 +215,20 @@ LinkedHashMap<std::string, NodeType> Lexer::buildReserveWords() {
 }
 
 void Lexer::output() {
-    if (first) {
-        first = false;
+    if (firstOutput) {
+        firstOutput = false;
         lastLexType = Lexer::curLexType;
         lastToken = curToken;
     } else {
-        if (!(lastLexType == NodeType::LEX_EMPTY || lastLexType == NodeType::LEX_END)) {
-
-#ifdef STDOUT_PRINT_LEXER
-            std::cout << typeToStr(lastLexType) << " " << lastToken << std::endl;
+        if (!(lastLexType == NodeType::LEX_EMPTY ||
+              lastLexType == NodeType::LEX_END)) {
+#ifdef STDOUT_LEXER
+            std::cout << typeToStr(lastLexType) << " " << lastToken
+                      << std::endl;
 #endif
 #ifdef FILE_PRINT_LEXER
-            outFileStream << typeToStr(lastLexType) << " " << lastToken << std::endl;
+            outFileStream << typeToStr(lastLexType) << " " << lastToken
+                          << std::endl;
 #endif
         }
 
@@ -249,6 +244,11 @@ void Lexer::updateWords(NodeType l, Token t) {
         column[i] = column[i + 1];
         row[i] = row[i + 1];
     }
+
+    pos[deep - 1] = posTemp;
+    column[deep - 1] = columnTemp;
+    row[deep - 1] = rowTemp;
+
     words[deep - 1].first = l;
     words[deep - 1].second = std::move(t);
 }
@@ -257,11 +257,36 @@ void Lexer::updateWords(NodeType l, Token t) {
 // It's wrong if Cond is a kind of Exp, but our work doesn't require it.
 bool Lexer::findAssignBeforeSemicolon() {
     for (int t = pos[0] - 1;
-         t < fileContents.length() && fileContents[t] != ';';
-         ++t) {
+         t < fileContents.length() && fileContents[t] != ';'; ++t) {
         if (fileContents[t] == '=') {
             return true;
         }
     }
     return false;
+}
+
+void Lexer::init(const std::string &inFile, const std::string &outFile) {
+    reserveWords = buildReserveWords();
+
+    auto inFileStream = std::ifstream(inFile);
+    if (!inFileStream) {
+        throw std::runtime_error("Reading " + inFile + " fails!");
+    }
+
+#if defined(FILE_PRINT_LEXER) || defined(FILE_PRINT_PARSER)
+    outFileStream = std::ofstream(outFile);
+    if (!outFileStream && !outFile.empty()) {
+        throw std::runtime_error("Writing " + outFile + " fails!");
+    }
+#endif
+
+
+    std::stringstream buffer;
+    buffer << inFileStream.rdbuf();
+    fileContents = buffer.str();
+
+    while (isspace(nextChar()));
+    for (int i = 0; i < deep; ++i) {
+        next();
+    }
 }

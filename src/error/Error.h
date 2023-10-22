@@ -5,11 +5,16 @@
 #ifndef COMPILER_ERROR_H
 #define COMPILER_ERROR_H
 
-#include <exception>
+#include <string>
+#include "lexer/Lexer.h"
 
-class Error : public std::exception {
+class Error {
 public:
-    static void raise_error();
+    static std::ofstream errorFileStream;
+
+    static void raise(char code, int row = Lexer::curRow);
+
+    static void raise(const std::string &mes = "unnamed");
 };
 
 

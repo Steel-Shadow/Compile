@@ -34,6 +34,36 @@ std::unique_ptr<MulExp> MulExp::parse() {
     return n;
 }
 
+int MulExp::evaluate() {
+    int val = first->evaluate();
+    for (int i = 0; i < ops.size(); ++i) {
+        auto op = ops[i];
+        auto e = elements[i]->evaluate();
+        if (op == NodeType::MULT) {
+            val *= e;
+        } else if (op == NodeType::DIV) {
+            val /= e;
+        } else if (op == NodeType::MOD) {
+            val %= e;
+        }
+    }
+    return val;
+}
+
+size_t MulExp::getRank() {
+    if (!elements.empty()) {
+        return 0;
+    }
+    return first->getRank();
+}
+
+std::string MulExp::getIdent() {
+    if (!elements.empty()) {
+        return "";
+    }
+    return first->getIdent();
+}
+
 std::unique_ptr<AddExp> AddExp::parse() {
     auto n = std::make_unique<AddExp>();
 
@@ -48,6 +78,34 @@ std::unique_ptr<AddExp> AddExp::parse() {
     }
 
     return n;
+}
+
+int AddExp::evaluate() {
+    int val = first->evaluate();
+    for (int i = 0; i < ops.size(); ++i) {
+        auto op = ops[i];
+        auto e = elements[i]->evaluate();
+        if (op == NodeType::PLUS) {
+            val += e;
+        } else if (op == NodeType::MINU) {
+            val -= e;
+        }
+    }
+    return val;
+}
+
+size_t AddExp::getRank() {
+    if (!elements.empty()) {
+        return 0;
+    }
+    return first->getRank();
+}
+
+std::string AddExp::getIdent() {
+    if (!elements.empty()) {
+        return "";
+    }
+    return first->getIdent();
 }
 
 std::unique_ptr<RelExp> RelExp::parse() {

@@ -156,7 +156,7 @@ std::string typeToStr(NodeType type) {
             return "LOrExp";
         default:
             // bad type
-            Error::raise_error();
+            Error::raise();
             return "";
     }
 }

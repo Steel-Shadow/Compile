@@ -14,7 +14,10 @@
 // FuncType → 'void' | 'int'
 class FuncType {
     NodeType type;
+
 public:
+    [[nodiscard]] NodeType getType() const;
+
     static std::unique_ptr<FuncType> parse();
 };
 
@@ -22,17 +25,26 @@ public:
 class FuncFParam {
     std::unique_ptr<Btype> type;
     std::string ident;
-    std::vector<std::unique_ptr<Exp>> dims;
+    std::vector<std::unique_ptr<Exp>> dims; // if [], dims[0]=nullptr
 
 public:
     static std::unique_ptr<FuncFParam> parse();
+
+    [[nodiscard]] const std::string &getId() const;
+
+    std::vector<int> getDims();
 };
 
 // FuncFParams → FuncFParam { ',' FuncFParam }
 class FuncFParams {
     std::vector<std::unique_ptr<FuncFParam>> funcFParams;
+
 public:
     static std::unique_ptr<FuncFParams> parse();
+
+    [[nodiscard]] std::vector<Dimensions> getDimsVec() const;
+
+    [[nodiscard]] const std::vector<std::unique_ptr<FuncFParam>> &getFuncFParams() const;
 };
 
 //FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
@@ -58,6 +70,8 @@ public:
 // FuncRParams → Exp { ',' Exp }
 class FuncRParams {
     std::vector<std::unique_ptr<Exp>> params;
+public:
+    [[nodiscard]] const std::vector<std::unique_ptr<Exp>> &getParams() const;
 
 public:
     static std::unique_ptr<FuncRParams> parse();

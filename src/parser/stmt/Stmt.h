@@ -7,12 +7,14 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "lexer/NodeType.h"
 
 class Cond;
 
 class LVal;
 
 class Exp;
+
 /*-------------------------Block-----------------------------*/
 // BlockItem → Decl | Stmt
 class BlockItem {
@@ -36,16 +38,55 @@ class Stmt : public BlockItem {
 
 public:
     static std::unique_ptr<Stmt> parse();
+
+    static bool retVoid;
 };
 /*-----------------------------------------------------------*/
 
+// LVal '=' 'getint''('')'';' | LVal '=' Exp ';'
+class LValStmt : public Stmt {
+    std::unique_ptr<LVal> lVal;
+
+public:
+    static std::unique_ptr<LValStmt> parse();
+};
+
+// LVal '=' Exp ';'
+class AssignStmt : public LValStmt {
+    std::unique_ptr<Exp> exp;
+
+public:
+    static std::unique_ptr<AssignStmt> parse();
+};
+
+// [Exp] ';'
+class ExpStmt : public Stmt {
+    std::unique_ptr<Exp> exp;
+
+public:
+    static std::unique_ptr<ExpStmt> parse();
+};
 
 // Block → '{' { BlockItem } '}'
-class Block : public Stmt {
+class Block {
     std::vector<std::unique_ptr<BlockItem>> blockItems;
+public:
+    const std::vector<std::unique_ptr<BlockItem>> &getBlockItems() const;
 
 public:
     static std::unique_ptr<Block> parse();
+
+    [[maybe_unused]]NodeType getReType();
+
+    static int lastRow;
+};
+
+// Block
+class BlockStmt : public Stmt {
+    std::unique_ptr<Block> block;
+
+public:
+    static std::unique_ptr<BlockStmt> parse();
 };
 
 // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
@@ -87,6 +128,8 @@ class BigForStmt : public Stmt {
     std::unique_ptr<Stmt> stmt;
 
 public:
+    static bool inFor;
+
     static std::unique_ptr<BigForStmt> parse();
 };
 
@@ -96,23 +139,8 @@ class ReturnStmt : public Stmt {
 
 public:
     static std::unique_ptr<ReturnStmt> parse();
-};
 
-// 'printf''('FormatString{','Exp}')'';'
-class PrintStmt : public Stmt {
-    std::string formatString;
-    std::vector<std::unique_ptr<Exp>> exps;
-
-public:
-    static std::unique_ptr<PrintStmt> parse();
-};
-
-// LVal '=' 'getint''('')'';' | LVal '=' Exp ';'
-class LValStmt : public Stmt {
-    std::unique_ptr<LVal> lVal;
-
-public:
-    static std::unique_ptr<LValStmt> parse();
+    [[nodiscard]] const std::unique_ptr<Exp> &getExp() const;
 };
 
 // | LVal '=' 'getint''('')'';'
@@ -122,20 +150,20 @@ public:
     static std::unique_ptr<GetintStmt> parse();
 };
 
-// LVal '=' Exp ';'
-class AssignStmt : public LValStmt {
-    std::unique_ptr<Exp> exp;
+// 'printf''('FormatString{','Exp}')'';'
+class PrintStmt : public Stmt {
+    std::string formatString;
+    std::vector<std::unique_ptr<Exp>> exps;
+
+    int numOfFormat;
 
 public:
-    static std::unique_ptr<AssignStmt> parse();
-};
+    static std::unique_ptr<PrintStmt> parse();
 
-// [Exp] ';'
-class ExpStmt : public Stmt {
-    std::unique_ptr<Exp> exp;
+private:
+    void checkFormatString(std::string str);
 
-public:
-    static std::unique_ptr<ExpStmt> parse();
+    void checkFormatNum();
 };
 
 #endif //COMPILER_STMT_H

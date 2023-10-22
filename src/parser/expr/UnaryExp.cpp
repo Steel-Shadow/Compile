@@ -6,24 +6,40 @@
 #include "parser/decl/Decl.h"
 #include "error/Error.h"
 #include "parser/func/Func.h"
-
 #include "parser/Parser.h"
-#include "lexer/Lexer.h"
+#include "symTab/SymTab.h"
 
 using namespace Parser;
 
 std::unique_ptr<LVal> LVal::parse() {
     auto n = std::make_unique<LVal>();
+
     n->ident = Ident::parse();
+    if (!SymTab::find(n->ident)) {
+        Error::raise('c');
+    }
 
     while (Lexer::curLexType == NodeType::LBRACK) {
         Lexer::next();
+        int row = Lexer::curRow;
         n->dims.push_back(Exp::parse(false));
-        singleLex(NodeType::RBRACK);
+        singleLex(NodeType::RBRACK, row);
     }
 
     output(NodeType::LVal);
     return n;
+}
+
+size_t LVal::getRank() {
+    return dims.size();
+}
+
+std::string LVal::getIdent() {
+    return ident;
+}
+
+bool LVal::isConst() {
+    return SymTab::find(ident)->cons;
 }
 
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
@@ -41,12 +57,27 @@ std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     return n;
 }
 
+size_t PrimaryExp::getRank() {
+    if (auto p = dynamic_cast<LVal *>(this)) {
+        return p->getRank();
+    }
+    return 0;
+}
+
+std::string PrimaryExp::getIdent() {
+    if (auto p = dynamic_cast<LVal *>(this)) {
+        return p->getIdent();
+    }
+    return "";
+}
+
 std::unique_ptr<PareExp> PareExp::parse() {
     auto n = std::make_unique<PareExp>();
 
     Lexer::next();
+    int row = Lexer::curRow;
     n->exp = Exp::parse(false);
-    singleLex(NodeType::RPARENT);
+    singleLex(NodeType::RPARENT, row);
 
     return n;
 }
@@ -57,10 +88,14 @@ std::unique_ptr<Number> Number::parse() {
     if (Lexer::curLexType == NodeType::INTCON) {
         n->intConst = std::stoi(Lexer::curToken);
         Lexer::next();
-    } else { Error::raise_error(); }
+    } else { Error::raise(); }
 
     output(NodeType::Number);
     return n;
+}
+
+int Number::evaluate() {
+    return intConst;
 }
 
 std::unique_ptr<UnaryExp> UnaryExp::parse() {
@@ -74,7 +109,7 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
             case NodeType::MINU:
             case NodeType::NOT:
                 // UnaryOp → '+' | '−' | '!'
-                n->unaryOps.push_back(Lexer::curLexType);
+                n->ops.push_back(Lexer::curLexType);
                 Lexer::next();
 
                 output(NodeType::UnaryOp);
@@ -105,27 +140,90 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
                 break;
 
             default:
-                Error::raise_error();
+                Error::raise();
         }
     }
 
-    for (int i = 0; i < n->unaryOps.size(); i++) {
+    for (int i = 0; i < n->ops.size(); i++) {
         output(NodeType::UnaryExp);
     }
 
     return n;
 }
 
+int UnaryExp::evaluate() {
+    int val = baseUnaryExp->evaluate();
+
+    for (auto op: ops) {
+        if (op == NodeType::MINU) {
+            val = -val;
+        }
+    }
+
+    return val;
+}
+
+size_t UnaryExp::getRank() {
+    if (auto p = dynamic_cast<PrimaryExp *>(baseUnaryExp.get())) {
+        return p->getRank();
+    }
+    return 0;
+}
+
+std::string UnaryExp::getIdent() {
+    if (auto p = dynamic_cast<PrimaryExp *>(baseUnaryExp.get())) {
+        return p->getIdent();
+    }
+    return "";
+}
+
 std::unique_ptr<FuncCall> FuncCall::parse() {
     auto n = std::make_unique<FuncCall>();
 
+    int row = Lexer::curRow;
     n->ident = Ident::parse();
+
+    Symbol *funcSym = SymTab::find(n->ident);
+    if (!funcSym) {
+        Error::raise('c', row);
+    }
+
     singleLex(NodeType::LPARENT);
 
     if (Lexer::curLexType != NodeType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
+        checkParams(n, row, funcSym); // SymTab error handle
     }
 
-    singleLex(NodeType::RPARENT);
+    singleLex(NodeType::RPARENT, row); // todo: error row maybe wrong
     return n;
+}
+
+void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym) {
+    auto &realParams = n->funcRParams->getParams();
+    // check number of realParams
+    if (realParams.size() != funcSym->params.size()) {
+        Error::raise('d', row);
+    } else {
+        // check type of params
+        for (int i = 0; i < realParams.size(); i++) {
+            auto &rParam = realParams[i];
+
+            size_t formalRank = funcSym->params[i].size();
+            size_t symRank;
+            size_t indexRank = rParam->getRank();
+
+            if (rParam->getIdent().empty()) {
+                // rParam is Exp (not LVal)
+                symRank = 0;
+            } else {
+                // rParam is LVal
+                symRank = SymTab::find(rParam->getIdent())->dims.size();
+            }
+
+            if (symRank - indexRank != formalRank) {
+                Error::raise('e', row);
+            }
+        }
+    }
 }

@@ -5,17 +5,20 @@
 #ifndef COMPILER_CONFIG_H
 #define COMPILER_CONFIG_H
 
-
-//TODO: In error, temporary turn off.
-//#define FILE_PRINT_LEXER
-//#define FILE_PRINT_PARSER
-
 #define ERROR
 
-// print in std::cout
-#ifdef MY_STDOUT
-#define STDOUT_PRINT_LEXER
-#define STDOUT_PRINT_PARSER
+// In error, temporary turn off.
+#if defined(ERROR)
+#define FILE_PRINT_ERROR
+#else
+#define FILE_PRINT_LEXER
+#define FILE_PRINT_PARSER
+#endif
+
+#if defined(MY_DEBUG)
+#define STDOUT_ERROR
+//#define STDOUT_LEXER
+//#define STDOUT_PARSER
 #endif
 
 

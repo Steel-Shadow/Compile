@@ -1,3 +1,22 @@
+# todo
+
+末尾空行？
+考虑递归？
+
+常量数组 arr 不能作为参数传入到函数中
+
+函数信息
+
+# SymTable
+
+栈式符号表
+
+for 语句的 (...) 与 {...} 是同一个作用域，专题报告有错。
+
+符号表填表中，需要获取数组维度，进行常量计算。
+
+符号表深度修改位置： `FuncDef` `MainFuncDef` `BigForStmt` `IfStmt` (不是在 block 内)
+
 # Lexer
 
 ## 预读优化
@@ -36,6 +55,17 @@ enum class NodeType {/*...*/}
 多个节点类使用继承降低复杂度、复用代码。
 
 解析方法分散在各个节点类中，作为 static 方法。
+
+## ConstInitVal
+
+文法规定中，Exp ConstExp没有区分(AST 中，ConstExp 下的节点不为 const)，额外在语义中语义约束。
+
+在后续分析时需要注意。
+
+```
+Exp → AddExp
+ConstExp → AddExp
+```
 
 # C++ 坑
 
