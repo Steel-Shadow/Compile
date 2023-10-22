@@ -283,7 +283,9 @@ std::unique_ptr<LValStmt> LValStmt::parse() {
 
     int row = Lexer::curRow;
     auto lVal = LVal::parse();
-    if (lVal->isConst()) {
+
+    auto sym = SymTab::find(lVal->getIdent());
+    if (sym && sym->cons) {
         Error::raise('h', row);
     }
 

@@ -80,8 +80,6 @@ public:
     size_t getRank() override;
 
     std::string getIdent() override;
-
-    bool isConst();
 };
 
 // Number → IntConst

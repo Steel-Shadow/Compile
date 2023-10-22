@@ -38,10 +38,6 @@ std::string LVal::getIdent() {
     return ident;
 }
 
-bool LVal::isConst() {
-    return SymTab::find(ident)->cons;
-}
-
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     auto n = std::make_unique<PrimaryExp>();
 
