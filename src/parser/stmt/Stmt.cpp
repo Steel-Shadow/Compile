@@ -234,9 +234,10 @@ void PrintStmt::checkFormatString(std::string str) {
                 Error::raise('a');
             }
         } else if (c == '%') {
-            numOfFormat++;
             if (str[++i] != 'd') {
                 Error::raise('a');
+            } else {
+                numOfFormat++;
             }
         } else if (!(c == 32 || c == 33 || c >= 40 && c <= 126)) {
             Error::raise('a');
@@ -272,10 +273,6 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     singleLex(NodeType::RPARENT, row);
     singleLex(NodeType::SEMICN, row);
     return n;
-}
-
-void PrintStmt::checkFormatNum() {
-
 }
 
 std::unique_ptr<LValStmt> LValStmt::parse() {

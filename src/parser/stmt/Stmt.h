@@ -162,8 +162,6 @@ public:
 
 private:
     void checkFormatString(std::string str);
-
-    void checkFormatNum();
 };
 
 #endif //COMPILER_STMT_H
