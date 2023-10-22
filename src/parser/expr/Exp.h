@@ -55,6 +55,8 @@ class FuncCall : public BaseUnaryExp {
 public:
     static std::unique_ptr<FuncCall> parse();
 
+    std::string getIdent();
+
 private:
     static void checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym);
 };

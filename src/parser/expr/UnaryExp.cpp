@@ -170,6 +170,9 @@ std::string UnaryExp::getIdent() {
     if (auto p = dynamic_cast<PrimaryExp *>(baseUnaryExp.get())) {
         return p->getIdent();
     }
+    if (auto p = dynamic_cast<FuncCall *>(baseUnaryExp.get())) {
+        return p->getIdent();
+    }
     return "";
 }
 
@@ -195,6 +198,10 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
     return n;
 }
 
+std::string FuncCall::getIdent() {
+    return ident;
+}
+
 void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym) {
     auto &realParams = n->funcRParams->getParams();
     // check number of realParams
@@ -209,12 +216,20 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Sy
             size_t symRank;
             size_t indexRank = rParam->getRank();
 
-            if (rParam->getIdent().empty()) {
-                // rParam is Exp (not LVal)
+            std::string ident = rParam->getIdent();
+            if (ident.empty()) {
+                // rParam is Exp (neither LVal nor FuncCall)
                 symRank = 0;
             } else {
-                // rParam is LVal
-                symRank = SymTab::find(rParam->getIdent())->dims.size();
+                auto sym = SymTab::find(ident);
+                if (sym->type == SymType::Func) {
+                    // FuncCall
+                    // void | int
+                    symRank = sym->reType == NodeType::VOIDTK ? -1 : 0;
+                } else {
+                    // LVal
+                    symRank = sym->dims.size();
+                }
             }
 
             if (symRank - indexRank != formalRank) {
@@ -223,3 +238,4 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Sy
         }
     }
 }
+
