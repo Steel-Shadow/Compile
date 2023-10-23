@@ -10,6 +10,7 @@
 
 #include "config.h"
 #include "error/Error.h"
+#include "LinkedHashMap.h"
 
 std::ofstream Lexer::outFileStream;
 std::string Lexer::fileContents;

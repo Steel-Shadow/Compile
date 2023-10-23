@@ -122,10 +122,6 @@ std::vector<Dimensions> FuncFParams::getDimsVec() const {
     return raws;
 }
 
-const std::vector<std::unique_ptr<FuncFParam>> &FuncFParams::getFuncFParams() const {
-    return funcFParams;
-}
-
 std::unique_ptr<FuncFParam> FuncFParam::parse() {
     auto n = std::make_unique<FuncFParam>();
 

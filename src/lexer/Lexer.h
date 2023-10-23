@@ -8,7 +8,6 @@
 #include <fstream>
 #include <string>
 
-#include "LinkedHashMap.h"
 #include "NodeType.h"
 
 typedef std::string Token;

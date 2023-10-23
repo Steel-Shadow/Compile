@@ -44,10 +44,6 @@ void SymTab::add(const std::string &ident,
     where->symbols.emplace(ident, Symbol(reType, params));
 }
 
-Symbol &SymTab::get(const std::string &id) {
-    return symbols.at(id);
-}
-
 void SymTab::deepIn() {
     auto s = std::make_unique<SymTab>();
     s->prev = cur;
@@ -63,8 +59,4 @@ void SymTab::deepOut() {
 
 SymTab *SymTab::getPrev() const {
     return prev;
-}
-
-void SymTab::erase(const std::string &ident) {
-    symbols.erase(ident);
 }

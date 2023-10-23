@@ -15,8 +15,6 @@ class Btype {
     NodeType type;
 public:
     static std::unique_ptr<Btype> parse();
-
-    NodeType getType() const;
 };
 
 // Decl → ConstDecl | VarDecl

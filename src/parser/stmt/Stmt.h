@@ -71,7 +71,7 @@ public:
 class Block {
     std::vector<std::unique_ptr<BlockItem>> blockItems;
 public:
-    const std::vector<std::unique_ptr<BlockItem>> &getBlockItems() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<BlockItem>> &getBlockItems() const;
 
 public:
     static std::unique_ptr<Block> parse();

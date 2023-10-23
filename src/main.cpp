@@ -2,9 +2,9 @@
 #include "parser/CompUnit.h"
 #include "error/Error.h"
 
-void compile(const std::string &inFile = "testfile.txt",
-             const std::string &outFile = "output.txt",
-             const std::string &errorFile = "error.txt") {
+void compile(const std::string &inFile = "",
+             const std::string &outFile = "",
+             const std::string &errorFile = "") {
     Lexer::init(inFile, outFile);
     Error::errorFileStream = std::ofstream(errorFile);
     auto compUnit = CompUnit::parse();

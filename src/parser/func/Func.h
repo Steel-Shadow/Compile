@@ -43,8 +43,6 @@ public:
     static std::unique_ptr<FuncFParams> parse();
 
     [[nodiscard]] std::vector<Dimensions> getDimsVec() const;
-
-    [[nodiscard]] const std::vector<std::unique_ptr<FuncFParam>> &getFuncFParams() const;
 };
 
 //FuncDef → FuncType Ident '(' [FuncFParams] ')' Block

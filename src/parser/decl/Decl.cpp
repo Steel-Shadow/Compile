@@ -48,10 +48,6 @@ std::unique_ptr<Btype> Btype::parse() {
     return n;
 }
 
-NodeType Btype::getType() const {
-    return type;
-}
-
 std::string Ident::parse() {
     std::string ident;
 

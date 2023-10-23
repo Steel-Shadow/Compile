@@ -5,7 +5,6 @@
 
 #include "Decl.h"
 #include "parser/Parser.h"
-#include "lexer/Lexer.h"
 #include "symTab/SymTab.h"
 #include "error/Error.h"
 

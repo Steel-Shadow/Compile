@@ -47,13 +47,9 @@ public:
                     const std::vector<Dimensions> &params,
                     SymTab *where = cur);
 
-    void erase(const std::string &ident);
-
     static void deepIn();
 
     static void deepOut();
-
-    Symbol &get(const std::string &id);
 
     SymTab *getPrev() const;
 };
