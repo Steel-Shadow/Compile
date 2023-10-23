@@ -7,8 +7,8 @@
 
 
 //TODO: In error, temporary turn off.
-//#define FILE_PRINT_LEXER
-//#define FILE_PRINT_PARSER
+#define FILE_PRINT_LEXER
+#define FILE_PRINT_PARSER
 
 #define ERROR
 
