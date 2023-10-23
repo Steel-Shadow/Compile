@@ -248,7 +248,7 @@ void PrintStmt::checkFormatString(std::string str) {
 std::unique_ptr<PrintStmt> PrintStmt::parse() {
     auto n = std::make_unique<PrintStmt>();
 
-    int row = Lexer::curRow; //todo: maybe wrong
+    int row = Lexer::curRow;
     Lexer::next();
 
     singleLex(NodeType::LPARENT);
@@ -302,7 +302,7 @@ std::unique_ptr<LValStmt> LValStmt::parse() {
 std::unique_ptr<GetintStmt> GetintStmt::parse() {
     auto n = std::make_unique<GetintStmt>();
 
-    int row = Lexer::curRow; // todo: maybe wrong
+    int row = Lexer::curRow;
 
     singleLex(NodeType::GETINTTK);
     singleLex(NodeType::LPARENT);

@@ -31,7 +31,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
         n->funcFParams = FuncFParams::parse();
         params = n->funcFParams->getDimsVec();
     }
-    singleLex(NodeType::RPARENT, row); //todo: maybe wrong
+    singleLex(NodeType::RPARENT, row);
 
     SymTab::add(n->ident, n->funcType->getType(),
                 params,

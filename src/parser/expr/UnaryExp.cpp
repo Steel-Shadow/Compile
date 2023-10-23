@@ -194,7 +194,7 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
         checkParams(n, row, funcSym); // SymTab error handle
     }
 
-    singleLex(NodeType::RPARENT, row); // todo: error row maybe wrong
+    singleLex(NodeType::RPARENT, row);
     return n;
 }
 
