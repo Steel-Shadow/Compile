@@ -21,7 +21,6 @@ namespace Lexer {
     extern std::string fileContents;
 
     // pre-reading deep.
-    // Change deep and must change row & column initialization!
     static constexpr size_t deep = 3;
 
     // char c;            // c = fileContents[posTemp - 1]
@@ -30,27 +29,21 @@ namespace Lexer {
     extern int row[deep];     // count from 1
     extern int &curRow; // row[0]
 
-    extern Word words[deep];
+    Word peek(int n = 0);
+
+    // Word words[deep];
     extern NodeType &curLexType;
     extern Token &curToken;
 
     // LinkedHashMap<std::string, NodeType> buildReserveWords();
     // LinkedHashMap<std::string, NodeType> reserveWords;
-
-    char nextChar();
-
-    void reserve(const Token &t, NodeType &l);
-
+    // char nextChar();
+    // void reserve(const Token &t, NodeType &l);
     // void retract();
-
-    void output();
-
-    void updateWords(NodeType l, Token t);
+    // void output();
+    // void updateWords(NodeType l, Token t);
 
     Word next();
-
-    // n is the depth of pre-reading
-    Word peek(int n = 0);
 
     bool findAssignBeforeSemicolon();
 }  // namespace Lexer

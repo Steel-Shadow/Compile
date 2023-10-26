@@ -15,33 +15,34 @@
 std::ofstream Lexer::outFileStream;
 std::string Lexer::fileContents;
 
-char c; // c = fileContents[posTemp - 1]
+Word words[Lexer::deep];
+NodeType &Lexer::curLexType = words[0].first;
+Token &Lexer::curToken = words[0].second;
 
 int Lexer::pos[deep]; // count from 1
-int posTemp;
-
 int Lexer::column[deep];  // count from 1
-int columnTemp;
-
 int Lexer::row[deep];     // count from 1.
-int rowTemp{1};
-
 int &Lexer::curRow = Lexer::row[0];
+
+char c; // c = fileContents[posTemp - 1]
+int posTemp;
+int columnTemp;
+int rowTemp{1};
 
 // synchronize output of parser and lexer
 bool firstOutput = true;
 NodeType lastLexType;
 Token lastToken;
 
-Word Lexer::words[Lexer::deep];
-NodeType &Lexer::curLexType = words[0].first;
-Token &Lexer::curToken = words[0].second;
-
 LinkedHashMap<std::string, NodeType> reserveWords;
 
+Word Lexer::peek(int n) {
+    return words[n];
+}
+
 // also return EOF
-char Lexer::nextChar() {
-    if (posTemp >= fileContents.size()) {
+char nextChar() {
+    if (posTemp >= Lexer::fileContents.size()) {
         c = EOF;
         return EOF;
     }
@@ -53,10 +54,22 @@ char Lexer::nextChar() {
         columnTemp++;
     }
 
-    c = fileContents[posTemp++];
+    c = Lexer::fileContents[posTemp++];
 
     return c;
 }
+
+void reserve(const Token &t, NodeType &l) {
+    if (reserveWords.containsKey(t)) {
+        l = reserveWords.get(t);
+    } else {
+        l = NodeType::IDENFR;
+    }
+}
+
+void output();
+
+void updateWords(NodeType l, Token t);
 
 // stop if you read NodeType::Lex_END
 // or the file will be read in loop
@@ -159,18 +172,6 @@ Word Lexer::next() {
     return words[0];
 }
 
-Word Lexer::peek(int n) {
-    return words[n];
-}
-
-void Lexer::reserve(const Token &t, NodeType &l) {
-    if (reserveWords.containsKey(t)) {
-        l = reserveWords.get(t);
-    } else {
-        l = NodeType::IDENFR;
-    }
-}
-
 LinkedHashMap<std::string, NodeType> buildReserveWords() {
     auto map = new LinkedHashMap<std::string, NodeType>;
     // IDENFR
@@ -215,11 +216,11 @@ LinkedHashMap<std::string, NodeType> buildReserveWords() {
     return *map;
 }
 
-void Lexer::output() {
+void output() {
     if (firstOutput) {
         firstOutput = false;
         lastLexType = Lexer::curLexType;
-        lastToken = curToken;
+        lastToken = Lexer::curToken;
     } else {
         if (!(lastLexType == NodeType::LEX_EMPTY ||
               lastLexType == NodeType::LEX_END)) {
@@ -227,18 +228,19 @@ void Lexer::output() {
             std::cout << typeToStr(lastLexType) << " " << lastToken
                       << std::endl;
 #endif
-#ifdef FILE_PRINT_LEXER
-            outFileStream << typeToStr(lastLexType) << " " << lastToken
-                          << std::endl;
+#ifdef FILEOUT_LEXER
+            Lexer::outFileStream << typeToStr(lastLexType) << " " << lastToken
+                                 << std::endl;
 #endif
         }
 
         lastLexType = Lexer::curLexType;
-        lastToken = curToken;
+        lastToken = Lexer::curToken;
     }
 }
 
-void Lexer::updateWords(NodeType l, Token t) {
+void updateWords(NodeType l, Token t) {
+    using namespace Lexer;
     for (int i = 0; i < deep - 1; ++i) {
         words[i] = words[i + 1];
         pos[i] = pos[i + 1];
@@ -274,7 +276,7 @@ void Lexer::init(const std::string &inFile, const std::string &outFile) {
         throw std::runtime_error("Reading " + inFile + " fails!");
     }
 
-#if defined(FILE_PRINT_LEXER) || defined(FILE_PRINT_PARSER)
+#if defined(FILEOUT_LEXER) || defined(FILEOUT_PARSER)
     outFileStream = std::ofstream(outFile);
     if (!outFileStream && !outFile.empty()) {
         throw std::runtime_error("Writing " + outFile + " fails!");

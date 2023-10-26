@@ -28,7 +28,7 @@ void Parser::output(NodeType type) {
 #ifdef STDOUT_PARSER
     std::cout << "<" << typeToStr(type) << ">" << std::endl;
 #endif
-#ifdef FILE_PRINT_PARSER
+#ifdef FILEOUT_PARSER
     Lexer::outFileStream << "<" << typeToStr(type) << ">" << std::endl;
 #endif
 }

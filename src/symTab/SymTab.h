@@ -13,9 +13,8 @@
 // Stack
 // global -next-> SymTab... -next-> *cur
 class SymTab {
-    SymTab *prev;
+    SymTab *prev; // prev SymTable
 
-    // prev SymTable
     std::unique_ptr<SymTab> next;    // next SymTable
 
     // Ident to Symbol
