@@ -7,6 +7,7 @@
 
 #include "parser/Parser.h"
 #include "symTab/SymTab.h"
+#include "middle/CodeGen.h"
 
 using namespace Parser;
 
@@ -49,9 +50,14 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
         }
     }
 
-    SymTab::deepOut();
+    SymTab::deepOut(); // FuncDef
     output(NodeType::FuncDef);
     return n;
+}
+
+CodeGen::Function FuncDef::codeGen() {
+    // todo
+    return CodeGen::Function();
 }
 
 std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
@@ -78,7 +84,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
         }
     }
 
-    SymTab::deepOut();
+    SymTab::deepOut(); // MainFuncDef
     output(NodeType::MainFuncDef);
     return n;
 }

@@ -35,6 +35,10 @@ std::unique_ptr<ExpInitVal> ExpInitVal::parse(bool cons) {
     return n;
 }
 
+std::vector<int> ExpInitVal::evaluate() {
+    return std::vector{exp->evaluate()};
+}
+
 std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
     auto n = std::make_unique<ArrayInitVal>();
     n->cons = cons;
@@ -51,4 +55,15 @@ std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
 
     singleLex(NodeType::RBRACE);
     return n;
+}
+
+std::vector<int> ArrayInitVal::evaluate() {
+    std::vector<int> res;
+
+    for (auto &i: array) {
+        auto t = i->evaluate();
+        res.insert(res.end(), t.begin(), t.end());
+    }
+
+    return res;
 }

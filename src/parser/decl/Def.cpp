@@ -48,3 +48,11 @@ std::unique_ptr<Def> Def::parse(bool cons) {
     }
     return n;
 }
+
+const std::string &Def::getIdent() const {
+    return ident;
+}
+
+const std::unique_ptr<InitVal> &Def::getInitVal() const {
+    return initVal;
+}

@@ -10,15 +10,18 @@
 
 #include "decl/Decl.h"
 #include "func/Func.h"
+#include "middle/CodeGen.h"
 
 // CompUnit → {Decl} {FuncDef} MainFuncDef
 class CompUnit {
-    std::vector<std::unique_ptr<Decl> > decls;
+    std::vector<std::unique_ptr<Decl>> decls;
     std::vector<std::unique_ptr<FuncDef>> funcDefs;
     std::unique_ptr<MainFuncDef> mainFuncDef;
 
 public:
     static std::unique_ptr<CompUnit> parse();
+
+    std::unique_ptr<CodeGen::Module> codeGen();
 };
 
 #endif //COMPILER_COMPUNIT_H

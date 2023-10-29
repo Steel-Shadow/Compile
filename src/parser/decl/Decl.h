@@ -25,6 +25,8 @@ class Decl : public BlockItem {
 
     std::unique_ptr<Btype> btype;
     std::vector<std::unique_ptr<Def>> defs;
+public:
+    [[nodiscard]] const std::vector<std::unique_ptr<Def>> &getDefs() const;
 
 public:
     static std::unique_ptr<Decl> parse();

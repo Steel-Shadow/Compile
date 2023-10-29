@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # make sure to use clang or gcc
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DMY_DEBUG)
-endif()
+    add_compile_definitions(MY_DEBUG)
+endif ()
 
 project(Compiler)
 

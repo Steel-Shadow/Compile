@@ -21,6 +21,8 @@ public:
     virtual ~InitVal() = default;
 
     static std::unique_ptr<InitVal> parse(bool cons);
+
+    virtual std::vector<int> evaluate() = 0;
 };
 
 class ExpInitVal : public InitVal {
@@ -28,6 +30,8 @@ class ExpInitVal : public InitVal {
 
 public:
     static std::unique_ptr<ExpInitVal> parse(bool cons);
+
+    std::vector<int> evaluate() override;
 };
 
 class ArrayInitVal : public InitVal {
@@ -35,6 +39,8 @@ class ArrayInitVal : public InitVal {
 
 public:
     static std::unique_ptr<ArrayInitVal> parse(bool cons);
+
+    std::vector<int> evaluate() override;
 };
 
 #endif //COMPILER_INITVAL_H

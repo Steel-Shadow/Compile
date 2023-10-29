@@ -5,7 +5,7 @@
 #include "SymTab.h"
 #include "error/Error.h"
 
-SymTab SymTab::global;
+SymTab SymTab::global{nullptr};
 
 SymTab *SymTab::cur = &global;
 
@@ -45,18 +45,16 @@ void SymTab::add(const std::string &ident,
 }
 
 void SymTab::deepIn() {
-    auto s = std::make_unique<SymTab>();
-    s->prev = cur;
-
-    cur->next = std::move(s);
-    cur = cur->next.get();
+    cur->next.push_back(std::make_unique<SymTab>(cur));
+    cur = cur->next.back().get();
 }
 
 void SymTab::deepOut() {
     cur = cur->prev;
-    cur->next = nullptr;
 }
 
 SymTab *SymTab::getPrev() const {
     return prev;
 }
+
+SymTab::SymTab(SymTab *prev) : prev(prev) {}

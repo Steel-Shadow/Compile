@@ -39,6 +39,10 @@ std::unique_ptr<Decl> Decl::parse() {
     return n;
 }
 
+const std::vector<std::unique_ptr<Def>> &Decl::getDefs() const {
+    return defs;
+}
+
 std::unique_ptr<Btype> Btype::parse() {
     auto n = std::make_unique<Btype>();
 

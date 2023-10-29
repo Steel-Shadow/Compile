@@ -8,6 +8,7 @@
 #include "parser/Parser.h"
 
 using namespace Parser;
+using namespace CodeGen;
 
 std::unique_ptr<CompUnit> CompUnit::parse() {
     auto n = std::make_unique<CompUnit>();
@@ -32,4 +33,22 @@ std::unique_ptr<CompUnit> CompUnit::parse() {
     output(NodeType::CompUnit);
 
     return n;
+}
+
+std::unique_ptr<CodeGen::Module> CompUnit::codeGen() {
+    auto module = std::make_unique<Module>("Made from Steel Shadow");
+
+    for (auto &decl: decls) {
+        for (auto &def: decl->getDefs()) {
+            auto &i = def->getInitVal();
+            module->getGlobals().push_back(std::make_pair(
+                    def->getIdent(), i->evaluate()));
+        }
+    }
+
+    for (auto &funcDef: funcDefs) {
+        module->getFunctions().push_back(funcDef->codeGen());
+    }
+
+    return module;
 }

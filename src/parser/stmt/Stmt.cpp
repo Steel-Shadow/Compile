@@ -8,6 +8,7 @@
 #include "error/Error.h"
 #include "parser/Parser.h"
 #include "symTab/SymTab.h"
+#include "middle/CodeGen.h"
 
 using namespace Parser;
 
@@ -128,7 +129,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
         n->ifStmt = Stmt::parse();
     }
 
-    SymTab::deepOut();
+    SymTab::deepOut(); // IfStmt
     return n;
 }
 
@@ -162,7 +163,7 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
     n->stmt = Stmt::parse();
 
     inFor = false;
-    SymTab::deepOut();
+    SymTab::deepOut(); // ForStmt
     return n;
 }
 
@@ -337,7 +338,8 @@ std::unique_ptr<BlockStmt> BlockStmt::parse() {
 
     SymTab::deepIn();
     n->block = Block::parse();
-    SymTab::deepOut();
+
+    SymTab::deepOut(); // BlockStmt
 
     return n;
 }

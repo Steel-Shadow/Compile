@@ -10,6 +10,7 @@
 
 #include "lexer/NodeType.h"
 #include "parser/decl/Decl.h"
+#include "middle/CodeGen.h"
 
 // FuncType → 'void' | 'int'
 class FuncType {
@@ -54,6 +55,8 @@ class FuncDef {
 
 public:
     static std::unique_ptr<FuncDef> parse();
+
+    CodeGen::Function codeGen();
 };
 
 // MainFuncDef→'int''main''('')'Block

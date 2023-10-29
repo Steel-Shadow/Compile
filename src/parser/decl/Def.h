@@ -18,11 +18,18 @@ class Def {
     bool cons;
 
     std::string ident;
+
+private:
     std::vector<std::unique_ptr<Exp>> dims; // dim is ConstExp
-    std::unique_ptr<InitVal> initVal; // can be empty for VarDef(cons=false)
+    std::unique_ptr<InitVal> initVal;
+public:
+    const std::unique_ptr<InitVal> &getInitVal() const;
+    // can be empty for VarDef(cons=false)
 
 public:
     static std::unique_ptr<Def> parse(bool cons);
+
+    const std::string &getIdent() const;
 };
 
 #endif //COMPILER_DEF_H

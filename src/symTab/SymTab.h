@@ -15,7 +15,7 @@
 class SymTab {
     SymTab *prev; // prev SymTable
 
-    std::unique_ptr<SymTab> next;    // next SymTable
+    std::vector<std::unique_ptr<SymTab>> next; // next SymTable
 
     // Ident to Symbol
     std::unordered_map<std::string, Symbol> symbols;
@@ -23,6 +23,8 @@ class SymTab {
 public:
     static SymTab *cur;
     static SymTab global;
+
+    explicit SymTab(SymTab *prev);
 
     static bool reDefine(const std::string &ident);
 
