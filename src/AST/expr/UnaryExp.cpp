@@ -3,9 +3,9 @@
 //
 #include "Exp.h"
 
-#include "frontend/parser/decl/Decl.h"
+#include "AST/decl/Decl.h"
 #include "frontend/error/Error.h"
-#include "frontend/parser/func/Func.h"
+#include "AST/func/Func.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 

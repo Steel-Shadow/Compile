@@ -1,7 +1,8 @@
 #include "frontend/lexer/Lexer.h"
-#include "frontend/parser/CompUnit.h"
 #include "frontend/error/Error.h"
 #include "backend/CodeGen.h"
+#include "middle/IR.h"
+#include "AST/CompUnit.h"
 
 void compile(const std::string &inFile,
              const std::string &outFile,

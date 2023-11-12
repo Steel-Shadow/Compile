@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 
-#include "frontend/parser/expr/Exp.h"
+#include "AST/expr/Exp.h"
 #include "InitVal.h"
 
 // ConstDef → Ident { '[' ConstExp ']' } '=' ConstInitVal

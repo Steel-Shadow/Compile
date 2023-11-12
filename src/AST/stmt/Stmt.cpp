@@ -5,7 +5,7 @@
 #include <regex>
 #include "Stmt.h"
 
-#include "frontend/parser/decl/Decl.h"
+#include "AST/decl/Decl.h"
 #include "frontend/error/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"

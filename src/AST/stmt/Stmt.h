@@ -8,7 +8,6 @@
 #include <vector>
 #include <string>
 #include <stack>
-#include "frontend/lexer/NodeType.h"
 #include "middle/IR.h"
 
 struct Cond;

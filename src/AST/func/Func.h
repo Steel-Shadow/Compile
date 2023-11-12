@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "frontend/lexer/NodeType.h"
-#include "frontend/parser/decl/Decl.h"
+#include "AST/decl/Decl.h"
 
 // FuncType → 'void' | 'int'
 struct FuncType {

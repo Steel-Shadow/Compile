@@ -154,7 +154,7 @@ void BasicBlock::addInst(Instruction inst) {
 }
 
 BasicBlock::BasicBlock(std::string labelName, bool isFunc) :
-        label(Label(labelName, isFunc)) {
+        label(Label(std::move(labelName), isFunc)) {
 }
 
 void BasicBlock::outputIR() {

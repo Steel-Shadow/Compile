@@ -10,7 +10,6 @@
 
 #include "decl/Decl.h"
 #include "func/Func.h"
-#include "middle/IR.h"
 
 // CompUnit → {Decl} {FuncDef} MainFuncDef
 struct CompUnit {

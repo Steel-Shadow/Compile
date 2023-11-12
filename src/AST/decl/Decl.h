@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "Def.h"
-#include "frontend/parser/stmt/Stmt.h"
+#include "AST/stmt/Stmt.h"
 
 struct Btype {
     NodeType type;

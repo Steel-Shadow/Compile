@@ -4,7 +4,7 @@
 
 #include "InitVal.h"
 
-#include "frontend/parser/expr/Exp.h"
+#include "AST/expr/Exp.h"
 #include "frontend/parser/Parser.h"
 
 using namespace Parser;
