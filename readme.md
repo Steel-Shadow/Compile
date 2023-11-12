@@ -106,6 +106,8 @@ for 语句的 (...) 与 {...} 是同一个作用域，专题报告有错。
 Lexer 记录错误位置，在语法分析中完成错误判断、处理。
 
 ## C++ 坑
+### g++ vs clang++
+libc++ 的报错信息友好太多了
 
 ### Singleton
 
@@ -123,4 +125,4 @@ c++ 17 应该使用 variant 替代 union。
 
 ### Cmake
 
-学习 Cmake 构建 cpp 工程。makefile 过于原始，不够现代。**
+学习 Cmake 构建 cpp 工程。makefile 过于原始，不够现代。

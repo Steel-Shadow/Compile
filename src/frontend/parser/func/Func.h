@@ -1,0 +1,74 @@
+//
+// Created by Steel_Shadow on 2023/10/11.
+//
+
+#ifndef COMPILER_FUNC_H
+#define COMPILER_FUNC_H
+
+#include <memory>
+#include <vector>
+
+#include "frontend/lexer/NodeType.h"
+#include "frontend/parser/decl/Decl.h"
+
+// FuncType → 'void' | 'int'
+struct FuncType {
+    NodeType type;
+
+    [[nodiscard]] NodeType getType() const;
+
+    static std::unique_ptr<FuncType> parse();
+};
+
+// FuncFParam → BType Ident ['[' ']' { '[' ConstExp ']' }]
+struct FuncFParam {
+    std::unique_ptr<Btype> type;
+    std::string ident;
+    std::vector<std::unique_ptr<Exp>> dims; // if [], dims[0]=nullptr
+
+    static std::unique_ptr<FuncFParam> parse();
+
+    [[nodiscard]] const std::string &getId() const;
+
+    std::vector<int> getDims();
+};
+
+// FuncFParams → FuncFParam { ',' FuncFParam }
+struct FuncFParams {
+    std::vector<std::unique_ptr<FuncFParam>> funcFParams;
+
+    static std::unique_ptr<FuncFParams> parse();
+
+    [[nodiscard]] std::vector<Dimensions> getDimsVec() const;
+};
+
+//FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
+struct FuncDef {
+    std::unique_ptr<FuncType> funcType;
+    std::string ident;
+    std::unique_ptr<FuncFParams> funcFParams;
+    std::unique_ptr<Block> block;
+
+    static std::unique_ptr<FuncDef> parse();
+
+    std::unique_ptr<IR::Function> genIR();
+};
+
+// MainFuncDef→'int''main''('')'Block
+struct MainFuncDef {
+    std::unique_ptr<Block> block;
+
+    static std::unique_ptr<MainFuncDef> parse();
+
+    std::unique_ptr<IR::Function> genIR() const;
+};
+
+
+// FuncRParams → Exp { ',' Exp }
+struct FuncRParams {
+    std::vector<std::unique_ptr<Exp>> params;
+
+    static std::unique_ptr<FuncRParams> parse();
+};
+
+#endif //COMPILER_FUNC_H
