@@ -42,7 +42,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     if (!Stmt::retVoid) {
         if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
+            !dynamic_cast<ReturnStmt*>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -71,7 +71,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 
     if (!Stmt::retVoid) {
         if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
+            !dynamic_cast<ReturnStmt*>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -85,7 +85,8 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 
 std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     using namespace IR;
-    auto function = std::make_unique<Function>("main", NodeType::INTTK, std::vector<Dimensions>());
+    auto function = std::make_unique<Function>("main", Function::convertType(NodeType::INTTK),
+                                               std::vector<Dimensions>());
 
     SymTab::iterIn();
     Function::idAllocator = 0;
@@ -104,7 +105,9 @@ std::unique_ptr<FuncType> FuncType::parse() {
     if (Lexer::curLexType == NodeType::VOIDTK || Lexer::curLexType == NodeType::INTTK) {
         n->type = Lexer::curLexType;
         Lexer::next();
-    } else { Error::raise(); }
+    } else {
+        Error::raise();
+    }
 
     output(NodeType::FuncType);
     return n;
@@ -131,7 +134,7 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
 std::vector<Dimensions> FuncFParams::getDimsVec() const {
     std::vector<Dimensions> raws;
     raws.reserve(funcFParams.size());
-    for (auto &i: funcFParams) {
+    for (auto& i : funcFParams) {
         raws.push_back(i->getDims());
     }
     return raws;
@@ -169,14 +172,14 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
     return n;
 }
 
-const std::string &FuncFParam::getId() const {
+const std::string& FuncFParam::getId() const {
     return ident;
 }
 
 std::vector<int> FuncFParam::getDims() {
     std::vector<int> dimsValue;
     dimsValue.reserve(dims.size());
-    for (auto &i: dims) {
+    for (auto& i : dims) {
         dimsValue.push_back(i == nullptr ? 0 : i->evaluate());
     }
     return dimsValue;
@@ -200,15 +203,20 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     using namespace IR;
     NodeType reType = funcType->getType();
     auto params = SymTab::find(ident)->params;
-    auto function = std::make_unique<Function>(ident, reType, params);
+    auto function = std::make_unique<Function>(ident, Function::convertType(reType), params);
+
+    BasicBlocks bBlocks;
+    Function::idAllocator = 0;
 
     SymTab::iterIn();
-    Function::idAllocator = 0;
-    BasicBlocks bBlocks;
+
     bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
+    bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
     block->genIR(bBlocks);
-    function->setBasicBlocks(bBlocks);
+
+    bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 
+    function->setBasicBlocks(bBlocks);
     return function;
 }

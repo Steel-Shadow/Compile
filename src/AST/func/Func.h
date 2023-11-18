@@ -15,7 +15,7 @@
 struct FuncType {
     NodeType type;
 
-    [[nodiscard]] NodeType getType() const;
+    NodeType getType() const;
 
     static std::unique_ptr<FuncType> parse();
 };
@@ -28,7 +28,7 @@ struct FuncFParam {
 
     static std::unique_ptr<FuncFParam> parse();
 
-    [[nodiscard]] const std::string &getId() const;
+    const std::string& getId() const;
 
     std::vector<int> getDims();
 };
@@ -39,7 +39,7 @@ struct FuncFParams {
 
     static std::unique_ptr<FuncFParams> parse();
 
-    [[nodiscard]] std::vector<Dimensions> getDimsVec() const;
+    std::vector<Dimensions> getDimsVec() const;
 };
 
 //FuncDef → FuncType Ident '(' [FuncFParams] ')' Block

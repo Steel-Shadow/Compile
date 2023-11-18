@@ -1,0 +1,1 @@
+7z.exe a -tzip srcCode .\src\*

@@ -26,7 +26,7 @@ struct Decl : public BlockItem {
     std::unique_ptr<Btype> btype;
     std::vector<std::unique_ptr<Def>> defs;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<Def>> &getDefs() const;
+    const std::vector<std::unique_ptr<Def>> &getDefs() const;
 
     static std::unique_ptr<Decl> parse();
 

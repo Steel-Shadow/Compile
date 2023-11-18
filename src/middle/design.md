@@ -1,12 +1,16 @@
 常量声明、变量声明、读语句、写语句、赋值语句，加减乘除模除等运算语句、函数定义及调用语句
 
 ## todo:
+
 检查所有 IR unique_ptr move
 
-完善代码生成的变量类型系统
+完善代码生成的变量类型系统?
 
 局部变量地址：由目标代码生成完成，为每一个 Function 设置活动记录，
-allocate时记录变量地址
+allocate 时记录变量相对于当前 activation record 的 offset。
+
+遇到特殊 IR (InStack outStack) 时，将当前的 sp 当前偏移量 curOffset 入栈 stack<int> offsetStack，在结束时出栈恢复相应的
+curOffset。
 
 Cond 比较符号 ('<' | '>' | '<=' | '>=')
 
@@ -24,10 +28,6 @@ Cond 比较符号 ('<' | '>' | '<=' | '>=')
 Module{Global}{Function}
 Function{BasicBlock}  
 BasicBlock{Instruction}
-
-## Instruction
-
-四元式，非 SSA
 
 ## 中间代码生成
 
@@ -64,3 +64,5 @@ if (simple instanceof AssignStmt) {
 2. IR::Function 初始化时有一个空的 BasicBlock，后续可能无效。可以考虑删除空 BasicBlock
 3. Exp 中间代码生成中，常数 Number 生成 IR::Temp，对应 Mips 的 li 指令。立即数装载可以直接在计算中完成，不一定需要分开一步。后端代码优化考虑。
 4. BigForStmt 中间代码生成中，iter 结束后可直接判断 cond，减少运行的跳转数（但指令体积增大）
+5. 函数传参，使用 register $a0-$a3
+6. 函数如果没有调用其他函数，则 $ra 无需入栈

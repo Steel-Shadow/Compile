@@ -16,7 +16,9 @@ std::unique_ptr<Decl> Decl::parse() {
     if (Lexer::curLexType == NodeType::CONSTTK) {
         Lexer::next();
         n->cons = true;
-    } else { n->cons = false; }
+    } else {
+        n->cons = false;
+    }
 
     n->btype = Btype::parse();
 
@@ -36,62 +38,65 @@ std::unique_ptr<Decl> Decl::parse() {
     } else {
         output(NodeType::VarDecl);
     }
-//    output(NodeType::Decl);
+    //    output(NodeType::Decl);
     return n;
 }
 
-const std::vector<std::unique_ptr<Def>> &Decl::getDefs() const {
+const std::vector<std::unique_ptr<Def>>& Decl::getDefs() const {
     return defs;
 }
 
-void Decl::genIR(IR::BasicBlocks &bBlocks) {
+void Decl::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
-    for (auto &def: defs) {
+    for (auto& def : defs) {
         def->genIR(bBlocks);
     }
 }
 
-void Def::genIR(IR::BasicBlocks &bBlocks) {
+void Def::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
 
     auto var = std::make_unique<Var>(
-            ident,
-            SymTab::cur->getDepth(),
-            cons,
-            SymTab::find(ident)->dims
+        ident,
+        SymTab::cur->getDepth(),
+        cons,
+        SymTab::find(ident)->dims
     );
 
     auto size = std::make_unique<ConstVal>(getArraySize());
-    bBlocks.back()->addInst(Instruction(
-            Operator::Alloca,
-            nullptr,
-            std::make_unique<Var>(*var),
-            std::move(size)
+    bBlocks.back()->addInst(Inst(
+        Op::Alloca,
+        nullptr,
+        std::make_unique<Var>(*var),
+        std::move(size)
     ));
 
     if (initVal) {
-        if (dims.empty()) { // single value assign
-            auto *p = dynamic_cast<ExpInitVal *>(initVal.get());
+        if (dims.empty()) {
+            // single value assign
+            auto* p = dynamic_cast<ExpInitVal*>(initVal.get());
             auto value = p->exp->genIR(bBlocks);
 
-            bBlocks.back()->addInst(Instruction(
-                    Operator::Assign,
-                    std::move(var),
-                    std::move(value),
-                    nullptr
+            bBlocks.back()->addInst(Inst(
+                Op::Assign,
+                std::move(var),
+                std::move(value),
+                nullptr
             ));
-        } else { // array init
-            auto array = dynamic_cast<ArrayInitVal *>(initVal.get());
+        } else {
+            // array init
+            auto array = dynamic_cast<ArrayInitVal*>(initVal.get());
 
             int index = 0;
-            for (auto &expInit: array->getFlatten()) {
+            for (auto& expInit : array->getFlatten()) {
                 auto value = expInit->exp->genIR(bBlocks);
 
                 index++;
-                bBlocks.back()->addInst(Instruction(Operator::Store,
-                                                    std::move(value),
-                                                    std::move(var),
-                                                    std::make_unique<ConstVal>(index)));
+                bBlocks.back()->addInst(Inst(
+                    Op::Store,
+                    std::move(value),
+                    std::move(var),
+                    std::make_unique<ConstVal>(index)));
             }
         }
     }
@@ -100,7 +105,7 @@ void Def::genIR(IR::BasicBlocks &bBlocks) {
 int Def::getArraySize() const {
     auto symbol = SymTab::find(ident);
     int size = 1;
-    for (const auto &i: symbol->dims) {
+    for (const auto& i : symbol->dims) {
         size *= i;
     }
     return size;
@@ -111,7 +116,7 @@ std::unique_ptr<Btype> Btype::parse() {
 
     singleLex(NodeType::INTTK);
     n->type = NodeType::INTTK;
-//    output(NodeType::Btype);
+    //    output(NodeType::Btype);
     return n;
 }
 
@@ -121,7 +126,9 @@ std::string Ident::parse() {
     if (Lexer::curLexType == NodeType::IDENFR) {
         ident = Lexer::curToken;
         Lexer::next();
-    } else { Error::raise(); }
+    } else {
+        Error::raise();
+    }
 
     return ident;
 }

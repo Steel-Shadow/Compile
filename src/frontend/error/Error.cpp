@@ -12,20 +12,20 @@ std::ofstream Error::errorFileStream;
 
 void Error::raise(char code, int row) {
 #ifdef STDOUT_ERROR
-    std::cout << row << " " << code << std::endl;
+    std::cout << row << " " << code << '\n';
 #endif
-#ifdef FILE_PRINT_ERROR
-    errorFileStream << row << " " << code << std::endl;
+#ifdef FILEOUT_ERROR
+    errorFileStream << row << " " << code << '\n';
 #endif
 }
 
 // My error, which is not defined in course tasks.
-void Error::raise(const std::string &mes) {
+void Error::raise(const std::string& mes) {
 #ifdef STDOUT_ERROR
     std::cout << "error: " << mes << " "
-              << Lexer::curRow << "," << Lexer::column[0]
-              << "---------------------------------------"
-              << std::endl;
-//    exit(-1);
+        // << Lexer::curRow << "," << Lexer::column[0]
+        << "---------------------------------------"
+        << '\n';
+    // exit(-1);
 #endif
 }

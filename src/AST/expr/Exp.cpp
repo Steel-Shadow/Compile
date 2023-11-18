@@ -44,6 +44,6 @@ LVal *Exp::getLVal() const {
 }
 
 int BaseUnaryExp::evaluate() {
-    Error::raise("evaluate non-Number BaseUnaryExp");
+    Error::raise("evaluate non-Number non-ConstLVal BaseUnaryExp");
     return 0;
 }

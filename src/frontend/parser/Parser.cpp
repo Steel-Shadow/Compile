@@ -25,10 +25,10 @@ void Parser::singleLex(NodeType type, int row) {
 
 void Parser::output(NodeType type) {
 #ifdef STDOUT_PARSER
-    std::cout << "<" << typeToStr(type) << ">" << std::endl;
+    std::cout << "<" << typeToStr(type) << ">" << '\n';
 #endif
 #ifdef FILEOUT_PARSER
-    Lexer::outFileStream << "<" << typeToStr(type) << ">" << std::endl;
+    Lexer::outFileStream << "<" << typeToStr(type) << ">" << '\n';
 #endif
 }
 

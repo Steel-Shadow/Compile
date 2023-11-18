@@ -19,7 +19,7 @@ struct BaseUnaryExp {
     // override in Number
     virtual int evaluate();
 
-    virtual std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) = 0;
+    virtual std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) = 0;
 };
 
 struct LVal;
@@ -34,15 +34,15 @@ struct UnaryExp {
 
     static std::unique_ptr<UnaryExp> parse();
 
-    int evaluate();
+    int evaluate() const;
 
     size_t getRank() const;
 
     std::string getIdent() const;
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks);
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks);
 
-    LVal *getLVal() const;
+    LVal* getLVal() const;
 };
 
 // PrimaryExp → '(' Exp ')' | LVal | Number
@@ -59,24 +59,26 @@ struct FuncCall : public BaseUnaryExp {
     std::string ident;
     std::unique_ptr<FuncRParams> funcRParams;
 
-    const std::string &getIdent() const;
+    const std::string& getIdent() const;
 
     static std::unique_ptr<FuncCall> parse();
 
-    static void checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym);
+    static void checkParams(const std::unique_ptr<FuncCall>& n, int row, const Symbol* funcSym);
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) override;
 };
 
 struct Exp;
 
 struct PareExp : public PrimaryExp {
-// '(' Exp ')'
+    // '(' Exp ')'
     std::unique_ptr<Exp> exp;
 
     static std::unique_ptr<PareExp> parse();
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) override;
+
+    int evaluate() override;
 };
 
 // LVal → Ident {'[' Exp ']'}
@@ -91,7 +93,9 @@ struct LVal : public PrimaryExp {
     std::string getIdent() override;
 
     // Load a Var to Temp
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) override;
+
+    int evaluate() override;
 };
 
 // Number → IntConst
@@ -104,10 +108,10 @@ struct Number : public PrimaryExp {
 
     // load immediate number in a separate MIPS instruction
     // can be optimized into calculate instruction (backend)
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) override;
 };
 
-template<class T>
+template <class T>
 struct MultiExp {
     std::unique_ptr<T> first;
     std::vector<NodeType> ops;
@@ -116,19 +120,19 @@ struct MultiExp {
     // we don't need the destructor
     //     virtual ~MultiExp() = default;
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) {
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) {
         using namespace IR;
         auto lastRes = first->genIR(bBlocks);
         for (int i = 0; i < ops.size(); i++) {
-            auto &e = elements[i];
+            auto& e = elements[i];
             auto t = e->genIR(bBlocks);
             auto res = std::make_unique<Temp>();
             auto resCopy = std::make_unique<Temp>(*res);
-            bBlocks.back()->addInst(Instruction(
-                    NodeTypeToIROp(ops[i]),
-                    std::move(res),
-                    std::move(lastRes),
-                    std::move(t)
+            bBlocks.back()->addInst(Inst(
+                NodeTypeToIROp(ops[i]),
+                std::move(res),
+                std::move(lastRes),
+                std::move(t)
             ));
             lastRes = std::move(resCopy);
         }
@@ -142,7 +146,7 @@ struct MultiExp {
         return first->getIdent();
     }
 
-    LVal *getLVal() const {
+    LVal* getLVal() const {
         if (!elements.empty()) {
             return nullptr;
         }
@@ -197,7 +201,7 @@ struct Cond {
 
     static std::unique_ptr<Cond> parse();
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &basicBlocks) const;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& basicBlocks) const;
 };
 
 // Exp → AddExp
@@ -220,10 +224,10 @@ struct Exp {
     // if the Exp is not a single LVal or FuncCall, return ""
     std::string getIdent() const;
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const;
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks& bBlocks) const;
 
     // FuncCall rParam is an array
-    LVal *getLVal() const;
+    LVal* getLVal() const;
 };
 
 #endif  // COMPILER_EXP_H

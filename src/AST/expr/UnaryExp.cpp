@@ -1,6 +1,8 @@
 //
 // Created by Steel_Shadow on 2023/10/12.
 //
+#include <iostream>
+
 #include "Exp.h"
 
 #include "AST/decl/Decl.h"
@@ -38,23 +40,40 @@ std::string LVal::getIdent() {
     return ident;
 }
 
-std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto symbol = SymTab::find(ident);
     auto var = std::make_unique<IR::Var>(
-            ident,
-            SymTab::findDepth(ident),
-            symbol->cons,
-            symbol->dims);
+        ident,
+        SymTab::findDepth(ident),
+        symbol->cons,
+        symbol->dims);
 
-    auto res = std::make_unique<IR::Temp>();
-    bBlocks.back()->addInst(Instruction(IR::Operator::Load,
-                                        std::make_unique<Temp>(*res),
-                                        std::move(var),
-                                        nullptr
+    auto res = std::make_unique<Temp>();
+    bBlocks.back()->addInst(Inst(IR::Op::Load,
+                                 std::make_unique<Temp>(*res),
+                                 std::move(var),
+                                 nullptr
     ));
 
     return res;
+}
+
+int LVal::evaluate() {
+    auto sym = SymTab::find(ident);
+    if (sym == nullptr) {
+        Error::raise("LVal not found in evaluate()");
+        return 0;
+    } else if (!sym->cons) {
+        Error::raise("Non-const LVal in evaluate()");
+    } else if (sym->dims.empty()) {
+        for (auto [str,globVar] : IR::Module::getGlobVars()) {
+            if (str == ident)
+                return globVar.initVal[0];
+        }
+    }
+    Error::raise("Should not be here");
+    return 0;
 }
 
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
@@ -71,14 +90,14 @@ std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
 }
 
 size_t PrimaryExp::getRank() {
-    if (auto p = dynamic_cast<LVal *>(this)) {
+    if (auto p = dynamic_cast<LVal*>(this)) {
         return p->getRank();
     }
     return 0;
 }
 
 std::string PrimaryExp::getIdent() {
-    if (auto p = dynamic_cast<LVal *>(this)) {
+    if (auto p = dynamic_cast<LVal*>(this)) {
         return p->getIdent();
     }
     return "";
@@ -95,8 +114,12 @@ std::unique_ptr<PareExp> PareExp::parse() {
     return n;
 }
 
-std::unique_ptr<IR::Temp> PareExp::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> PareExp::genIR(IR::BasicBlocks& bBlocks) {
     return exp->genIR(bBlocks);
+}
+
+int PareExp::evaluate() {
+    return exp->evaluate();
 }
 
 std::unique_ptr<Number> Number::parse() {
@@ -105,7 +128,9 @@ std::unique_ptr<Number> Number::parse() {
     if (Lexer::curLexType == NodeType::INTCON) {
         n->intConst = std::stoi(Lexer::curToken);
         Lexer::next();
-    } else { Error::raise(); }
+    } else {
+        Error::raise();
+    }
 
     output(NodeType::Number);
     return n;
@@ -115,14 +140,14 @@ int Number::evaluate() {
     return intConst;
 }
 
-std::unique_ptr<IR::Temp> Number::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> Number::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto n = std::make_unique<Temp>();
 
-    bBlocks.back()->addInst(Instruction(Operator::LoadImd,
-                                        std::make_unique<Temp>(*n),
-                                        std::make_unique<ConstVal>(intConst),
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(Op::LoadImd,
+                                 std::make_unique<Temp>(*n),
+                                 std::make_unique<ConstVal>(intConst),
+                                 nullptr));
     return n;
 }
 
@@ -133,42 +158,42 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
     while (!getBaseUnaryExp) {
         // UnaryExp → {UnaryOp} ( PrimaryExp | Ident '(' [FuncRParams] ')' )
         switch (Lexer::curLexType) {
-            case NodeType::PLUS:
-            case NodeType::MINU:
-            case NodeType::NOT:
-                // UnaryOp → '+' | '−' | '!'
-                n->ops.push_back(Lexer::curLexType);
-                Lexer::next();
+        case NodeType::PLUS:
+        case NodeType::MINU:
+        case NodeType::NOT:
+            // UnaryOp → '+' | '−' | '!'
+            n->ops.push_back(Lexer::curLexType);
+            Lexer::next();
 
-                output(NodeType::UnaryOp);
-                break;
+            output(NodeType::UnaryOp);
+            break;
 
-            case NodeType::LPARENT:
-            case NodeType::INTCON:
-                // PrimaryExp → '(' Exp ')' | LVal | Number
+        case NodeType::LPARENT:
+        case NodeType::INTCON:
+            // PrimaryExp → '(' Exp ')' | LVal | Number
+            n->baseUnaryExp = PrimaryExp::parse();
+            getBaseUnaryExp = true;
+
+            output(NodeType::UnaryExp);
+            break;
+
+        case NodeType::IDENFR:
+            // PrimaryExp → '(' Exp ')' | LVal | Number
+            // LVal → Ident {'[' Exp ']'}
+
+            // Ident '(' [FuncRParams] ')'
+            if (Lexer::peek(1).first == NodeType::LPARENT) {
+                n->baseUnaryExp = FuncCall::parse();
+            } else {
                 n->baseUnaryExp = PrimaryExp::parse();
-                getBaseUnaryExp = true;
+            }
+            getBaseUnaryExp = true;
 
-                output(NodeType::UnaryExp);
-                break;
+            output(NodeType::UnaryExp);
+            break;
 
-            case NodeType::IDENFR:
-                // PrimaryExp → '(' Exp ')' | LVal | Number
-                // LVal → Ident {'[' Exp ']'}
-
-                // Ident '(' [FuncRParams] ')'
-                if (Lexer::peek(1).first == NodeType::LPARENT) {
-                    n->baseUnaryExp = FuncCall::parse();
-                } else {
-                    n->baseUnaryExp = PrimaryExp::parse();
-                }
-                getBaseUnaryExp = true;
-
-                output(NodeType::UnaryExp);
-                break;
-
-            default:
-                Error::raise();
+        default:
+            Error::raise();
         }
     }
 
@@ -179,10 +204,10 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
     return n;
 }
 
-int UnaryExp::evaluate() {
+int UnaryExp::evaluate() const {
     int val = baseUnaryExp->evaluate();
 
-    for (auto op: ops) {
+    for (auto op : ops) {
         if (op == NodeType::MINU) {
             val = -val;
         }
@@ -192,46 +217,46 @@ int UnaryExp::evaluate() {
 }
 
 size_t UnaryExp::getRank() const {
-    if (auto p = dynamic_cast<PrimaryExp *>(baseUnaryExp.get())) {
+    if (auto p = dynamic_cast<PrimaryExp*>(baseUnaryExp.get())) {
         return p->getRank();
     }
     return 0;
 }
 
 std::string UnaryExp::getIdent() const {
-    if (auto p = dynamic_cast<PrimaryExp *>(baseUnaryExp.get())) {
+    if (auto p = dynamic_cast<PrimaryExp*>(baseUnaryExp.get())) {
         return p->getIdent();
     }
-    if (auto p = dynamic_cast<FuncCall *>(baseUnaryExp.get())) {
+    if (auto p = dynamic_cast<FuncCall*>(baseUnaryExp.get())) {
         return p->getIdent();
     }
     return "";
 }
 
-std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto res = baseUnaryExp->genIR(bBlocks);
 
     bool negative = false;
-    for (NodeType op: ops) {
+    for (NodeType op : ops) {
         if (op == NodeType::MINU) {
             negative = !negative;
         }
     }
     if (negative) {
-        bBlocks.back()->addInst(Instruction(
-                Operator::Neg,
-                nullptr,
-                std::make_unique<Temp>(*res),
-                nullptr
+        bBlocks.back()->addInst(Inst(
+            Op::Neg,
+            nullptr,
+            std::make_unique<Temp>(*res),
+            nullptr
         ));
     }
 
     return res;
 }
 
-LVal *UnaryExp::getLVal() const {
-    if (auto lVal = dynamic_cast<LVal *>(baseUnaryExp.get())) {
+LVal* UnaryExp::getLVal() const {
+    if (auto lVal = dynamic_cast<LVal*>(baseUnaryExp.get())) {
         return lVal;
     }
     return nullptr;
@@ -243,7 +268,7 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
     int row = Lexer::curRow;
     n->ident = Ident::parse();
 
-    Symbol *funcSym = SymTab::find(n->ident);
+    Symbol* funcSym = SymTab::find(n->ident);
     if (!funcSym) {
         Error::raise('c', row);
     }
@@ -259,15 +284,15 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
     return n;
 }
 
-void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym) {
-    auto &realParams = n->funcRParams->params;
+void FuncCall::checkParams(const std::unique_ptr<FuncCall>& n, int row, const Symbol* funcSym) {
+    auto& realParams = n->funcRParams->params;
     // check number of realParams
     if (realParams.size() != funcSym->params.size()) {
         Error::raise('d', row);
     } else {
         // check type of params
         for (int i = 0; i < realParams.size(); i++) {
-            auto &rParam = realParams[i];
+            auto& rParam = realParams[i];
 
             size_t formalRank = funcSym->params[i].size();
             size_t symRank;
@@ -298,7 +323,7 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Sy
     }
 }
 
-std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto funcSym = SymTab::find(ident);
 
@@ -311,10 +336,10 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
         if (formalRank > 0) {
             // array (pass param by address)
             auto var = std::make_unique<Var>(
-                    name,
-                    SymTab::findDepth(name),
-                    symbol->cons,
-                    symbol->dims);
+                name,
+                SymTab::findDepth(name),
+                symbol->cons,
+                symbol->dims);
             /*todo: 代码生成2 函数参数为数组
              * int a[2][2] = {{1,2},{3,4}};
              * void f(int p[]){}
@@ -323,28 +348,28 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
              * 遍历实参下标，计算函数实参的offset
              * 代码生成2
              */
-            LVal *lVar = (*rParam)->getLVal();
+            LVal* lVar = (*rParam)->getLVal();
             int offset;
-            bBlocks.back()->addInst(Instruction(Operator::PushParam,
-                                                nullptr,
-                                                std::move(var),
-                                                std::make_unique<ConstVal>(offset)));
-        } else if (formalRank == 0) {
+            bBlocks.back()->addInst(Inst(Op::PushParam,
+                                         nullptr,
+                                         std::move(var),
+                                         std::make_unique<ConstVal>(offset)));
+        } else {
             // single LVal (not array)
             // load Var from memory to Temp
-            bBlocks.back()->addInst(Instruction(Operator::PushParam,
-                                                nullptr,
-                                                (*rParam)->genIR(bBlocks),
-                                                nullptr));
+            bBlocks.back()->addInst(Inst(Op::PushParam,
+                                         nullptr,
+                                         (*rParam)->genIR(bBlocks),
+                                         nullptr));
         }
 
         i++;
     }
 
-    bBlocks.back()->addInst(Instruction(IR::Operator::Call,
-                                        nullptr,
-                                        std::make_unique<Label>(ident, true),
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(IR::Op::Call,
+                                 nullptr,
+                                 std::make_unique<Label>(ident, true),
+                                 nullptr));
 
     NodeType reType = funcSym->reType;
     if (reType == NodeType::INTTK) {
@@ -355,6 +380,6 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
     }
 }
 
-const std::string &FuncCall::getIdent() const {
+const std::string& FuncCall::getIdent() const {
     return ident;
 }

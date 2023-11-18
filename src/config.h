@@ -8,21 +8,27 @@
 //#define ERROR
 #define CODEGEN
 
+
 #if defined(ERROR)
-#define FILE_PRINT_ERROR
+#define FILEOUT_ERROR
 #else
 //#define FILEOUT_LEXER
 //#define FILEOUT_PARSER
 #endif
 
+
 #if defined(CODEGEN)
 #define FILEOUT_MIPS
 #endif
 
+
 #if defined(MY_DEBUG)
+// #define STDOUT_LEXER
+// #define STDOUT_PARSER
 #define STDOUT_ERROR
-//#define STDOUT_LEXER
-//#define STDOUT_PARSER
+// #define STDOUT_IR
+#define STDOUT_MIPS
+#define FILEOUT_IR
 #endif
 
 

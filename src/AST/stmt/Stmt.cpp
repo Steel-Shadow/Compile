@@ -31,7 +31,7 @@ std::unique_ptr<Block> Block::parse() {
     return n;
 }
 
-const std::vector<std::unique_ptr<BlockItem>> &Block::getBlockItems() const {
+const std::vector<std::unique_ptr<BlockItem>>& Block::getBlockItems() const {
     return blockItems;
 }
 
@@ -49,9 +49,9 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
     return n;
 }
 
-void Block::genIR(IR::BasicBlocks &basicBlocks) {
+void Block::genIR(IR::BasicBlocks& basicBlocks) {
     using namespace IR;
-    for (auto &i: blockItems) {
+    for (auto& i : blockItems) {
         i->genIR(basicBlocks);
     }
 }
@@ -62,41 +62,41 @@ std::unique_ptr<Stmt> Stmt::parse() {
     std::unique_ptr<Stmt> n;
 
     switch (Lexer::curLexType) {
-        case NodeType::LBRACE:
-            n = BlockStmt::parse();
-            break;
-        case NodeType::IFTK:
-            n = IfStmt::parse();
-            break;
-        case NodeType::BREAKTK:
-            n = BreakStmt::parse();
-            break;
-        case NodeType::CONTINUETK:
-            n = ContinueStmt::parse();
-            break;
-        case NodeType::FORTK:
-            n = BigForStmt::parse();
-            break;
-        case NodeType::RETURNTK:
-            n = ReturnStmt::parse();
-            break;
-        case NodeType::PRINTFTK:
-            n = PrintStmt::parse();
-            break;
-        case NodeType::SEMICN:
-            Lexer::next();
-            break;
-        case NodeType::IDENFR:
-            //find '=' to distinguish LVal and Exp
-            if (Lexer::findAssignBeforeSemicolon()) {
-                n = LValStmt::parse();
-            } else {
-                n = ExpStmt::parse();
-            }
-            break;
-        default:
+    case NodeType::LBRACE:
+        n = BlockStmt::parse();
+        break;
+    case NodeType::IFTK:
+        n = IfStmt::parse();
+        break;
+    case NodeType::BREAKTK:
+        n = BreakStmt::parse();
+        break;
+    case NodeType::CONTINUETK:
+        n = ContinueStmt::parse();
+        break;
+    case NodeType::FORTK:
+        n = BigForStmt::parse();
+        break;
+    case NodeType::RETURNTK:
+        n = ReturnStmt::parse();
+        break;
+    case NodeType::PRINTFTK:
+        n = PrintStmt::parse();
+        break;
+    case NodeType::SEMICN:
+        Lexer::next();
+        break;
+    case NodeType::IDENFR:
+        //find '=' to distinguish LVal and Exp
+        if (Lexer::findAssignBeforeSemicolon()) {
+            n = LValStmt::parse();
+        } else {
             n = ExpStmt::parse();
-            break;
+        }
+        break;
+    default:
+        n = ExpStmt::parse();
+        break;
     }
 
     output(NodeType::Stmt);
@@ -125,8 +125,16 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
     return n;
 }
 
-void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
+void IfStmt::genIR(IR::BasicBlocks& bBlocks) {
+    SymTab::iterIn();
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::InStack, nullptr, nullptr, nullptr));
+
     // todo: 代码生成2
+
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
+    SymTab::iterOut();
 }
 
 bool BigForStmt::inFor;
@@ -166,8 +174,11 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
 std::stack<IR::Label> BigForStmt::stackEndLabel{};
 std::stack<IR::Label> BigForStmt::stackIterLabel{};
 
-void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
+void BigForStmt::genIR(IR::BasicBlocks& bBlocks) {
     SymTab::iterIn();
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::InStack, nullptr, nullptr, nullptr));
+
     using namespace IR;
     init->genIR(bBlocks);
 
@@ -183,24 +194,26 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     bBlocks.push_back(std::move(forCondBlock));
     auto tempCond = cond->genIR(bBlocks);
-    pForCondBlock->jump = Instruction(IR::Operator::Bif0,
-                                      nullptr,
-                                      std::move(tempCond),
-                                      std::make_unique<Label>(forEndBlock->label));
+    pForCondBlock->jump = Inst(IR::Op::Bif0,
+                               nullptr,
+                               std::move(tempCond),
+                               std::make_unique<Label>(forEndBlock->label));
 
     stmt->genIR(bBlocks);
 
     bBlocks.push_back(std::move(forIterBlock));
     iter->genIR(bBlocks);
-    pForIterBlock->jump = Instruction(IR::Operator::Br,
-                                      nullptr,
-                                      std::make_unique<Label>(pForCondBlock->label),
-                                      nullptr);
+    pForIterBlock->jump = Inst(IR::Op::Br,
+                               nullptr,
+                               std::make_unique<Label>(pForCondBlock->label),
+                               nullptr);
 
     bBlocks.push_back(std::move(forEndBlock));
 
     stackEndLabel.pop();
     stackIterLabel.pop();
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }
 
@@ -215,7 +228,7 @@ std::unique_ptr<ForStmt> ForStmt::parse() {
     return n;
 }
 
-void ForStmt::genIR(IR::BasicBlocks &basicBlocks) const {
+void ForStmt::genIR(IR::BasicBlocks& basicBlocks) const {
     using namespace IR;
     auto t = exp->genIR(basicBlocks);
 
@@ -224,10 +237,10 @@ void ForStmt::genIR(IR::BasicBlocks &basicBlocks) const {
                                         SymTab::findDepth(lVal->ident),
                                         sym->cons,
                                         sym->dims);
-    basicBlocks.back()->addInst(Instruction(IR::Operator::Assign,
-                                            std::move(irLVal),
-                                            std::move(t),
-                                            nullptr));
+    basicBlocks.back()->addInst(Inst(IR::Op::Assign,
+                                     std::move(irLVal),
+                                     std::move(t),
+                                     nullptr));
 }
 
 std::unique_ptr<BreakStmt> BreakStmt::parse() {
@@ -242,12 +255,12 @@ std::unique_ptr<BreakStmt> BreakStmt::parse() {
     return std::make_unique<BreakStmt>();
 }
 
-void BreakStmt::genIR(IR::BasicBlocks &bBlocks) {
+void BreakStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
-    bBlocks.back()->addInst(Instruction(IR::Operator::Br,
-                                        nullptr,
-                                        std::make_unique<Label>(BigForStmt::stackEndLabel.top()),
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(IR::Op::Br,
+                                 nullptr,
+                                 std::make_unique<Label>(BigForStmt::stackEndLabel.top()),
+                                 nullptr));
 }
 
 std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
@@ -262,12 +275,12 @@ std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
     return std::make_unique<ContinueStmt>();
 }
 
-void ContinueStmt::genIR(IR::BasicBlocks &bBlocks) {
+void ContinueStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
-    bBlocks.back()->addInst(Instruction(IR::Operator::Br,
-                                        nullptr,
-                                        std::make_unique<Label>(BigForStmt::stackIterLabel.top()),
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(IR::Op::Br,
+                                 nullptr,
+                                 std::make_unique<Label>(BigForStmt::stackIterLabel.top()),
+                                 nullptr));
 }
 
 std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
@@ -289,23 +302,23 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
     return n;
 }
 
-void ReturnStmt::genIR(IR::BasicBlocks &bBlocks) {
+void ReturnStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     if (exp) {
         auto temp = exp->genIR(bBlocks);
-        bBlocks.back()->addInst(Instruction(IR::Operator::Ret,
-                                            nullptr,
-                                            std::move(temp),
-                                            nullptr));
+        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+                                     nullptr,
+                                     std::move(temp),
+                                     nullptr));
     } else {
-        bBlocks.back()->addInst(Instruction(IR::Operator::Ret,
-                                            nullptr,
-                                            nullptr,
-                                            nullptr));
+        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr));
     }
 }
 
-void PrintStmt::checkFormatString(std::string str) {
+void PrintStmt::checkFormatString(const std::string& str) {
     // skip begin and end " "
     for (int i = 1; i < str.length() - 1; i++) {
         char c = str[i];
@@ -338,7 +351,9 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
         n->checkFormatString(Lexer::curToken);
         n->formatString = Lexer::curToken;
         Lexer::next();
-    } else { Error::raise(); }
+    } else {
+        Error::raise();
+    }
 
     int numOfExp = 0;
     while (Lexer::curLexType == NodeType::COMMA) {
@@ -356,7 +371,7 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     return n;
 }
 
-std::vector<std::string> PrintStmt::spilt(std::string input, const std::string &pattern) {
+std::vector<std::string> PrintStmt::spilt(std::string input, const std::string& pattern) {
     std::regex regex(pattern);
 
     std::sregex_token_iterator iter(input.begin(), input.end(), regex, -1);
@@ -365,37 +380,36 @@ std::vector<std::string> PrintStmt::spilt(std::string input, const std::string &
     return {iter, end};
 }
 
-void PrintStmt::genIR(IR::BasicBlocks &bBlocks) {
+void PrintStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
-    auto strings = spilt(formatString, "%d|\\n");
-
     // string | %d
     std::string buffer;
-    for (int i = 0, j = 0; i < formatString.length(); i++) {
+    // skip \" in formatString
+    for (int i = 1, j = 0; i < formatString.length() - 1; i++) {
         if (formatString[i] == '%') {
             i++;
-            Str::MIPS_strings.push_back(buffer);
+            Str::MIPS_strings.push_back('\"' + buffer + '\"');
             buffer.clear();
-            bBlocks.back()->addInst(Instruction(IR::Operator::PrintStr,
-                                                nullptr,
-                                                std::make_unique<Str>(),
-                                                nullptr));
+            bBlocks.back()->addInst(Inst(IR::Op::PrintStr,
+                                         nullptr,
+                                         std::make_unique<Str>(),
+                                         nullptr));
 
             auto t = exps[j++]->genIR(bBlocks);
-            bBlocks.back()->addInst(Instruction(IR::Operator::PrintInt,
-                                                nullptr,
-                                                std::move(t),
-                                                nullptr));
+            bBlocks.back()->addInst(Inst(IR::Op::PrintInt,
+                                         nullptr,
+                                         std::move(t),
+                                         nullptr));
         } else {
             buffer += formatString[i];
         }
     }
 
-    Str::MIPS_strings.push_back(buffer);
-    bBlocks.back()->addInst(Instruction(IR::Operator::PrintStr,
-                                        nullptr,
-                                        std::make_unique<Str>(),
-                                        nullptr));
+    Str::MIPS_strings.push_back('\"' + buffer + '\"');
+    bBlocks.back()->addInst(Inst(IR::Op::PrintStr,
+                                 nullptr,
+                                 std::make_unique<Str>(),
+                                 nullptr));
 }
 
 std::unique_ptr<LValStmt> LValStmt::parse() {
@@ -435,7 +449,7 @@ std::unique_ptr<GetIntStmt> GetIntStmt::parse() {
     return n;
 }
 
-void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
+void GetIntStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto sym = SymTab::find(lVal->ident);
     auto irLVal = std::make_unique<Var>(lVal->ident,
@@ -443,10 +457,10 @@ void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
                                         sym->cons,
                                         sym->dims);
 
-    bBlocks.back()->addInst(Instruction(IR::Operator::GetInt,
-                                        std::move(irLVal),
-                                        nullptr,
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(IR::Op::GetInt,
+                                 std::move(irLVal),
+                                 nullptr,
+                                 nullptr));
 }
 
 std::unique_ptr<AssignStmt> AssignStmt::parse() {
@@ -459,21 +473,21 @@ std::unique_ptr<AssignStmt> AssignStmt::parse() {
     return n;
 }
 
-void AssignStmt::genIR(IR::BasicBlocks &bBlocks) {
+void AssignStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     auto t = exp->genIR(bBlocks);
 
     auto symbol = SymTab::find(lVal->ident);
     auto var = std::make_unique<IR::Var>(
-            lVal->ident,
-            SymTab::findDepth(lVal->ident),
-            symbol->cons,
-            symbol->dims);
+        lVal->ident,
+        SymTab::findDepth(lVal->ident),
+        symbol->cons,
+        symbol->dims);
 
-    bBlocks.back()->addInst(Instruction(IR::Operator::Assign,
-                                        std::move(var),
-                                        std::move(t),
-                                        nullptr));
+    bBlocks.back()->addInst(Inst(IR::Op::Assign,
+                                 std::move(var),
+                                 std::move(t),
+                                 nullptr));
 }
 
 std::unique_ptr<ExpStmt> ExpStmt::parse() {
@@ -486,7 +500,7 @@ std::unique_ptr<ExpStmt> ExpStmt::parse() {
     return n;
 }
 
-void ExpStmt::genIR(IR::BasicBlocks &bBlocks) {
+void ExpStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     if (exp) {
         auto t = exp->genIR(bBlocks);
@@ -504,8 +518,14 @@ std::unique_ptr<BlockStmt> BlockStmt::parse() {
     return n;
 }
 
-void BlockStmt::genIR(IR::BasicBlocks &bBlocks) {
+void BlockStmt::genIR(IR::BasicBlocks& bBlocks) {
     SymTab::iterIn();
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::InStack, nullptr, nullptr, nullptr));
+
     block->genIR(bBlocks);
+
+    bBlocks.back()->addInst(IR::Inst(
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }
