@@ -31,9 +31,6 @@ struct Label : public Assembly {
 
 void irToMips(IR::Inst& inst);
 
-int getGlobOffset(IR::Var* var);
-int getStackOffset(IR::Var* var);
-
 void optimize();
 
 void outputAll(IR::Module& module);

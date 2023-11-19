@@ -214,6 +214,13 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
     block->genIR(bBlocks);
 
+    if (bBlocks.back()->instructions.back().op != Op::Ret) {
+        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr));
+    }
+
     bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 

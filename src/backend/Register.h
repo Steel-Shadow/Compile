@@ -4,6 +4,8 @@
 
 #ifndef REGISTER_H
 #define REGISTER_H
+#include <stack>
+
 #include "middle/IR.h"
 #include "tools/CircularQueue.h"
 

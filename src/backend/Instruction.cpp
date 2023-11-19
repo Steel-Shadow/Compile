@@ -7,7 +7,7 @@
 #include <string>
 
 #include "Register.h"
-#include "StackMemory.h"
+#include "Memory.h"
 #include "frontend/symTab/SymTab.h"
 
 using namespace MIPS;
@@ -96,7 +96,7 @@ J_Inst::J_Inst(Op op, const Label& label):
 
 std::string J_Inst::toString() {
     return opToString(op) + '\t'
-        + label.toString();
+        + label.nameAndId;
 }
 
 void MIPS::InStack(IR::Inst&) {
@@ -113,9 +113,9 @@ void MIPS::Assign(IR::Inst& inst) {
     auto arg1 = dynamic_cast<IR::Temp*>(inst.arg1.get());
 
     if (res->depth == 0) {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::gp, getGlobOffset(res)));
+        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(arg1), Register::none, Label(res->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, getStackOffset(res)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, -getStackOffset(res)));
     }
 }
 
@@ -198,9 +198,9 @@ void MIPS::GetInt(IR::Inst& inst) {
 
     auto res = dynamic_cast<IR::Var*>(inst.res.get());
     if (res->depth == 0) {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::v0, Register::gp, getGlobOffset(res)));
+        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, Register::v0, Register::none, Label(res->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::v0, Register::sp, getStackOffset(res)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::v0, Register::sp, -getStackOffset(res)));
     }
 }
 
@@ -239,9 +239,9 @@ void MIPS::Load(IR::Inst& inst) {
     auto arg1 = dynamic_cast<IR::Var*>(inst.arg1.get());
 
     if (arg1->depth == 0) {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, newReg(res), Register::gp, getGlobOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_label_Inst>(Op::lw, newReg(res), Register::none, Label(arg1->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, newReg(res), Register::sp, getStackOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, newReg(res), Register::sp, -getStackOffset(arg1)));
     }
 }
 
@@ -250,9 +250,9 @@ void MIPS::Store(IR::Inst& inst) {
     auto arg1 = dynamic_cast<IR::Var*>(inst.arg1.get());
 
     if (arg1->depth == 0) {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::gp, getGlobOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(res), Register::none, Label(arg1->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::sp, getStackOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::sp, -getStackOffset(arg1)));
     }
 }
 
@@ -282,44 +282,51 @@ void MIPS::Call(IR::Inst& inst) {
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::ra, Register::sp, -StackMemory::curOffset));
 
     // move $sp for called function
-    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::ra, Register::sp, -StackMemory::curOffset));
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, -StackMemory::curOffset));
 
     // jal to function body
     assemblies.push_back(std::make_unique<J_Inst>(Op::jal, func));
+
+
+    // restore $ra $sp
+    int offset = 0;
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::ra, Register::sp, offset));
+    offset += 4;
+    offset += 4; // $sp should be the last to restore
+
+    // resotre %n(IR::Temp) -> $t0-$t3
+    for (int i = static_cast<int>(Register::t0); i <= static_cast<int>(Register::t0) + MAX_TEMP_REGS; ++i) {
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, static_cast<Register>(i), Register::sp, offset));
+        offset += 4;
+    }
+
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::sp, Register::sp, 4));
 }
 
 void MIPS::PushParam(IR::Inst& inst) {
     // todo: 代码生成二 数组传参
     // 优化 使用 a0-a3 传参
-    auto param = dynamic_cast<IR::Temp*>(inst.res.get());
+    auto param = dynamic_cast<IR::Temp*>(inst.arg1.get());
 
     StackMemory::curOffset += 4;
-    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(param), Register::sp, StackMemory::curOffset));
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(param), Register::sp, -StackMemory::curOffset));
 }
 
 void MIPS::Ret(IR::Inst& inst) {
-    if (auto ret = dynamic_cast<IR::Temp*>(inst.arg1.get())) {
-        assemblies.push_back(std::make_unique<R_Inst>(Op::move, Register::v0, getReg(ret), Register::none));
-    }
-
-    // main don't need restore the environment
-    // In MIPS gen, main is the first function
     static bool firstIsMainRet = true;
-    if (!firstIsMainRet) {
-        // restore $ra $sp
-        int offset = 0;
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::ra, Register::sp, offset));
-        offset += 4;
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::sp, Register::sp, offset));
-        offset += 4;
 
-        // resotre %n(IR::Temp) -> $t0-$t3
-        for (int i = static_cast<int>(Register::t0); i <= static_cast<int>(Register::t3); ++i) {
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, static_cast<Register>(i), Register::sp, offset));
-            offset += 4;
+    auto ret = dynamic_cast<IR::Temp*>(inst.arg1.get());
+    if (firstIsMainRet) {
+        firstIsMainRet = false;
+        if (ret) {
+            assemblies.push_back(std::make_unique<R_Inst>(Op::move, Register::a0, getReg(ret), Register::none));
+        }
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::li, Register::v0, Register::none, 17));
+        assemblies.push_back(std::make_unique<R_Inst>(Op::syscall, Register::none, Register::none, Register::none));
+    } else {
+        if (ret) {
+            assemblies.push_back(std::make_unique<R_Inst>(Op::move, Register::v0, getReg(ret), Register::none));
         }
         assemblies.push_back(std::make_unique<R_Inst>(Op::jr, Register::none, Register::ra, Register::none));
-    } else {
-        firstIsMainRet = true;
     }
 }

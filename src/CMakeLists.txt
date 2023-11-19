@@ -12,8 +12,7 @@ add_executable(
 
         ${HEADERS}
         ${SOURCES}
-
-        ${INCLUDE_SOURCES}
+        #        ${INCLUDE_SOURCES}
 )
 
 # include *.h

@@ -54,6 +54,13 @@ public:
         return size == 0;
     }
 
+    void clear() {
+        std::fill(data, data + MAX_SIZE, T{});
+        size = 0;
+        front = 0;
+        rear = 0;
+    }
+
 private:
     T* data;
     int size;

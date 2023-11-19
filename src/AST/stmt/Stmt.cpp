@@ -195,19 +195,19 @@ void BigForStmt::genIR(IR::BasicBlocks& bBlocks) {
 
     bBlocks.push_back(std::move(forCondBlock));
     auto tempCond = cond->genIR(bBlocks);
-    pForCondBlock->jump = Inst(IR::Op::Bif0,
-                               nullptr,
-                               std::move(tempCond),
-                               std::make_unique<Label>(forEndBlock->label));
+    pForCondBlock->addInst(Inst(IR::Op::Bif0,
+                                nullptr,
+                                std::move(tempCond),
+                                std::make_unique<Label>(forEndBlock->label)));
 
     stmt->genIR(bBlocks);
 
     bBlocks.push_back(std::move(forIterBlock));
     iter->genIR(bBlocks);
-    pForIterBlock->jump = Inst(IR::Op::Br,
-                               nullptr,
-                               std::make_unique<Label>(pForCondBlock->label),
-                               nullptr);
+    pForIterBlock->addInst(Inst(IR::Op::Br,
+                                nullptr,
+                                std::make_unique<Label>(pForCondBlock->label),
+                                nullptr));
 
     bBlocks.push_back(std::move(forEndBlock));
 
@@ -372,7 +372,7 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     return n;
 }
 
-void PrintStmt::addStr(IR::BasicBlocks& bBlocks, std::string buffer) {
+void PrintStmt::addStr(IR::BasicBlocks& bBlocks, std::string& buffer) {
     if (buffer.empty()) {
         return;
     }

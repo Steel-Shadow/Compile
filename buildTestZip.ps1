@@ -1,7 +1,7 @@
 cmake --build .\cmake-build-debug\
 cd bin
 .\Compiler.exe
-java -jar .\mars.jar mips.txt
+java -jar .\mars.jar nc mips.txt
 cd ..
-Compress-Archive -LiteralPath .\src -DestinationPath .\srcCode.zip -Update
+7z a srcCode.zip src\ CMakeLists.txt > nul
 

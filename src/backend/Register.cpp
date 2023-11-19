@@ -10,7 +10,7 @@
 using namespace MIPS;
 
 int MIPS::curRealReg = 0;
-CircularQueue<std::pair<int, Register>, 4> MIPS::circularTempRegs;
+CircularQueue<std::pair<int, Register>, MAX_TEMP_REGS> MIPS::circularTempRegs;
 
 Register MIPS::newReg(IR::Temp* temp) {
     static int index = 0;

@@ -7,7 +7,7 @@
 
 #include "config.h"
 #include "Instruction.h"
-#include "StackMemory.h"
+#include "Memory.h"
 #include "frontend/error/Error.h"
 
 using namespace MIPS;
@@ -69,9 +69,17 @@ void MIPS::outputAll(IR::Module& module) {
     }
 
     // other function (except main)
-    for (auto& func : module.getFunctions()) {
-        for (auto basicBlock = func->getBasicBlocks().begin();
-             basicBlock != std::prev(func->getBasicBlocks().end());
+    for (auto func = module.getFunctions().begin();
+         func != std::prev(module.getFunctions().end());
+         ++func) {
+        circularTempRegs.clear();
+        StackMemory::varToOffset.clear();
+        // todo: 把函数参数传入 varToOffset
+        // for (auto param : func) {
+
+        // }
+        for (auto basicBlock = (*func)->getBasicBlocks().begin();
+             basicBlock != (*func)->getBasicBlocks().end();
              ++basicBlock) {
             assemblies.push_back(std::make_unique<Label>((*basicBlock)->label.nameAndId));
             for (auto& inst : (*basicBlock)->instructions) {
@@ -87,21 +95,6 @@ void MIPS::outputAll(IR::Module& module) {
     for (auto& assem : assemblies) {
         output(assem->toString());
     }
-}
-
-int MIPS::getGlobOffset(IR::Var* var) {
-    int i = 0;
-    for (auto [name,globVar] : IR::Module::getGlobVars()) {
-        if (name == var->name) {
-            return i * 4;
-        }
-        ++i;
-    }
-    return -1;
-}
-
-int MIPS::getStackOffset(IR::Var* var) {
-    return StackMemory::varToOffset[var];
 }
 
 void MIPS::optimize() {

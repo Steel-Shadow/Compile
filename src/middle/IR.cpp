@@ -42,10 +42,10 @@ void Inst::outputIR() const {
 
 #if defined(STDOUT_IR)
     cout << opToStr(op) << '\t'
-    << (res ? res->toString() : "_") << '\t'
-    << (arg1 ? arg1->toString() : "_") << '\t'
-    << (arg2 ? arg2->toString() : "_") << '\t'
-    << '\n';
+        << (res ? res->toString() : "_") << '\t'
+        << (arg1 ? arg1->toString() : "_") << '\t'
+        << (arg2 ? arg2->toString() : "_") << '\t'
+        << '\n';
 #endif
 
 #if defined(FILEOUT_IR)
@@ -214,7 +214,6 @@ void BasicBlock::outputIR() const {
     for (auto& i : instructions) {
         i.outputIR();
     }
-    jump.outputIR();
 }
 
 int IR::sizeOfType(Type type) {
@@ -246,10 +245,6 @@ std::string Var::toString() const {
         s += "[" + std::to_string(i) + "]";
     }
     return s;
-}
-
-bool Var::operator==(const Var& other) {
-    return name == other.name && depth == other.depth;
 }
 
 Temp::Temp(Type type)
@@ -309,4 +304,16 @@ Str::Str() {
 
 std::string Str::toString() const {
     return "str_" + std::to_string(id);
+}
+
+bool IR::operator==(const Var& lhs, const Var& rhs) {
+    return lhs.name == rhs.name
+        && lhs.depth == rhs.depth;
+}
+
+std::size_t IR::hash_value(const Var& obj) {
+    std::size_t seed = 0x2100EB1C;
+    seed ^= (seed << 6) + (seed >> 2) + 0x0CCF5A17 + std::hash<std::string>()(obj.name);
+    seed ^= (seed << 6) + (seed >> 2) + 0x6CBE80FE + static_cast<std::size_t>(obj.depth);
+    return seed;
 }

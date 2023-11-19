@@ -101,9 +101,11 @@ struct Var : public Element {
 
     Var(std::string name, int depth, bool cons, const std::vector<int>& dims, Type type = Type::Int);
 
-    std::string toString() const override;
+    friend bool operator==(const Var& lhs, const Var& rhs);
 
-    bool operator==(const Var& other);
+    friend std::size_t hash_value(const Var& obj);
+
+    std::string toString() const override;
 };
 
 // temp register
@@ -171,12 +173,10 @@ struct Label : public Element {
     std::string toString() const override;
 };
 
-// if (jump.op == Empty)
 struct BasicBlock {
     // go to next BasicBlock
     Label label; // string is good for debugging
     std::vector<Inst> instructions;
-    Inst jump{Op::Empty, nullptr, nullptr, nullptr}; // Br Call
 
     // if isFunc, no suffix number
     explicit BasicBlock(std::string labelName, bool isFunc = false);
@@ -249,18 +249,21 @@ public:
 Op NodeTypeToIROp(NodeType n);
 } // namespace IR
 
+namespace std {
 template <>
-struct std::hash<IR::Var*> {
-    std::size_t operator()(const IR::Var* k) const noexcept {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-
-        std::size_t seed = 0x771DE635;
-        seed ^= (seed << 6) + (seed >> 2) + 0x68DBA875 + std::hash<std::string>()(k->name);
-        seed ^= (seed << 6) + (seed >> 2) + 0x48E349E1 + static_cast<std::size_t>(k->depth);
-        return seed;
+struct hash<IR::Var*> {
+    std::size_t operator()(const IR::Var* key) const noexcept {
+        return hash_value(*key);
     }
 };
 
+template <>
+struct equal_to<IR::Var*> {
+    bool operator()(const IR::Var* lhs, const IR::Var* rhs) const {
+        return *lhs == *rhs;
+    }
+};
+}
+
 #endif //COMPILER_IR_H
+
