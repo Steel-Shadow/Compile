@@ -27,8 +27,8 @@
 // #define STDOUT_PARSER
 #define STDOUT_ERROR
 // #define STDOUT_IR
-#define STDOUT_MIPS
 #define FILEOUT_IR
+#define STDOUT_MIPS
 #endif
 
 

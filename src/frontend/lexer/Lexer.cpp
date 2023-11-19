@@ -21,7 +21,7 @@ Token& Lexer::curToken = words[0].second;
 int Lexer::pos[deep]; // count from 1
 int Lexer::column[deep]; // count from 1
 int Lexer::row[deep]; // count from 1.
-int& Lexer::curRow = Lexer::row[0];
+int& Lexer::curRow = row[0];
 
 char c; // c = fileContents[posTemp - 1]
 int posTemp;
@@ -104,17 +104,19 @@ Word Lexer::next() {
         nextChar();
         if (c == '/') {
             // q2
-            while (nextChar() != '\n');
+            while (nextChar() != '\n') {
+            }
             // line comment //
             token = "";
             lexType = NodeType::COMMENT;
         } else if (c == '*') {
             // q5
         q5:
-            while (nextChar() != '*');
+            while (nextChar() != '*') {
+            }
             do {
-                if (c == '*');
-                else if (c == '/') {
+                if (c == '*') {
+                } else if (c == '/') {
                     break; // q7
                 } else {
                     goto q5;
@@ -142,10 +144,7 @@ Word Lexer::next() {
         nextChar();
     } else {
         // special operator +-*/ && &
-        for (const auto& i : reserveWords) {
-            std::string str = i.first;
-            NodeType type = i.second;
-
+        for (const auto& [str, type] : reserveWords) {
             if (fileContents.substr(posTemp - 1, str.length()) == str) {
                 posTemp += static_cast<int>(str.length());
                 columnTemp += static_cast<int>(str.length());
@@ -290,7 +289,8 @@ void Lexer::init(const std::string& inFile, const std::string& outFile) {
     buffer << inFileStream.rdbuf();
     fileContents = buffer.str();
 
-    while (isspace(nextChar()));
+    while (isspace(nextChar())) {
+    }
     for (int i = 0; i < deep; ++i) {
         next();
     }

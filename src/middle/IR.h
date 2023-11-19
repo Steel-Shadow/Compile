@@ -116,7 +116,7 @@ struct Temp : public Element {
 
     // function return Temp
     // id must be -1
-    explicit Temp(int id, Type type = Type::Int);
+    explicit Temp(int id, Type type);
 
     Temp(Temp const& other);
 

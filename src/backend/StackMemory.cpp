@@ -18,3 +18,5 @@ void StackMemory::Deallocate() {
     curOffset = offsetStack.top();
     offsetStack.pop();
 }
+
+

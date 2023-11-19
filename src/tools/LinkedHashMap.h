@@ -23,12 +23,12 @@ public:
             auto list_iterator = std::prev(data.end());
             key_to_iterator[key] = list_iterator;
         }
-    };
+    }
 
     bool containsKey(const K& key) const {
         // ReSharper disable once CppUseAssociativeContains
         return key_to_iterator.find(key) != key_to_iterator.end();
-    };
+    }
 
     V get(const K& key) const {
         auto it = key_to_iterator.find(key);
@@ -37,7 +37,7 @@ public:
         } else {
             throw std::out_of_range("Key not found");
         }
-    };
+    }
 
     void remove(const K& key) {
         auto it = key_to_iterator.find(key);
@@ -45,23 +45,23 @@ public:
             data.erase(it->second);
             key_to_iterator.erase(it);
         }
-    };
+    }
 
     void replace(const K& key, const V& value) {
         auto it = key_to_iterator.find(key);
         if (it != key_to_iterator.end()) {
             it->second->second = value;
         }
-    };
+    }
 
     // iterator for std::list
     typename std::list<std::pair<K, V>>::iterator begin() {
         return data.begin();
-    };
+    }
 
     typename std::list<std::pair<K, V>>::iterator end() {
         return data.end();
-    };
+    }
 
 private:
     std::list<std::pair<K, V>> data;

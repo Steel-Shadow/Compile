@@ -60,7 +60,7 @@ std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
 std::vector<int> ArrayInitVal::evaluate() {
     std::vector<int> res;
 
-    for (auto &i: array) {
+    for (auto& i : array) {
         auto t = i->evaluate();
         res.insert(res.end(), t.begin(), t.end());
     }
@@ -68,14 +68,14 @@ std::vector<int> ArrayInitVal::evaluate() {
     return res;
 }
 
-std::vector<ExpInitVal *> ArrayInitVal::getFlatten() {
-    std::vector<ExpInitVal *> flatten;
-    for (auto &i: array) {
-        if (auto p1 = dynamic_cast<ExpInitVal *>(i.get())) {
+std::vector<ExpInitVal*> ArrayInitVal::getFlatten() {
+    std::vector<ExpInitVal*> flatten;
+    for (auto& i : array) {
+        if (auto p1 = dynamic_cast<ExpInitVal*>(i.get())) {
             flatten.push_back(p1);
         } else {
-            auto p2 = dynamic_cast<ArrayInitVal *>(i.get());
-            std::vector<ExpInitVal *> subFlatten = p2->getFlatten();
+            auto p2 = dynamic_cast<ArrayInitVal*>(i.get());
+            std::vector<ExpInitVal*> subFlatten = p2->getFlatten();
             flatten.insert(flatten.end(), subFlatten.begin(), subFlatten.end());
         }
     }

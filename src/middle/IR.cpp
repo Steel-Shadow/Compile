@@ -164,8 +164,13 @@ void Function::setBasicBlocks(BasicBlocks& bBlocks) {
 
 void Module::outputIR() const {
     for (const auto& [fst, snd] : globVars) {
+#if defined(STDOUT_IR)
         std::cout << fst << '\n';
+#endif
+
+#if defined(FILEOUT_IR)
         IRFileStream << fst << '\n';
+#endif
     }
     for (auto& i : functions) {
         for (auto& j : i->getBasicBlocks()) {
@@ -206,9 +211,12 @@ BasicBlock::BasicBlock(std::string labelName, bool isFunc)
 
 void BasicBlock::outputIR() const {
     using namespace std;
+#if defined(STDOUT_IR)
     cout << label.nameAndId << ":" << '\n';
+#endif
+#if defined(FILEOUT_IR)
     IRFileStream << label.nameAndId << ":" << '\n';
-
+#endif
     for (auto& i : instructions) {
         i.outputIR();
     }

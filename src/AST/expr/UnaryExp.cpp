@@ -244,12 +244,14 @@ std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks& bBlocks) {
         }
     }
     if (negative) {
+        auto negRes = std::make_unique<Temp>();
         bBlocks.back()->addInst(Inst(
             Op::Neg,
-            nullptr,
-            std::make_unique<Temp>(*res),
+            std::make_unique<Temp>(*negRes.get()),
+            std::move(res),
             nullptr
         ));
+        return negRes;
     }
 
     return res;
@@ -373,7 +375,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks& bBlocks) {
 
     NodeType reType = funcSym->reType;
     if (reType == NodeType::INTTK) {
-        return std::make_unique<Temp>(-1);
+        return std::make_unique<Temp>(-1, Type::Int);
     } else {
         // reType == NodeType::VOIDTK
         return nullptr;

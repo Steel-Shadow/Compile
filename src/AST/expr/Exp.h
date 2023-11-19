@@ -212,7 +212,7 @@ struct Exp {
 
     std::unique_ptr<AddExp> addExp;
 
-    static std::unique_ptr<Exp> parse(bool con);
+    static std::unique_ptr<Exp> parse(bool cons);
 
     int evaluate() const;
 

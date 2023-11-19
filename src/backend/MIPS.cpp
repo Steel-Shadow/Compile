@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "Instruction.h"
-#include "Register.h"
 #include "StackMemory.h"
 #include "frontend/error/Error.h"
 

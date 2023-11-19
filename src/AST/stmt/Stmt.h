@@ -175,8 +175,7 @@ struct PrintStmt : public Stmt {
 
 private:
     void checkFormatString(const std::string& str);
-
-    static std::vector<std::string> spilt(std::string input, const std::string& pattern);
+    static void addStr(IR::BasicBlocks& bBlocks, std::string buffer);
 };
 
 #endif //COMPILER_STMT_H

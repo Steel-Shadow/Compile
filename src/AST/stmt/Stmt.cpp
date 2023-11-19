@@ -24,7 +24,7 @@ std::unique_ptr<Block> Block::parse() {
         n->blockItems.push_back(std::move(i));
     }
 
-    Block::lastRow = Lexer::curRow;
+    lastRow = Lexer::curRow;
     Lexer::next(); // }
 
     output(NodeType::Block);
@@ -84,6 +84,7 @@ std::unique_ptr<Stmt> Stmt::parse() {
         n = PrintStmt::parse();
         break;
     case NodeType::SEMICN:
+        n = std::make_unique<ExpStmt>();
         Lexer::next();
         break;
     case NodeType::IDENFR:
@@ -371,13 +372,17 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     return n;
 }
 
-std::vector<std::string> PrintStmt::spilt(std::string input, const std::string& pattern) {
-    std::regex regex(pattern);
+void PrintStmt::addStr(IR::BasicBlocks& bBlocks, std::string buffer) {
+    if (buffer.empty()) {
+        return;
+    }
 
-    std::sregex_token_iterator iter(input.begin(), input.end(), regex, -1);
-    std::sregex_token_iterator end;
-
-    return {iter, end};
+    IR::Str::MIPS_strings.push_back('\"' + buffer + '\"');
+    buffer.clear();
+    bBlocks.back()->addInst(IR::Inst(IR::Op::PrintStr,
+                                     nullptr,
+                                     std::make_unique<IR::Str>(),
+                                     nullptr));
 }
 
 void PrintStmt::genIR(IR::BasicBlocks& bBlocks) {
@@ -388,12 +393,7 @@ void PrintStmt::genIR(IR::BasicBlocks& bBlocks) {
     for (int i = 1, j = 0; i < formatString.length() - 1; i++) {
         if (formatString[i] == '%') {
             i++;
-            Str::MIPS_strings.push_back('\"' + buffer + '\"');
-            buffer.clear();
-            bBlocks.back()->addInst(Inst(IR::Op::PrintStr,
-                                         nullptr,
-                                         std::make_unique<Str>(),
-                                         nullptr));
+            addStr(bBlocks, buffer);
 
             auto t = exps[j++]->genIR(bBlocks);
             bBlocks.back()->addInst(Inst(IR::Op::PrintInt,
@@ -404,12 +404,7 @@ void PrintStmt::genIR(IR::BasicBlocks& bBlocks) {
             buffer += formatString[i];
         }
     }
-
-    Str::MIPS_strings.push_back('\"' + buffer + '\"');
-    bBlocks.back()->addInst(Inst(IR::Op::PrintStr,
-                                 nullptr,
-                                 std::make_unique<Str>(),
-                                 nullptr));
+    addStr(bBlocks, buffer);
 }
 
 std::unique_ptr<LValStmt> LValStmt::parse() {
@@ -503,7 +498,7 @@ std::unique_ptr<ExpStmt> ExpStmt::parse() {
 void ExpStmt::genIR(IR::BasicBlocks& bBlocks) {
     using namespace IR;
     if (exp) {
-        auto t = exp->genIR(bBlocks);
+        exp->genIR(bBlocks);
     }
 }
 
