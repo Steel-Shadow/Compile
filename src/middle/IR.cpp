@@ -34,10 +34,6 @@ Inst::Inst(
       arg2(std::move(arg2)) {
 }
 
-Inst::Inst():
-    op(Op::Empty) {
-}
-
 void Inst::outputIR() const {
     using namespace std;
     if (op == Op::Empty) {
@@ -63,8 +59,6 @@ void Inst::outputIR() const {
 
 std::string Inst::opToStr(Op anOperator) {
     switch (anOperator) {
-    case Op::Empty:
-        return "Empty";
     case Op::Assign:
         return "Assign";
     case Op::Add:
@@ -146,7 +140,7 @@ GlobVar::GlobVar(bool cons, const std::vector<int>& dims)
     for (const int i : dims) {
         size *= i;
     }
-    initVal = std::vector<int>(size, 0);
+    initVal = std::vector(size, 0);
 }
 
 

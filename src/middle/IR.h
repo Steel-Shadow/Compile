@@ -150,8 +150,6 @@ struct Inst {
     std::unique_ptr<Element> arg1;
     std::unique_ptr<Element> arg2;
 
-    Inst();
-
     Inst(Op op,
          std::unique_ptr<Element> res,
          std::unique_ptr<Element> arg1,
@@ -178,7 +176,7 @@ struct BasicBlock {
     // go to next BasicBlock
     Label label; // string is good for debugging
     std::vector<Inst> instructions;
-    Inst jump; // Br Call
+    Inst jump{Op::Empty, nullptr, nullptr, nullptr}; // Br Call
 
     // if isFunc, no suffix number
     explicit BasicBlock(std::string labelName, bool isFunc = false);
