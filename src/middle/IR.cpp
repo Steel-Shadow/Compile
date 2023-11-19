@@ -3,6 +3,9 @@
 //
 #include "IR.h"
 #include <iostream>
+#include <utility>
+#include <utility>
+
 #include "frontend/error/Error.h"
 #include "config.h"
 
@@ -145,14 +148,14 @@ GlobVar::GlobVar(bool cons, const std::vector<int>& dims)
 
 
 Function::Function(std::string name, Type reType,
-                   const std::vector<Dimensions>& params):
+                   const std::vector<Param>& params):
     name(std::move(name)),
     reType(reType),
     params(params) {
     idAllocator = 0;
 }
 
-void Function::setBasicBlocks(BasicBlocks& bBlocks) {
+void Function::moveBasicBlocks(BasicBlocks&& bBlocks) {
     basicBlocks = std::move(bBlocks);
 }
 
@@ -193,6 +196,10 @@ Type Function::convertType(NodeType type) {
         Error::raise("Bad Function reType");
         return Type::Void;
     }
+}
+
+std::vector<Param> Function::getParams() const {
+    return params;
 }
 
 void BasicBlock::addInst(Inst inst) {
@@ -237,6 +244,12 @@ Var::Var(std::string name,
     cons(cons),
     dims(dims),
     type(type) {
+}
+
+Var::Var(const std::string& name, int depth):
+    name(name),
+    depth(depth),
+    cons(false), type(Type::Int) {
 }
 
 std::string Var::toString() const {

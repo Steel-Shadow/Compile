@@ -115,7 +115,7 @@ void MIPS::Assign(IR::Inst& inst) {
     if (res->depth == 0) {
         assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(arg1), Register::none, Label(res->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, -getStackOffset(res)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, -getStackOffset(*res)));
     }
 }
 
@@ -200,7 +200,7 @@ void MIPS::GetInt(IR::Inst& inst) {
     if (res->depth == 0) {
         assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, Register::v0, Register::none, Label(res->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::v0, Register::sp, -getStackOffset(res)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::v0, Register::sp, -getStackOffset(*res)));
     }
 }
 
@@ -231,7 +231,7 @@ void MIPS::Alloca(IR::Inst& inst) {
     int byte = sizeOfType(size->type) * size->value;
 
     StackMemory::curOffset += byte;
-    StackMemory::varToOffset[var] = StackMemory::curOffset;
+    StackMemory::varToOffset[*var] = StackMemory::curOffset;
 }
 
 void MIPS::Load(IR::Inst& inst) {
@@ -241,7 +241,7 @@ void MIPS::Load(IR::Inst& inst) {
     if (arg1->depth == 0) {
         assemblies.push_back(std::make_unique<I_label_Inst>(Op::lw, newReg(res), Register::none, Label(arg1->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, newReg(res), Register::sp, -getStackOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, newReg(res), Register::sp, -getStackOffset(*arg1)));
     }
 }
 
@@ -252,7 +252,7 @@ void MIPS::Store(IR::Inst& inst) {
     if (arg1->depth == 0) {
         assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(res), Register::none, Label(arg1->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::sp, -getStackOffset(arg1)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::sp, -getStackOffset(*arg1)));
     }
 }
 
@@ -286,7 +286,6 @@ void MIPS::Call(IR::Inst& inst) {
 
     // jal to function body
     assemblies.push_back(std::make_unique<J_Inst>(Op::jal, func));
-
 
     // restore $ra $sp
     int offset = 0;

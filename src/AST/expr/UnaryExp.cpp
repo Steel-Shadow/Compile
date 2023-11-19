@@ -296,7 +296,7 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall>& n, int row, const Sy
         for (int i = 0; i < realParams.size(); i++) {
             auto& rParam = realParams[i];
 
-            size_t formalRank = funcSym->params[i].size();
+            size_t formalRank = funcSym->params[i].second.size();
             size_t symRank;
 
             auto lVal = rParam->getLVal();
@@ -334,7 +334,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks& bBlocks) {
         auto name = (*rParam)->getIdent();
 
         auto symbol = SymTab::find(name); // LVal / FuncCall
-        size_t formalRank = funcSym->params[i].size();
+        size_t formalRank = funcSym->params[i].second.size();
         if (formalRank > 0) {
             // array (pass param by address)
             auto var = std::make_unique<Var>(

@@ -5,17 +5,21 @@
 #ifndef COMPILER_SYMBOL_H
 #define COMPILER_SYMBOL_H
 
-
 #include <vector>
 #include "frontend/lexer/NodeType.h"
 
+struct Symbol;
+
+using Dimensions = std::vector<int>;
+using Param = std::pair<std::string, Dimensions>;
+
 enum class SymType {
-    Value, // const var
+    Value,
+    // const var
     Func,
     Param
 };
 
-using Dimensions = std::vector<int>;
 
 // all information in a Symbol (also redundant info)
 // use SymType type to distinguish
@@ -31,11 +35,11 @@ struct Symbol {
 
     // func
     NodeType reType{NodeType::LEX_EMPTY};
-    std::vector<Dimensions> params; // only save dimension
+    std::vector<Param> params; // only save dimension
 
-    Symbol(bool cons, const std::vector<int> &dims); // const var
-    Symbol(NodeType reType, const std::vector<Dimensions> &params); // func
-    explicit Symbol(const std::vector<int> &dims); // param
+    Symbol(bool cons, const std::vector<int>& dims); // const var
+    Symbol(NodeType reType, const std::vector<Param>& params); // func
+    explicit Symbol(const std::vector<int>& dims); // param
 };
 
 #endif //COMPILER_SYMBOL_H

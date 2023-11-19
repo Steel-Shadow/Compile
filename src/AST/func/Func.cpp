@@ -3,6 +3,10 @@
 //
 
 #include "Func.h"
+
+#include <utility>
+#include <utility>
+
 #include "frontend/error/Error.h"
 
 #include "frontend/parser/Parser.h"
@@ -24,18 +28,16 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     SymTab::deepIn();
 
-    std::vector<Dimensions> params;
+    std::vector<Param> params;
 
     singleLex(NodeType::LPARENT);
     if (Lexer::curLexType != NodeType::RPARENT) {
         n->funcFParams = FuncFParams::parse();
-        params = n->funcFParams->getDimsVec();
+        params = n->funcFParams->getParameters();
     }
     singleLex(NodeType::RPARENT, row);
 
-    SymTab::add(n->ident, n->funcType->getType(),
-                params,
-                SymTab::cur->getPrev());
+    SymTab::add(n->ident, Symbol(n->funcType->getType(), params), SymTab::cur->getPrev());
 
     Stmt::retVoid = (n->funcType->getType() == NodeType::VOIDTK);
     n->block = Block::parse();
@@ -85,18 +87,22 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 
 std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     using namespace IR;
-    auto function = std::make_unique<Function>("main", Function::convertType(NodeType::INTTK),
-                                               std::vector<Dimensions>());
+    auto main = std::make_unique<Function>(
+        "main", Function::convertType(NodeType::INTTK), std::vector<Param>());
 
-    SymTab::iterIn();
-    Function::idAllocator = 0;
     BasicBlocks bBlocks;
     bBlocks.emplace_back(std::make_unique<BasicBlock>("main", true));
-    block->genIR(bBlocks);
-    function->setBasicBlocks(bBlocks);
-    SymTab::iterOut();
+    bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
+    SymTab::iterIn();
 
-    return function;
+    Function::idAllocator = 0;
+    block->genIR(bBlocks);
+
+    SymTab::iterOut();
+    bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
+
+    main->moveBasicBlocks(std::move(bBlocks));
+    return main;
 }
 
 std::unique_ptr<FuncType> FuncType::parse() {
@@ -131,11 +137,11 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
     return n;
 }
 
-std::vector<Dimensions> FuncFParams::getDimsVec() const {
-    std::vector<Dimensions> raws;
+std::vector<Param> FuncFParams::getParameters() const {
+    std::vector<Param> raws;
     raws.reserve(funcFParams.size());
     for (auto& i : funcFParams) {
-        raws.push_back(i->getDims());
+        raws.push_back(std::make_pair(i->ident, i->getDims()));
     }
     return raws;
 }
@@ -167,7 +173,7 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
         }
     }
 
-    SymTab::add(n->getId(), n->getDims());
+    SymTab::add(n->getId(), Symbol(n->getDims()));
     output(NodeType::FuncFParam);
     return n;
 }
@@ -224,6 +230,6 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 
-    function->setBasicBlocks(bBlocks);
+    function->moveBasicBlocks(std::move(bBlocks));
     return function;
 }

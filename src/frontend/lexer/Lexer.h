@@ -46,6 +46,6 @@ namespace Lexer {
     Word next();
 
     bool findAssignBeforeSemicolon();
-}  // namespace Lexer
+}
 
 #endif  // COMPILER_LEXER_H

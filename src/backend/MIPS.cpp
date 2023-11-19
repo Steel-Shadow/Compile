@@ -74,10 +74,15 @@ void MIPS::outputAll(IR::Module& module) {
          ++func) {
         circularTempRegs.clear();
         StackMemory::varToOffset.clear();
-        // todo: 把函数参数传入 varToOffset
-        // for (auto param : func) {
 
-        // }
+        // set function's parameters to varToOffset
+        // explain in markdown and Memory.h
+        int offset = 4 * (2 + MAX_TEMP_REGS);
+        for (auto [ident,dimenstions] : (*func)->getParams()) {
+            StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
+            offset += 4;
+        }
+
         for (auto basicBlock = (*func)->getBasicBlocks().begin();
              basicBlock != (*func)->getBasicBlocks().end();
              ++basicBlock) {

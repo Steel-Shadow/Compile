@@ -5,10 +5,10 @@
 #include "Memory.h"
 using namespace MIPS;
 
-std::unordered_map<IR::Var*, int> StackMemory::varToOffset;
+std::unordered_map<IR::Var, int> StackMemory::varToOffset;
 
 int StackMemory::curOffset;
-std::stack<int> StackMemory::offsetStack{{0}};
+std::stack<int> StackMemory::offsetStack{};
 
 void StackMemory::Allocate() {
     offsetStack.push(curOffset);
@@ -19,11 +19,11 @@ void StackMemory::Deallocate() {
     offsetStack.pop();
 }
 
-int MIPS::getGlobOffset(IR::Var* var) {
+int MIPS::getGlobOffset(IR::Var& var) {
     // todo: 代码生成二 数组长度计算
     int i = data_segment - gp_init;
     for (auto [name,globVar] : IR::Module::getGlobVars()) {
-        if (name == var->name) {
+        if (name == var.name) {
             return i;
         }
         i += 4;
@@ -31,6 +31,6 @@ int MIPS::getGlobOffset(IR::Var* var) {
     return -1;
 }
 
-int MIPS::getStackOffset(IR::Var* var) {
+int MIPS::getStackOffset(IR::Var& var) {
     return StackMemory::varToOffset[var];
 }

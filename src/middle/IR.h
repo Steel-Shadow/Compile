@@ -10,14 +10,13 @@
 #include <vector>
 
 #include "frontend/lexer/NodeType.h"
+#include "frontend/symTab/Symbol.h"
 
 // Intermediate Representation
 // like the Parser, specific genIR method is distributed in respective AST node struct.
 // IR generation is the 2nd pass (1st pass builds the AST).
 namespace IR {
 extern std::ofstream IRFileStream;
-
-using Dimensions = std::vector<int>;
 
 enum class Type {
     Void,
@@ -100,6 +99,8 @@ struct Var : public Element {
     Type type;
 
     Var(std::string name, int depth, bool cons, const std::vector<int>& dims, Type type = Type::Int);
+
+    Var(const std::string& name, int depth);
 
     friend bool operator==(const Var& lhs, const Var& rhs);
 
@@ -193,7 +194,7 @@ using BasicBlocks = std::vector<std::unique_ptr<BasicBlock>>;
 class Function {
     std::string name;
     Type reType; // void int
-    std::vector<Dimensions> params; // Param -> p | p[] | p[][...]
+    std::vector<Param> params; // Param -> p | p[] | p[][...]
     BasicBlocks basicBlocks;
 
 public:
@@ -201,15 +202,16 @@ public:
     // reset to 0 at start of Function
     static int idAllocator;
 
-    Function(std::string name, Type reType,
-             const std::vector<Dimensions>& params);
+    Function(std::string name, Type reType, const std::vector<Param>& params);
 
-    void setBasicBlocks(BasicBlocks& bBlocks);
+    void moveBasicBlocks(BasicBlocks&& bBlocks);
 
     const std::string& getName() const;
 
     const BasicBlocks& getBasicBlocks() const;
     static Type convertType(NodeType type);
+
+    [[nodiscard]] std::vector<Param> getParams() const;
 };
 
 // backend CodeGen should not rely on SymTab
@@ -247,23 +249,22 @@ public:
 };
 
 Op NodeTypeToIROp(NodeType n);
-} // namespace IR
+}
 
 namespace std {
 template <>
-struct hash<IR::Var*> {
-    std::size_t operator()(const IR::Var* key) const noexcept {
-        return hash_value(*key);
+struct hash<IR::Var> {
+    std::size_t operator()(const IR::Var& key) const noexcept {
+        return hash_value(key);
     }
 };
 
 template <>
-struct equal_to<IR::Var*> {
-    bool operator()(const IR::Var* lhs, const IR::Var* rhs) const {
-        return *lhs == *rhs;
+struct equal_to<IR::Var> {
+    bool operator()(const IR::Var& lhs, const IR::Var& rhs) const {
+        return lhs == rhs;
     }
 };
 }
 
 #endif //COMPILER_IR_H
-

@@ -13,7 +13,7 @@
 // tree
 // global -next-> SymTab... -next-> *cur
 class SymTab {
-    SymTab *prev; // prev SymTable
+    SymTab* prev; // prev SymTable
 
     std::vector<std::unique_ptr<SymTab>> next; // next SymTable
 
@@ -23,43 +23,28 @@ class SymTab {
     int depth;
 
 public:
-    static SymTab *cur;
+    static SymTab* cur;
     static SymTab global;
 
-    explicit SymTab(SymTab *prev);
+    explicit SymTab(SymTab* prev);
 
-    static bool reDefine(const std::string &ident);
+    static bool reDefine(const std::string& ident);
 
-    static Symbol *find(const std::string &ident);
+    static Symbol* find(const std::string& ident);
 
     // find depth of Symbol from current SymTab
     // return -1 if not found
-    static int findDepth(const std::string &ident);
+    static int findDepth(const std::string& ident);
 
-    // const var
     // no effect if reDefine(ident)
-    static void add(const std::string &ident,
-                    bool cons,
-                    const std::vector<int> &dims);
-
-    // param
-    // no effect if reDefine(ident)
-    static void add(const std::string &ident,
-                    const std::vector<int> &dims);
-
-    // func
-    // no effect if reDefine(ident)
-    static void add(const std::string &ident,
-                    NodeType reType,
-                    const std::vector<Dimensions> &params,
-                    SymTab *where = cur);
+    static void add(const std::string& ident, Symbol&& symbol, SymTab* where = cur);
 
     // create a new empty SymTab, and set cur to the new one
     static void deepIn();
 
     static void deepOut();
 
-    SymTab *getPrev() const;
+    SymTab* getPrev() const;
 
 
     // breadth-first search

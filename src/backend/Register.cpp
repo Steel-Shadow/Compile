@@ -22,6 +22,9 @@ Register MIPS::newReg(IR::Temp* temp) {
 }
 
 Register MIPS::getReg(IR::Temp* temp) {
+    if (temp->id == -1) {
+        return Register::v0; // return value of function
+    }
     for (int i = 0; i < MAX_TEMP_REGS; i++) {
         if (circularTempRegs.getData()[i].first == temp->id) {
             return circularTempRegs.getData()[i].second;
