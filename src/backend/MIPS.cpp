@@ -15,7 +15,7 @@ using namespace MIPS;
 std::ofstream MIPS::mipsFileStream;
 std::vector<std::unique_ptr<Assembly>> MIPS::assemblies;
 
-void MIPS::output(const std::string& str, bool newLine) {
+void MIPS::output(const std::string &str, bool newLine) {
 #if defined(FILEOUT_MIPS)
     mipsFileStream << str;
     if (newLine) {
@@ -30,21 +30,21 @@ void MIPS::output(const std::string& str, bool newLine) {
 #endif
 }
 
-Label::Label(const std::string& name_and_id): nameAndId(name_and_id) {
+Label::Label(const std::string &name_and_id) : nameAndId(name_and_id) {
 }
 
-Label::Label(const IR::Label* label): nameAndId(label->nameAndId) {
+Label::Label(const IR::Label *label) : nameAndId(label->nameAndId) {
 }
 
 std::string Label::toString() {
     return nameAndId + ":";
 }
 
-void MIPS::outputAll(IR::Module& module) {
+void MIPS::outputAll(IR::Module &module) {
     /*---- .data output ----------------------*/
     output("#### MIPS ####");
     output(".data");
-    for (auto [name,globVar] : module.getGlobVars()) {
+    for (auto [name, globVar]: module.getGlobVars()) {
         output(name + ": .word ", false);
         for (auto i = globVar.initVal.rbegin(); i != globVar.initVal.rend(); ++i) {
             output(std::to_string(*i) + ",", false);
@@ -52,7 +52,7 @@ void MIPS::outputAll(IR::Module& module) {
         output("");
     }
     int i = 0;
-    for (auto str : IR::Str::MIPS_strings) {
+    for (auto str: IR::Str::MIPS_strings) {
         output("str_" + std::to_string(i) + ": .asciiz " + str);
         i++;
     }
@@ -61,9 +61,9 @@ void MIPS::outputAll(IR::Module& module) {
     output("");
     output(".text");
     // main
-    for (auto& basicBlock : module.getFunctions().back()->getBasicBlocks()) {
+    for (auto &basicBlock: module.getFunctions().back()->getBasicBlocks()) {
         assemblies.push_back(std::make_unique<Label>(basicBlock->label.nameAndId));
-        for (auto& inst : basicBlock->instructions) {
+        for (auto &inst: basicBlock->instructions) {
             irToMips(inst);
         }
     }
@@ -72,13 +72,14 @@ void MIPS::outputAll(IR::Module& module) {
     for (auto func = module.getFunctions().begin();
          func != std::prev(module.getFunctions().end());
          ++func) {
-        circularTempRegs.clear();
+        clearTempRegs();
+        StackMemory::curOffset = 0;
         StackMemory::varToOffset.clear();
 
         // set function's parameters to varToOffset
         // explain in markdown and Memory.h
-        int offset = 4 * (2 + MAX_TEMP_REGS);
-        for (auto [ident,dimenstions] : (*func)->getParams()) {
+        int offset = 4 * (2 + MAX_TEMP_REGS); // 2: $ra $sp
+        for (auto [ident, dimensions]: (*func)->getParams()) {
             StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
             offset += 4;
         }
@@ -87,7 +88,7 @@ void MIPS::outputAll(IR::Module& module) {
              basicBlock != (*func)->getBasicBlocks().end();
              ++basicBlock) {
             assemblies.push_back(std::make_unique<Label>((*basicBlock)->label.nameAndId));
-            for (auto& inst : (*basicBlock)->instructions) {
+            for (auto &inst: (*basicBlock)->instructions) {
                 irToMips(inst);
             }
         }
@@ -97,7 +98,7 @@ void MIPS::outputAll(IR::Module& module) {
     optimize();
 
     /*----- .text output  ---------------------*/
-    for (auto& assem : assemblies) {
+    for (auto &assem: assemblies) {
         output(assem->toString());
     }
 }
@@ -105,82 +106,87 @@ void MIPS::outputAll(IR::Module& module) {
 void MIPS::optimize() {
 }
 
-void MIPS::irToMips(IR::Inst& inst) {
+void MIPS::irToMips(IR::Inst &inst) {
     switch (inst.op) {
-    case IR::Op::Empty: ;
-        break;
-    case IR::Op::InStack:
-        InStack(inst);
-        break;
-    case IR::Op::OutStack:
-        OutStack(inst);
-        break;
-    case IR::Op::Assign:
-        Assign(inst);
-        break;
-    case IR::Op::Add:
-        Add(inst);
-        break;
-    case IR::Op::Sub:
-        Sub(inst);
-        break;
-    case IR::Op::Mul:
-        Mul(inst);
-        break;
-    case IR::Op::Div:
-        Div(inst);
-        break;
-    case IR::Op::Mod:
-        Mod(inst);
-        break;
-    case IR::Op::And:
-        And(inst);
-        break;
-    case IR::Op::Or:
-        Or(inst);
-        break;
-    case IR::Op::Neg:
-        Neg(inst);
-        break;
-    case IR::Op::LoadImd:
-        LoadImd(inst);
-        break;
-    case IR::Op::GetInt:
-        GetInt(inst);
-        break;
-    case IR::Op::PrintInt:
-        PrintInt(inst);
-        break;
-    case IR::Op::PrintStr:
-        PrintStr(inst);
-        break;
-    case IR::Op::Cmp:
-        Cmp(inst);
-        break;
-    case IR::Op::Alloca:
-        Alloca(inst);
-        break;
-    case IR::Op::Load:
-        Load(inst);
-        break;
-    case IR::Op::Store:
-        Store(inst);
-        break;
-    case IR::Op::Br:
-        Br(inst);
-        break;
-    case IR::Op::Bif0:
-        Bif0(inst);
-        break;
-    case IR::Op::Call:
-        Call(inst);
-        break;
-    case IR::Op::PushParam:
-        PushParam(inst);
-        break;
-    case IR::Op::Ret:
-        Ret(inst);
-        break;
-    default: Error::raise("Bad IR Op in MIPS gen");
+        case IR::Op::Empty:
+            break;
+        case IR::Op::InStack:
+            InStack(inst);
+            break;
+        case IR::Op::OutStack:
+            OutStack(inst);
+            break;
+        case IR::Op::Assign:
+            Assign(inst);
+            break;
+        case IR::Op::Add:
+            Add(inst);
+            break;
+        case IR::Op::Sub:
+            Sub(inst);
+            break;
+        case IR::Op::Mul:
+            Mul(inst);
+            break;
+        case IR::Op::Div:
+            Div(inst);
+            break;
+        case IR::Op::Mod:
+            Mod(inst);
+            break;
+        case IR::Op::And:
+            And(inst);
+            break;
+        case IR::Op::Or:
+            Or(inst);
+            break;
+        case IR::Op::Neg:
+            Neg(inst);
+            break;
+        case IR::Op::LoadImd:
+            LoadImd(inst);
+            break;
+        case IR::Op::GetInt:
+            GetInt(inst);
+            break;
+        case IR::Op::PrintInt:
+            PrintInt(inst);
+            break;
+        case IR::Op::PrintStr:
+            PrintStr(inst);
+            break;
+        case IR::Op::Cmp:
+            Cmp(inst);
+            break;
+        case IR::Op::Alloca:
+            Alloca(inst);
+            break;
+        case IR::Op::Load:
+            Load(inst);
+            break;
+        case IR::Op::Store:
+            Store(inst);
+            break;
+        case IR::Op::Br:
+            Br(inst);
+            break;
+        case IR::Op::Bif0:
+            Bif0(inst);
+            break;
+        case IR::Op::Call:
+            Call(inst);
+            break;
+        case IR::Op::PushParam:
+            PushParam(inst);
+            break;
+        case IR::Op::Ret:
+            Ret(inst);
+            break;
+        case IR::Op::NewMove:
+            NewMove(inst);
+            break;
+        default:
+            Error::raise("Bad IR Op in MIPS gen");
     }
 }
+

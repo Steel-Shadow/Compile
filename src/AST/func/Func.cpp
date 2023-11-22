@@ -5,7 +5,6 @@
 #include "Func.h"
 
 #include <utility>
-#include <utility>
 
 #include "frontend/error/Error.h"
 
@@ -44,7 +43,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     if (!Stmt::retVoid) {
         if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt*>(n->block->getBlockItems().back().get())) {
+            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -73,7 +72,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 
     if (!Stmt::retVoid) {
         if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt*>(n->block->getBlockItems().back().get())) {
+            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -88,18 +87,16 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     using namespace IR;
     auto main = std::make_unique<Function>(
-        "main", Function::convertType(NodeType::INTTK), std::vector<Param>());
+            "main", Function::convertType(NodeType::INTTK), std::vector<Param>());
 
     BasicBlocks bBlocks;
     bBlocks.emplace_back(std::make_unique<BasicBlock>("main", true));
-    bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
     SymTab::iterIn();
 
     Function::idAllocator = 0;
     block->genIR(bBlocks);
 
     SymTab::iterOut();
-    bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
 
     main->moveBasicBlocks(std::move(bBlocks));
     return main;
@@ -140,7 +137,7 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
 std::vector<Param> FuncFParams::getParameters() const {
     std::vector<Param> raws;
     raws.reserve(funcFParams.size());
-    for (auto& i : funcFParams) {
+    for (auto &i: funcFParams) {
         raws.push_back(std::make_pair(i->ident, i->getDims()));
     }
     return raws;
@@ -178,14 +175,14 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
     return n;
 }
 
-const std::string& FuncFParam::getId() const {
+const std::string &FuncFParam::getId() const {
     return ident;
 }
 
 std::vector<int> FuncFParam::getDims() {
     std::vector<int> dimsValue;
     dimsValue.reserve(dims.size());
-    for (auto& i : dims) {
+    for (auto &i: dims) {
         dimsValue.push_back(i == nullptr ? 0 : i->evaluate());
     }
     return dimsValue;
@@ -217,7 +214,6 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     SymTab::iterIn();
 
     bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
-    bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
     block->genIR(bBlocks);
 
     if (bBlocks.back()->instructions.back().op != Op::Ret) {
@@ -227,7 +223,6 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
                                      nullptr));
     }
 
-    bBlocks.back()->addInst(Inst(Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 
     function->moveBasicBlocks(std::move(bBlocks));

@@ -2,11 +2,11 @@
 #include "backend/MIPS.h"
 #include "frontend/error/Error.h"
 
-void compile(const std::string& inFile,
-             const std::string& outFile,
-             const std::string& errorFile,
-             const std::string& IRFile,
-             const std::string& mipsFile) {
+void compile(const std::string &inFile,
+             const std::string &outFile,
+             const std::string &errorFile,
+             const std::string &IRFile,
+             const std::string &mipsFile) {
     Lexer::init(inFile, outFile);
     Error::errorFileStream = std::ofstream(errorFile);
     IR::IRFileStream = std::ofstream(IRFile);
@@ -18,7 +18,7 @@ void compile(const std::string& inFile,
     MIPS::outputAll(*module);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (argc == 5) {
         compile(argv[1], argv[2], argv[3], argv[4], argv[5]);
     } else {

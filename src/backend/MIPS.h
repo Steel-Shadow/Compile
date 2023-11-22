@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "middle/IR.h"
+#include "Register.h"
 
 // init register at beginning
 namespace MIPS {
@@ -15,7 +16,8 @@ extern std::ofstream mipsFileStream;
 
 struct Assembly {
     virtual ~Assembly() = default;
-    virtual std::string toString() =0;
+
+    virtual std::string toString() = 0;
 };
 
 extern std::vector<std::unique_ptr<Assembly>> assemblies;
@@ -24,16 +26,20 @@ extern std::vector<std::unique_ptr<Assembly>> assemblies;
 struct Label : public Assembly {
     std::string nameAndId;
 
-    explicit Label(const std::string& name_and_id);
-    explicit Label(const IR::Label* label);
+    explicit Label(const std::string &name_and_id);
+
+    explicit Label(const IR::Label *label);
+
     std::string toString() override;
 };
 
-void irToMips(IR::Inst& inst);
+void irToMips(IR::Inst &inst);
 
 void optimize();
 
-void outputAll(IR::Module& module);
-void output(const std::string& str, bool newLine = true);
+void outputAll(IR::Module &module);
+
+void output(const std::string &str, bool newLine = true);
+
 }
 #endif //COMPILER_MIPS_H

@@ -2,73 +2,152 @@
 // Created by Steel_Shadow on 2023/11/15.
 //
 
-#include "tools/CircularQueue.h"
 #include "Register.h"
 
-#include "frontend/error/Error.h"
+#include "MIPS.h"
+#include "Instruction.h"
+#include "Memory.h"
 
 using namespace MIPS;
 
-int MIPS::curRealReg = 0;
-CircularQueue<std::pair<int, Register>, MAX_TEMP_REGS> MIPS::circularTempRegs;
-
-Register MIPS::newReg(IR::Temp* temp) {
-    static int index = 0;
-    index = (index + 1) % MAX_TEMP_REGS;
-    curRealReg = index + static_cast<int>(Register::t0);
-
-    circularTempRegs.enqueue(std::make_pair(temp->id, static_cast<Register>(curRealReg)));
-    return static_cast<Register>(curRealReg);
+// use template to dynamically generate
+template<std::size_t... Indices>
+constexpr auto genCleanRegs(std::index_sequence<Indices...>) {
+    return std::queue<Register>{{static_cast<Register>(Indices + static_cast<size_t>(Register::t0))...}};
 }
 
-Register MIPS::getReg(IR::Temp* temp) {
-    if (temp->id == -1) {
-        return Register::v0; // return value of function
+template<std::size_t N>
+constexpr auto cleanRegQueue() {
+    return genCleanRegs<>(std::make_index_sequence<N>{});
+}
+
+std::unordered_map<int, Register> MIPS::tempToRegs;
+std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
+
+Register MIPS::newReg(IR::Temp *temp) {
+    if (temp->id < 0) {
+        return static_cast<Register>(-temp->id);
+    } else if (freeTempRegs.empty()) {
+        return Register::t8;
+    } else {
+        Register r = freeTempRegs.front();
+        freeTempRegs.pop();
+        tempToRegs[temp->id] = r;
+        return r;
     }
-    for (int i = 0; i < MAX_TEMP_REGS; i++) {
-        if (circularTempRegs.getData()[i].first == temp->id) {
-            return circularTempRegs.getData()[i].second;
+}
+
+Register MIPS::getReg(IR::Temp *temp) {
+    if (temp->id < 0) {
+        return static_cast<Register>(-temp->id);
+    } else {
+        auto tempToReg = tempToRegs.find(temp->id);
+        if (tempToReg == tempToRegs.end()) {
+            // tempToReg not found, temp has been stored in memory
+            assemblies.push_back(std::make_unique<I_imm_Inst>(
+                    Op::lw,
+                    Register::t8,
+                    Register::sp,
+                    -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]
+            ));
+            return Register::t8;
+        } else {
+            Register t = tempToReg->second;
+            freeTempRegs.push(tempToReg->second);
+            tempToRegs.erase(temp->id);
+            return t;
         }
     }
-    Error::raise("IR::Temp not map to a valid MIPS::Register");
-    return Register::zero;
 }
 
 std::string MIPS::regToString(Register reg) {
     switch (reg) {
-    case Register::zero: return "$zero";
-    case Register::at: return "$at";
-    case Register::v0: return "$v0";
-    case Register::v1: return "$v1";
-    case Register::a0: return "$a0";
-    case Register::a1: return "$a1";
-    case Register::a2: return "$a2";
-    case Register::a3: return "$a3";
-    case Register::t0: return "$t0";
-    case Register::t1: return "$t1";
-    case Register::t2: return "$t2";
-    case Register::t3: return "$t3";
-    case Register::t4: return "$t4";
-    case Register::t5: return "$t5";
-    case Register::t6: return "$t6";
-    case Register::t7: return "$t7";
-    case Register::s0: return "$s0";
-    case Register::s1: return "$s1";
-    case Register::s2: return "$s2";
-    case Register::s3: return "$s3";
-    case Register::s4: return "$s4";
-    case Register::s5: return "$s5";
-    case Register::s6: return "$s6";
-    case Register::s7: return "$s7";
-    case Register::t8: return "$t8";
-    case Register::t9: return "$t9";
-    case Register::k0: return "$k0";
-    case Register::k1: return "$k1";
-    case Register::gp: return "$gp";
-    case Register::sp: return "$sp";
-    case Register::fp: return "$fp";
-    case Register::ra: return "$ra";
-    case Register::none: return "";
-    default: return "unknown";
+        case Register::zero:
+            return "$zero";
+        case Register::at:
+            return "$at";
+        case Register::v0:
+            return "$v0";
+        case Register::v1:
+            return "$v1";
+        case Register::a0:
+            return "$a0";
+        case Register::a1:
+            return "$a1";
+        case Register::a2:
+            return "$a2";
+        case Register::a3:
+            return "$a3";
+        case Register::t0:
+            return "$t0";
+        case Register::t1:
+            return "$t1";
+        case Register::t2:
+            return "$t2";
+        case Register::t3:
+            return "$t3";
+        case Register::t4:
+            return "$t4";
+        case Register::t5:
+            return "$t5";
+        case Register::t6:
+            return "$t6";
+        case Register::t7:
+            return "$t7";
+        case Register::s0:
+            return "$s0";
+        case Register::s1:
+            return "$s1";
+        case Register::s2:
+            return "$s2";
+        case Register::s3:
+            return "$s3";
+        case Register::s4:
+            return "$s4";
+        case Register::s5:
+            return "$s5";
+        case Register::s6:
+            return "$s6";
+        case Register::s7:
+            return "$s7";
+        case Register::t8:
+            return "$t8";
+        case Register::t9:
+            return "$t9";
+        case Register::k0:
+            return "$k0";
+        case Register::k1:
+            return "$k1";
+        case Register::gp:
+            return "$gp";
+        case Register::sp:
+            return "$sp";
+        case Register::fp:
+            return "$fp";
+        case Register::ra:
+            return "$ra";
+        case Register::none:
+            return "";
+        default:
+            return "unknown";
+    }
+}
+
+void MIPS::clearTempRegs() {
+    tempToRegs.clear();
+    freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
+}
+
+void MIPS::checkTempReg(IR::Temp *temp, MIPS::Register reg) {
+    if (reg == Register::t8) {
+        // if freeTempRegs is empty (reg==$t8),
+        // we should store temp on stack
+        auto var = IR::Var(temp->toString(), -1);
+        StackMemory::curOffset += 4;
+        StackMemory::varToOffset[var] = StackMemory::curOffset;
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw,
+                                                          Register::t8,
+                                                          Register::sp,
+                                                          -StackMemory::curOffset));
     }
 }

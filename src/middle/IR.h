@@ -46,6 +46,9 @@ enum class Op {
     And,
     Or,
 
+    // res(Temp) = arg1(Temp)
+    NewMove,
+
     // arg1(Temp) = -arg1
     Neg,
 
@@ -98,19 +101,19 @@ struct Var : public Element {
     std::vector<int> dims; // At most 2 dimensions in our work.
     Type type;
 
-    Var(std::string name, int depth, bool cons, const std::vector<int>& dims, Type type = Type::Int);
+    Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type = Type::Int);
 
-    Var(const std::string& name, int depth);
+    Var(const std::string &name, int depth);
 
-    friend bool operator==(const Var& lhs, const Var& rhs);
+    friend bool operator==(const Var &lhs, const Var &rhs);
 
-    friend std::size_t hash_value(const Var& obj);
+    friend std::size_t hash_value(const Var &obj);
 
     std::string toString() const override;
 };
 
 // temp register
-// ret id = -1
+// if id<0, getReg(this) = static_cast<Register>(-id);
 struct Temp : public Element {
     int id;
     Type type;
@@ -118,10 +121,10 @@ struct Temp : public Element {
     explicit Temp(Type type = Type::Int);
 
     // function return Temp
-    // id must be -1
+    // id must be -2 -3
     explicit Temp(int id, Type type);
 
-    Temp(Temp const& other);
+    Temp(Temp const &other);
 
     std::string toString() const override;
 };
@@ -202,13 +205,12 @@ public:
     // reset to 0 at start of Function
     static int idAllocator;
 
-    Function(std::string name, Type reType, const std::vector<Param>& params);
+    Function(std::string name, Type reType, const std::vector<Param> &params);
 
-    void moveBasicBlocks(BasicBlocks&& bBlocks);
+    void moveBasicBlocks(BasicBlocks &&bBlocks);
 
-    const std::string& getName() const;
+    const BasicBlocks &getBasicBlocks() const;
 
-    const BasicBlocks& getBasicBlocks() const;
     static Type convertType(NodeType type);
 
     [[nodiscard]] std::vector<Param> getParams() const;
@@ -226,9 +228,9 @@ struct GlobVar {
 
     // the teaching team guarantees that
     // "whenever an array initialization exists, a value must be assigned to each array member."
-    GlobVar(bool cons, const std::vector<int>& dims, std::vector<int>& initVal);
+    GlobVar(bool cons, const std::vector<int> &dims, std::vector<int> &initVal);
 
-    GlobVar(bool cons, const std::vector<int>& dims);
+    GlobVar(bool cons, const std::vector<int> &dims);
 };
 
 // only one module in our work
@@ -241,9 +243,9 @@ class Module {
 public:
     explicit Module(std::string name);
 
-    static std::vector<std::pair<std::string, GlobVar>>& getGlobVars();
+    static std::vector<std::pair<std::string, GlobVar>> &getGlobVars();
 
-    std::vector<std::unique_ptr<Function>>& getFunctions();
+    std::vector<std::unique_ptr<Function>> &getFunctions();
 
     void outputIR() const;
 };
@@ -252,17 +254,10 @@ Op NodeTypeToIROp(NodeType n);
 }
 
 namespace std {
-template <>
+template<>
 struct hash<IR::Var> {
-    std::size_t operator()(const IR::Var& key) const noexcept {
+    std::size_t operator()(const IR::Var &key) const noexcept {
         return hash_value(key);
-    }
-};
-
-template <>
-struct equal_to<IR::Var> {
-    bool operator()(const IR::Var& lhs, const IR::Var& rhs) const {
-        return lhs == rhs;
     }
 };
 }
