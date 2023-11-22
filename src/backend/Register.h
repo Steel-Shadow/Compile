@@ -6,7 +6,7 @@
 #define REGISTER_H
 
 #include <queue>
-#include <unordered_map>
+#include <map>
 #include "middle/IR.h"
 
 namespace MIPS {
@@ -26,9 +26,11 @@ enum class Register {
     none,
 };
 
-constexpr int MAX_TEMP_REGS = 5; //todo: change the num
+// least 4
+// decide which ones to save/restore in funcCall
+constexpr int MAX_TEMP_REGS = 5;
 
-extern std::unordered_map<int, Register> tempToRegs;
+extern std::map<int, Register> tempToRegs;
 extern std::queue<Register> freeTempRegs;
 
 Register newReg(IR::Temp *temp);
@@ -41,6 +43,7 @@ void checkTempReg(IR::Temp *temp, MIPS::Register reg);
 void clearTempRegs();
 
 std::string regToString(Register reg);
+
 }
 
 #endif //REGISTER_H

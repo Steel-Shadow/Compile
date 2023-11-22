@@ -12,6 +12,7 @@
 
 // init register at beginning
 namespace MIPS {
+constexpr int wordSize = 4;
 extern std::ofstream mipsFileStream;
 
 struct Assembly {

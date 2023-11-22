@@ -121,12 +121,13 @@ std::string J_Inst::toString() {
 }
 
 void MIPS::InStack(IR::Inst &) {
-    StackMemory::Allocate();
+    StackMemory::offsetStack.push(StackMemory::curOffset);
 }
 
 
 void MIPS::OutStack(IR::Inst &) {
-    StackMemory::Deallocate();
+    StackMemory::curOffset = StackMemory::offsetStack.top();
+    StackMemory::offsetStack.pop();
 }
 
 void MIPS::Assign(IR::Inst &inst) {
@@ -322,40 +323,49 @@ void MIPS::Bif0(IR::Inst &inst) {
 void MIPS::Call(IR::Inst &inst) {
     auto func = Label(dynamic_cast<IR::Label *>(inst.arg1.get()));
 
-    // save tempRegs
-    for (int i = static_cast<int>(Register::t0) + MAX_TEMP_REGS - 1; i >= static_cast<int>(Register::t0); --i) {
-        StackMemory::curOffset += 4;
-        assemblies.push_back(std::make_unique<I_imm_Inst>(
-                Op::sw, static_cast<Register>(i), Register::sp, -StackMemory::curOffset));
-    }
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, -StackMemory::curOffset));
+    StackMemory::offsetStack.push(StackMemory::curOffset);
+    StackMemory::curOffset = 0;
 
     // save $sp $ra
-    StackMemory::curOffset += 4;
+    StackMemory::curOffset += wordSize;
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::sp, Register::sp, -StackMemory::curOffset));
-    StackMemory::curOffset += 4;
+    StackMemory::curOffset += wordSize;
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, Register::ra, Register::sp, -StackMemory::curOffset));
 
-    // allocate stack for call
-    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, -StackMemory::curOffset));
+    // save tempRegs
+    // Only save used tempRegs, but we still allocate MAX_TEMP_REGS for stack of called function.
+    // In this way, we don't need to consider tempRegs after jal.
+    // I choose to use more stack memory, but fewer instructions.
+    // Another way is, before jal , save the number of used tempRegs to a realReg $?,
+    // use the realReg $? to locate parameters instead of $sp. (slower but less memory use of stack)
+    for (auto [tempId, reg]: tempToRegs) {
+        StackMemory::curOffset += wordSize;
+        assemblies.push_back(std::make_unique<I_imm_Inst>(
+                Op::sw, reg, Register::sp, -StackMemory::curOffset));
+    }
+
     // jal to function body
     assemblies.push_back(std::make_unique<J_Inst>(Op::jal, func));
-    // deAllocate stack for call
-    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, StackMemory::curOffset));
+
+    // restore tempRegs
+    for (auto i = tempToRegs.rbegin(); i != tempToRegs.rend(); ++i) {
+        assemblies.push_back(std::make_unique<I_imm_Inst>(
+                Op::lw, i->second, Register::sp, -StackMemory::curOffset));
+        StackMemory::curOffset -= wordSize;
+    }
 
     // restore $ra $sp
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::ra, Register::sp, -StackMemory::curOffset));
-    StackMemory::curOffset -= 4;
-    int spShouldBeTheLastToRestore = StackMemory::curOffset;
-    StackMemory::curOffset -= 4;
+    StackMemory::curOffset -= wordSize;
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::sp, Register::sp, -StackMemory::curOffset));
+    StackMemory::curOffset -= wordSize;
 
-    // restore tempRegs
-    for (int i = static_cast<int>(Register::t0); i < static_cast<int>(Register::t0) + MAX_TEMP_REGS; ++i) {
-        assemblies.push_back(
-                std::make_unique<I_imm_Inst>(Op::lw, static_cast<Register>(i), Register::sp, -StackMemory::curOffset));
-        StackMemory::curOffset -= 4;
-    }
-
-    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::sp, Register::sp, -spShouldBeTheLastToRestore));
+//    StackMemory::curOffset -= SymTab::find(func.nameAndId)->params.size() * wordSize;
+    // deAllocate stack for call
+    StackMemory::curOffset = StackMemory::offsetStack.top();
+    StackMemory::offsetStack.pop();
+    assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, StackMemory::curOffset));
 }
 
 void MIPS::PushParam(IR::Inst &inst) {
@@ -363,7 +373,7 @@ void MIPS::PushParam(IR::Inst &inst) {
     auto param = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
     // set function's parameters to varToOffset is done in MIPS.cpp
-    StackMemory::curOffset += 4;
+    StackMemory::curOffset += wordSize;
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(param), Register::sp, -StackMemory::curOffset));
 }
 

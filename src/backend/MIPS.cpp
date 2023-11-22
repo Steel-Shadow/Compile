@@ -41,7 +41,7 @@ std::string Label::toString() {
 }
 
 void MIPS::outputAll(IR::Module &module) {
-    /*---- .data output ----------------------*/
+    /*---- .data generate & output ----------------------*/
     output("#### MIPS ####");
     output(".data");
     for (auto [name, globVar]: module.getGlobVars()) {
@@ -73,15 +73,16 @@ void MIPS::outputAll(IR::Module &module) {
          func != std::prev(module.getFunctions().end());
          ++func) {
         clearTempRegs();
-        StackMemory::curOffset = 0;
+        // Use part of tempRegs, but move stackOffset for MAX_TEMP_REGS.
+        StackMemory::curOffset = wordSize * (2 + MAX_TEMP_REGS);
         StackMemory::varToOffset.clear();
 
         // set function's parameters to varToOffset
         // explain in markdown and Memory.h
-        int offset = 4 * (2 + MAX_TEMP_REGS); // 2: $ra $sp
+        int offset = 0;
         for (auto [ident, dimensions]: (*func)->getParams()) {
             StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
-            offset += 4;
+            offset += wordSize;
         }
 
         for (auto basicBlock = (*func)->getBasicBlocks().begin();

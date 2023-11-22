@@ -3,7 +3,6 @@
 //
 
 #include "Register.h"
-
 #include "MIPS.h"
 #include "Instruction.h"
 #include "Memory.h"
@@ -21,7 +20,7 @@ constexpr auto cleanRegQueue() {
     return genCleanRegs<>(std::make_index_sequence<N>{});
 }
 
-std::unordered_map<int, Register> MIPS::tempToRegs;
+std::map<int, Register> MIPS::tempToRegs;
 std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
 
 Register MIPS::newReg(IR::Temp *temp) {
@@ -143,7 +142,7 @@ void MIPS::checkTempReg(IR::Temp *temp, MIPS::Register reg) {
         // if freeTempRegs is empty (reg==$t8),
         // we should store temp on stack
         auto var = IR::Var(temp->toString(), -1);
-        StackMemory::curOffset += 4;
+        StackMemory::curOffset += wordSize;
         StackMemory::varToOffset[var] = StackMemory::curOffset;
         assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw,
                                                           Register::t8,

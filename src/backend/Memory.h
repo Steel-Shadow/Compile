@@ -21,7 +21,7 @@ int getStackOffset(IR::Var &var);
 // ra sp t0 t1 ... t7  p0(Function parameter) p1 ...
 // 0  1  2  3  ... 9   10=(10+0)              11=(10+1)
 //       -----------
-//       MAX_TEMP_REGS
+//       MAX_TEMP_REGS = 8
 //
 // when generating MIPS form IR,
 // if we get inst.op == InStack/outStack (BigForStmt IfStmt BlockStmt),
@@ -32,10 +32,6 @@ extern std::unordered_map<IR::Var, int> varToOffset;
 
 extern int curOffset;
 extern std::stack<int> offsetStack;
-
-void Allocate();
-
-void Deallocate();
 }
 }
 

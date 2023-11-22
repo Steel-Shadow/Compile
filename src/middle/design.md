@@ -8,6 +8,17 @@ t0开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器
 
 ## todo:
 
+函数调用保存现场时，保存部分临时寄存器，但分配 MAX_TEMP_REGS 的栈内存，这样被调用的子函数在定位栈内存时就无需考虑父函数使用了多少临时寄存器了。
+
+Only save used tempRegs, but we still allocate MAX_TEMP_REGS for stack of called function.
+In this way, we don't need to consider tempRegs after jal.
+
+Another way is, save the number of used tempRegs to a realReg $? before jal,
+use the realReg $? to locate parameters instead of $sp. (slower but less memory use of stack)
+
+I choose to use more stack memory, but fewer instructions.
+
+修改lw glob
 检查所有 IR unique_ptr move
 
 完善代码生成的变量类型系统?

@@ -387,22 +387,10 @@ void PrintStmt::addStr(IR::BasicBlocks &bBlocks, std::string &buffer) {
 
 void PrintStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
-    bBlocks.back()->addInst(Inst(IR::Op::InStack, nullptr, nullptr, nullptr));
 
     std::vector<std::unique_ptr<Temp>> args(exps.size());
     for (int i = 0; i < exps.size(); ++i) {
         args[i] = exps[i]->genIR(bBlocks);
-//        if (i < 4) {
-//            // $a0 - $a3
-//            auto t = dynamic_cast<Temp *>((bBlocks.back()->instructions.back().res.get()));
-//            t->id = -(i + static_cast<int>(MIPS::Register::a0));
-//            args[i]->id = -(i + static_cast<int>(MIPS::Register::a0));
-//        } else {
-//            bBlocks.back()->addInst(Inst(Op::PushParam,
-//                                         nullptr,
-//                                         std::make_unique<Temp>(*args[i]),
-//                                         nullptr));
-//        }
     }
 
     // string | %d
@@ -422,7 +410,6 @@ void PrintStmt::genIR(IR::BasicBlocks &bBlocks) {
         }
     }
     addStr(bBlocks, buffer);
-    bBlocks.back()->addInst(Inst(IR::Op::OutStack, nullptr, nullptr, nullptr));
 }
 
 std::unique_ptr<LValStmt> LValStmt::parse() {
