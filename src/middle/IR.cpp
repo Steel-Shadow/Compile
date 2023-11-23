@@ -11,7 +11,6 @@
 using namespace IR;
 
 std::ofstream IR::IRFileStream;
-std::vector<std::pair<std::string, GlobVar>> Module::globVars;
 std::vector<std::string> Str::MIPS_strings;
 
 Module::Module(std::string name)
@@ -20,10 +19,6 @@ Module::Module(std::string name)
 
 std::vector<std::unique_ptr<Function>> &Module::getFunctions() {
     return functions;
-}
-
-std::vector<std::pair<std::string, GlobVar>> &Module::getGlobVars() {
-    return globVars;
 }
 
 Inst::Inst(
@@ -177,6 +172,10 @@ void Module::outputIR() const {
             j->outputIR();
         }
     }
+}
+
+std::vector<std::pair<std::string, GlobVar>> &Module::getGlobVars() {
+    return globVars;
 }
 
 int Function::idAllocator = 0;

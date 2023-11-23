@@ -15,13 +15,13 @@ std::ofstream Lexer::outFileStream;
 std::string Lexer::fileContents;
 
 Word words[Lexer::deep];
-NodeType& Lexer::curLexType = words[0].first;
-Token& Lexer::curToken = words[0].second;
+NodeType &Lexer::curLexType = words[0].first;
+Token &Lexer::curToken = words[0].second;
 
 int Lexer::pos[deep]; // count from 1
 int Lexer::column[deep]; // count from 1
 int Lexer::row[deep]; // count from 1.
-int& Lexer::curRow = row[0];
+int &Lexer::curRow = Lexer::row[0];
 
 char c; // c = fileContents[posTemp - 1]
 int posTemp;
@@ -58,7 +58,7 @@ char nextChar() {
     return c;
 }
 
-void reserve(const Token& t, NodeType& l) {
+void reserve(const Token &t, NodeType &l) {
     if (reserveWords.containsKey(t)) {
         l = reserveWords.get(t);
     } else {
@@ -83,7 +83,7 @@ Word Lexer::next() {
         return words[0];
     }
 
-    NodeType lexType;
+    NodeType lexType = NodeType::LEX_EMPTY;
     Token token = std::string(1, c);
 
     if (c >= '0' && c <= '9') {
@@ -92,13 +92,11 @@ Word Lexer::next() {
         }
         // error: bad number
         lexType = NodeType::INTCON;
-        //        retract();
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
             token += c;
         }
         reserve(token, lexType);
-        //        retract();
     } else if (c == '/') {
         // q1
         nextChar();
@@ -111,7 +109,7 @@ Word Lexer::next() {
             lexType = NodeType::COMMENT;
         } else if (c == '*') {
             // q5
-        q5:
+            q5:
             while (nextChar() != '*') {
             }
             do {
@@ -129,7 +127,6 @@ Word Lexer::next() {
         } else {
             token = "/"; // q4
             lexType = NodeType::DIV;
-            //            retract();
         }
     } else if (c == '\"') {
         // STRCON
@@ -144,7 +141,7 @@ Word Lexer::next() {
         nextChar();
     } else {
         // special operator +-*/ && &
-        for (const auto& [str, type] : reserveWords) {
+        for (const auto &[str, type]: reserveWords) {
             if (fileContents.substr(posTemp - 1, str.length()) == str) {
                 posTemp += static_cast<int>(str.length());
                 columnTemp += static_cast<int>(str.length());
@@ -173,48 +170,45 @@ Word Lexer::next() {
     return words[0];
 }
 
-LinkedHashMap<std::string, NodeType> buildReserveWords() {
-    auto map = new LinkedHashMap<std::string, NodeType>;
+void buildReserveWords() {
     // IDENFR
     // INTCON
     // STRCON
-    map->put("main", NodeType::MAINTK);
-    map->put("const", NodeType::CONSTTK);
-    map->put("int", NodeType::INTTK);
-    map->put("break", NodeType::BREAKTK);
-    map->put("continue", NodeType::CONTINUETK);
-    map->put("if", NodeType::IFTK);
-    map->put("else", NodeType::ELSETK);
-    map->put("&&", NodeType::AND);
-    map->put("||", NodeType::OR);
-    map->put("for", NodeType::FORTK);
-    map->put("getint", NodeType::GETINTTK);
-    map->put("printf", NodeType::PRINTFTK);
-    map->put("return", NodeType::RETURNTK);
-    map->put("+", NodeType::PLUS);
-    map->put("-", NodeType::MINU);
-    map->put("void", NodeType::VOIDTK);
-    map->put("*", NodeType::MULT);
-    map->put("/", NodeType::DIV);
-    map->put("%", NodeType::MOD);
-    map->put("<=", NodeType::LEQ);
-    map->put("<", NodeType::LSS);
-    map->put(">=", NodeType::GEQ);
-    map->put(">", NodeType::GRE);
-    map->put("==", NodeType::EQL);
-    map->put("!=", NodeType::NEQ);
-    map->put("!", NodeType::NOT);
-    map->put("=", NodeType::ASSIGN);
-    map->put(";", NodeType::SEMICN);
-    map->put(",", NodeType::COMMA);
-    map->put("(", NodeType::LPARENT);
-    map->put(")", NodeType::RPARENT);
-    map->put("[", NodeType::LBRACK);
-    map->put("]", NodeType::RBRACK);
-    map->put("{", NodeType::LBRACE);
-    map->put("}", NodeType::RBRACE);
-
-    return *map;
+    reserveWords.put("main", NodeType::MAINTK);
+    reserveWords.put("const", NodeType::CONSTTK);
+    reserveWords.put("int", NodeType::INTTK);
+    reserveWords.put("break", NodeType::BREAKTK);
+    reserveWords.put("continue", NodeType::CONTINUETK);
+    reserveWords.put("if", NodeType::IFTK);
+    reserveWords.put("else", NodeType::ELSETK);
+    reserveWords.put("&&", NodeType::AND);
+    reserveWords.put("||", NodeType::OR);
+    reserveWords.put("for", NodeType::FORTK);
+    reserveWords.put("getint", NodeType::GETINTTK);
+    reserveWords.put("printf", NodeType::PRINTFTK);
+    reserveWords.put("return", NodeType::RETURNTK);
+    reserveWords.put("+", NodeType::PLUS);
+    reserveWords.put("-", NodeType::MINU);
+    reserveWords.put("void", NodeType::VOIDTK);
+    reserveWords.put("*", NodeType::MULT);
+    reserveWords.put("/", NodeType::DIV);
+    reserveWords.put("%", NodeType::MOD);
+    reserveWords.put("<=", NodeType::LEQ);
+    reserveWords.put("<", NodeType::LSS);
+    reserveWords.put(">=", NodeType::GEQ);
+    reserveWords.put(">", NodeType::GRE);
+    reserveWords.put("==", NodeType::EQL);
+    reserveWords.put("!=", NodeType::NEQ);
+    reserveWords.put("!", NodeType::NOT);
+    reserveWords.put("=", NodeType::ASSIGN);
+    reserveWords.put(";", NodeType::SEMICN);
+    reserveWords.put(",", NodeType::COMMA);
+    reserveWords.put("(", NodeType::LPARENT);
+    reserveWords.put(")", NodeType::RPARENT);
+    reserveWords.put("[", NodeType::LBRACK);
+    reserveWords.put("]", NodeType::RBRACK);
+    reserveWords.put("{", NodeType::LBRACE);
+    reserveWords.put("}", NodeType::RBRACE);
 }
 
 void output() {
@@ -224,7 +218,7 @@ void output() {
         lastToken = Lexer::curToken;
     } else {
         if (!(lastLexType == NodeType::LEX_EMPTY ||
-            lastLexType == NodeType::LEX_END)) {
+              lastLexType == NodeType::LEX_END)) {
 #ifdef STDOUT_LEXER
             std::cout << typeToStr(lastLexType) << " " << lastToken
                       << '\n';
@@ -269,8 +263,8 @@ bool Lexer::findAssignBeforeSemicolon() {
     return false;
 }
 
-void Lexer::init(const std::string& inFile, const std::string& outFile) {
-    reserveWords = buildReserveWords();
+void Lexer::init(const std::string &inFile, const std::string &outFile) {
+    buildReserveWords();
 
     auto inFileStream = std::ifstream(inFile);
     if (!inFileStream) {

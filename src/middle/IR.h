@@ -237,17 +237,17 @@ struct GlobVar {
 // address of globVars start at $gp
 class Module {
     std::string name;
-    static std::vector<std::pair<std::string, GlobVar>> globVars;
+    std::vector<std::pair<std::string, GlobVar>> globVars;
     std::vector<std::unique_ptr<Function>> functions;
 
 public:
     explicit Module(std::string name);
 
-    static std::vector<std::pair<std::string, GlobVar>> &getGlobVars();
-
     std::vector<std::unique_ptr<Function>> &getFunctions();
 
     void outputIR() const;
+
+    std::vector<std::pair<std::string, GlobVar>> &getGlobVars();
 };
 
 Op NodeTypeToIROp(NodeType n);

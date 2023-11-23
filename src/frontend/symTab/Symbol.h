@@ -32,14 +32,16 @@ struct Symbol {
     // value & array. dims also share for param
     bool cons{false}; // const | var
     std::vector<int> dims; // At most 2 dimensions in our work.
+    std::vector<int> initVal; // for const Value
+
 
     // func
     NodeType reType{NodeType::LEX_EMPTY};
     std::vector<Param> params; // only save dimension
 
-    Symbol(bool cons, const std::vector<int>& dims); // const var
-    Symbol(NodeType reType, const std::vector<Param>& params); // func
-    explicit Symbol(const std::vector<int>& dims); // param
+    Symbol(bool cons, const std::vector<int> &dims, const std::vector<int> &initVal = {}); // const var
+    Symbol(NodeType reType, const std::vector<Param> &params); // func
+    explicit Symbol(const std::vector<int> &dims); // param
 };
 
 #endif //COMPILER_SYMBOL_H

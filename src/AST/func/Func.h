@@ -28,7 +28,7 @@ struct FuncFParam {
 
     static std::unique_ptr<FuncFParam> parse();
 
-    const std::string& getId() const;
+    const std::string &getId() const;
 
     std::vector<int> getDims();
 };

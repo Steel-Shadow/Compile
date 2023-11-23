@@ -39,7 +39,11 @@ std::unique_ptr<Def> Def::parse(bool cons) {
         n->initVal = InitVal::parse(cons);
     }
 
-    SymTab::add(n->ident, Symbol(n->cons, dims));
+    if (cons || SymTab::cur->getDepth() == 0) {
+        SymTab::add(n->ident, Symbol(n->cons, dims, n->initVal->evaluate()));
+    } else {
+        SymTab::add(n->ident, Symbol(n->cons, dims));
+    }
 
     if (cons) {
         output(NodeType::ConstDef);
@@ -49,10 +53,10 @@ std::unique_ptr<Def> Def::parse(bool cons) {
     return n;
 }
 
-const std::string& Def::getIdent() const {
+const std::string &Def::getIdent() const {
     return ident;
 }
 
-const std::unique_ptr<InitVal>& Def::getInitVal() const {
+const std::unique_ptr<InitVal> &Def::getInitVal() const {
     return initVal;
 }

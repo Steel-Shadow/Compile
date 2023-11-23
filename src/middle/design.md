@@ -1,3 +1,6 @@
+将 glob 变量和 const 变量初值存储在符号表中， evaluate 访问符号表获取 const var。
+CompUnit::genIR()中，使用符号表的常量信息优化。
+
 临时寄存器分配策略：
 IR::Temp -> real Register
 t0 开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器数量。

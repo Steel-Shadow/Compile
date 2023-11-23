@@ -20,12 +20,12 @@ void Error::raise(char code, int row) {
 }
 
 // My error, which is not defined in course tasks.
-void Error::raise(const std::string& mes) {
+void Error::raise(const std::string &mes) {
 #ifdef STDOUT_ERROR
     std::cout << "error: " << mes << " "
-        // << Lexer::curRow << "," << Lexer::column[0]
-        << "---------------------------------------"
-        << '\n';
+              // << Lexer::curRow << "," << Lexer::column[0]
+              << "---------------------------------------"
+              << '\n';
     // exit(-1);
 #endif
 }

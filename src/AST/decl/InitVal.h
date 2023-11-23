@@ -40,7 +40,7 @@ struct ArrayInitVal : public InitVal {
 
     std::vector<int> evaluate() override;
 
-    std::vector<ExpInitVal*> getFlatten();
+    std::vector<ExpInitVal *> getFlatten();
 };
 
 #endif //COMPILER_INITVAL_H

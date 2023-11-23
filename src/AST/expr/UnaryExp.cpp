@@ -68,12 +68,10 @@ int LVal::evaluate() {
     } else if (!sym->cons) {
         Error::raise("Non-const LVal in evaluate()");
     } else if (sym->dims.empty()) {
-        for (auto [str, globVar]: IR::Module::getGlobVars()) {
-            if (str == ident)
-                return globVar.initVal[0];
-        }
+        return sym->initVal[0];
+    } else {
+        Error::raise("Array element in evaluate()");
     }
-    Error::raise("Should not be here");
     return 0;
 }
 

@@ -9,11 +9,11 @@
 
 // Specific parser method is distributed in respective class.
 namespace Parser {
-    // check the type and Lexer::next()
-    void singleLex(NodeType type, int row = Lexer::curRow);
+// check the type and Lexer::next()
+void singleLex(NodeType type, int row = Lexer::curRow);
 
-    // don't use/print in <BlockItem>, <Decl>, <BType>
-    void output(NodeType type);
+// don't use/print in <BlockItem>, <Decl>, <BType>
+void output(NodeType type);
 }
 
 #endif //COMPILER_PARSER_H

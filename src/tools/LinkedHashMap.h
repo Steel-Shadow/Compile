@@ -9,10 +9,10 @@
 #include <unordered_map>
 #include <stdexcept>
 
-template <typename K, typename V>
+template<typename K, typename V>
 class LinkedHashMap {
 public:
-    void put(const K& key, const V& value) {
+    void put(const K &key, const V &value) {
         auto it = key_to_iterator.find(key);
         if (it != key_to_iterator.end()) {
             // Key already exists, update the value
@@ -25,12 +25,12 @@ public:
         }
     }
 
-    bool containsKey(const K& key) const {
+    bool containsKey(const K &key) const {
         // ReSharper disable once CppUseAssociativeContains
         return key_to_iterator.find(key) != key_to_iterator.end();
     }
 
-    V get(const K& key) const {
+    V get(const K &key) const {
         auto it = key_to_iterator.find(key);
         if (it != key_to_iterator.end()) {
             return it->second->second;
@@ -39,7 +39,7 @@ public:
         }
     }
 
-    void remove(const K& key) {
+    void remove(const K &key) {
         auto it = key_to_iterator.find(key);
         if (it != key_to_iterator.end()) {
             data.erase(it->second);
@@ -47,7 +47,7 @@ public:
         }
     }
 
-    void replace(const K& key, const V& value) {
+    void replace(const K &key, const V &value) {
         auto it = key_to_iterator.find(key);
         if (it != key_to_iterator.end()) {
             it->second->second = value;

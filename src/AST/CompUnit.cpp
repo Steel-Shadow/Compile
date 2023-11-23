@@ -45,18 +45,10 @@ std::unique_ptr<IR::Module> CompUnit::genIR() {
 
     for (auto &decl: decls) {
         for (auto &def: decl->getDefs()) {
-            std::string ident = def->getIdent();
-            Dimensions dimensions = SymTab::find(def->getIdent())->dims;
-            auto &pInitVal = def->getInitVal();
+            auto sym = SymTab::find(def->ident);
 
-            if (pInitVal == nullptr) {
-                auto globVar = GlobVar(def->cons, dimensions);
-                module->getGlobVars().emplace_back(ident, globVar);
-            } else {
-                auto initVal = pInitVal->evaluate();
-                auto globVar = GlobVar(def->cons, dimensions, initVal);
-                module->getGlobVars().emplace_back(ident, globVar);
-            }
+            auto globVar = GlobVar(sym->cons, sym->dims, sym->initVal);
+            module->getGlobVars().emplace_back(def->ident, globVar);
         }
     }
 

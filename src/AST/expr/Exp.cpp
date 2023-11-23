@@ -21,9 +21,6 @@ std::unique_ptr<Exp> Exp::parse(bool cons) {
 }
 
 int Exp::evaluate() const {
-    if (!cons) {
-//        Error::raise("evaluate non-const Exp");
-    }
     return addExp->evaluate();
 }
 
