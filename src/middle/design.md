@@ -1,41 +1,21 @@
-常量声明、变量声明、读语句、写语句、赋值语句，加减乘除模除等运算语句、函数定义及调用语句
-
 临时寄存器分配策略：
 IR::Temp -> real Register
-t0开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器数量。
-若没有可用临时寄存器，则将临时寄存器存储为变量。
+t0 开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器数量。
+若没有可用临时寄存器，则将临时寄存器存储为局部变量。
 所有临时寄存器只生成一次，只使用一次，getReg()使用后马上释放实际寄存器。
 
 ## todo:
 
-函数调用保存现场时，保存部分临时寄存器，但分配 MAX_TEMP_REGS 的栈内存，这样被调用的子函数在定位栈内存时就无需考虑父函数使用了多少临时寄存器了。
+函数调用保存现场时，保存使用到了的临时寄存器，但分配 MAX_TEMP_REGS 的栈内存，这样被调用的子函数在定位栈内存时就无需考虑父函数使用了多少临时寄存器了。
 
-Only save used tempRegs, but we still allocate MAX_TEMP_REGS for stack of called function.
-In this way, we don't need to consider tempRegs after jal.
+另一种方法是，在 jal 之前将已使用的 tempRegs 数量保存到 realReg $?，
+使用 realReg $? 代替 $sp 来定位内存（速度较慢，但栈内存占用较少）。
 
-Another way is, save the number of used tempRegs to a realReg $? before jal,
-use the realReg $? to locate parameters instead of $sp. (slower but less memory use of stack)
-
-I choose to use more stack memory, but fewer instructions.
-
-修改lw glob
-检查所有 IR unique_ptr move
+竞速仅考虑速度，这里不考虑爆栈。
 
 完善代码生成的变量类型系统?
 
-局部变量地址：由目标代码生成完成，为每一个 Function 设置活动记录，
-allocate 时记录变量相对于当前 activation record 的 offset。
-
-遇到特殊 IR (InStack outStack) 时，将当前的 sp 当前偏移量 curOffset 入栈 stack<int> offsetStack，在结束时出栈恢复相应的
-curOffset。
-
-Cond 比较符号 ('<' | '>' | '<=' | '>=')
-
-## 需要检查的内容
-
-中间代码生成的符号表遍历 SymTab::iterIn
-
-局部变量（包括数组）定义、初始化
+遇到特殊 IR (InStack outStack) 时，将当前的 sp 当前偏移量 curOffset 入栈 stack<int> offsetStack，在结束时出栈恢复相应的curOffset。
 
 ## 中间表示
 
@@ -81,5 +61,7 @@ if (simple instanceof AssignStmt) {
 2. IR::Function 初始化时有一个空的 BasicBlock，后续可能无效。可以考虑删除空 BasicBlock
 3. Exp 中间代码生成中，常数 Number 生成 IR::Temp，对应 Mips 的 li 指令。立即数装载可以直接在计算中完成，不一定需要分开一步。后端代码优化考虑。
 4. BigForStmt 中间代码生成中，iter 结束后可直接判断 cond，减少运行的跳转数（但指令体积增大）
-5. 函数传参，使用 register $a0-$a3
-6. 函数如果没有调用其他函数，则 $ra 无需入栈
+5. 函数如果没有调用其他函数，则 $ra 无需入栈
+6. 地址装载 lw label，我可以自行计算全局数据段地址，可以避免伪指令
+7. div 指令选择，伪指令判断除以0了
+8. 

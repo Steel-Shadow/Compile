@@ -78,7 +78,7 @@ void MIPS::outputAll(IR::Module &module) {
         StackMemory::varToOffset.clear();
 
         // set function's parameters to varToOffset
-        // explain in markdown and Memory.h
+        // stack memory map explain is in markdown and Memory.h
         int offset = 0;
         for (auto [ident, dimensions]: (*func)->getParams()) {
             StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);

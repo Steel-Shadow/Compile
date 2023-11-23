@@ -16,12 +16,15 @@ constexpr int data_segment = 0x1001'0000;
 
 int getStackOffset(IR::Var &var);
 
-// MIPS memory
+// MIPS stack memory map
+// In funcCall, StackMemory::curOffset = 0
 // 0 -> 4GB
-// ra sp t0 t1 ... t7  p0(Function parameter) p1 ...
-// 0  1  2  3  ... 9   10=(10+0)              11=(10+1)
-//       -----------
-//       MAX_TEMP_REGS = 8
+//                    $sp
+//                     ↓
+// t7  ... t1 t0 ra sp | p0(parameter) p1 ... pN-1 |
+// -10 ... -4 -3 -2 -1 | 0             1  ... N-1  |
+// -------------
+// MAX_TEMP_REGS = 8
 //
 // when generating MIPS form IR,
 // if we get inst.op == InStack/outStack (BigForStmt IfStmt BlockStmt),

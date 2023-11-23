@@ -24,15 +24,16 @@ namespace Parser 仅包括输出函数和单词检验方法，具体的解析函
 原仿照 java 实现`单例模式`。后修改，CPP 更适合使用 namespace 实现单例效果。
 
 ### 预读处理
+
 Lexer 无需为`预读处理`额外扫描。
 
-Lexer 应当领先 Parser 若干个 单词(具体领先数量依据设计而定，单词信息均存储于 Lexer 内部)。  
+Lexer 应当领先 Parser 若干个 单词(具体领先数量依据设计而定，单词信息均存储于 Lexer 内部)。
 
 Lexer 共存储 3 个单词(便于 Parser 预读分析，具体深度在 Parser 设计中确定)，分别记录每个单词的位置数据(错误处理)。
 
 在读取新单词时，依次更新各个单词信息。
 
-由此优化， Lexer 仅会扫描全文一遍，预读不会影响性能。  
+由此优化， Lexer 仅会扫描全文一遍，预读不会影响性能。
 
 ### 词法类型
 
@@ -47,7 +48,7 @@ typedef std::string LexType;
 enum class NodeType {/*...*/}
 ```
 
-### `标识符` 和 `保留字` 
+### `标识符` 和 `保留字`
 
 为了简化代码实现，我借鉴了讨论区同学的 `LinkedHashMap`。
 只需将保留字加入上述 map 中，在区分时依次判断即可，无需实现状态机区分保留字。
@@ -58,7 +59,8 @@ CPP 标准库没有 JAVA 的 LinkedHashMap，我使用模板类实现(仅功能�
 ### 抽象语法树 AST
 
 原设计：AST 的节点均为一个类，该类成员属性包含一个 `NodeType` 用以区分不同节点。
-使用 unordered_map<Node* , 具体属性>表示结点的属性信息(如果在节点内部直接存储信息，每个节点都要包含所有可能的信息，浪费内存)。
+使用 unordered_map<Node* , 具体属性>表示结点的属性信息(
+如果在节点内部直接存储信息，每个节点都要包含所有可能的信息，浪费内存)。
 
 上述设计是可行的，但是每次访问属性都要访问指针，破坏了缓存连续性，代码运行效率低，不优雅。
 
@@ -66,7 +68,7 @@ CPP 标准库没有 JAVA 的 LinkedHashMap，我使用模板类实现(仅功能�
 
 多个节点类间使用继承降低复杂度、复用代码，类继承关系图(Visual Studio生成类图)如下所示。
 
-![ClassDiagram.png](ClassDiagram.png)
+![ClassDiagram.png](doc\ClassDiagram.png)
 
 ### 解析
 
@@ -96,9 +98,11 @@ ConstExp → AddExp
 for 语句的 (...) 与 {...} 是同一个作用域，专题报告有错。
 
 ### 常值计算
+
 符号表填表中，需要解析数组维度，进行常量计算。
 
 ### 符号表作用域修改
+
 符号表深度修改位置： `FuncDef` `MainFuncDef` `BigForStmt` `IfStmt` `BlockStmt` (不是在 `block` 内!)
 
 ## Error Handling
@@ -106,7 +110,9 @@ for 语句的 (...) 与 {...} 是同一个作用域，专题报告有错。
 Lexer 记录错误位置，在语法分析中完成错误判断、处理。
 
 ## C++ 坑
+
 ### g++ vs clang++
+
 libc++ 的报错信息友好太多了
 
 ### Singleton
