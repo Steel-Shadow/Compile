@@ -1,16 +1,13 @@
 //
 // Created by Steel_Shadow on 2023/10/12.
 //
-#include <iostream>
-
 #include "Exp.h"
-
 #include "AST/decl/Decl.h"
-#include "frontend/error/Error.h"
 #include "AST/func/Func.h"
+#include "backend/Register.h"
+#include "frontend/error/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
-#include "backend/Register.h"
 
 using namespace Parser;
 
@@ -55,7 +52,7 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
                                  std::make_unique<Temp>(*res),
                                  std::move(var),
                                  nullptr
-    ));
+            ));
 
     return res;
 }
@@ -232,7 +229,7 @@ std::string UnaryExp::getIdent() const {
     return "";
 }
 
-std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) {
+std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) const {
     using namespace IR;
     auto res = baseUnaryExp->genIR(bBlocks);
 
@@ -246,10 +243,10 @@ std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) {
         auto negRes = std::make_unique<Temp>();
         bBlocks.back()->addInst(Inst(
                 Op::Neg,
-                std::make_unique<Temp>(*negRes.get()),
+                std::make_unique<Temp>(*negRes),
                 std::move(res),
                 nullptr
-        ));
+                ));
         return negRes;
     }
 
@@ -278,7 +275,7 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
 
     if (Lexer::curLexType != NodeType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
-        checkParams(n, row, funcSym); // SymTab error handle
+        checkParams(n, row, funcSym);// SymTab error handle
     }
 
     singleLex(NodeType::RPARENT, row);
@@ -333,7 +330,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
         for (auto rParam = funcRParams->params.rbegin(); rParam != funcRParams->params.rend(); ++rParam) {
             auto name = (*rParam)->getIdent();
 
-            auto symbol = SymTab::find(name); // LVal / FuncCall
+            auto symbol = SymTab::find(name);// LVal / FuncCall
             size_t formalRank = funcSym->params[i].second.size();
 
             if (formalRank == 0) {
@@ -380,7 +377,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
         auto temp = std::make_unique<Temp>();
         bBlocks.back()->addInst(Inst(IR::Op::NewMove,
                                      std::make_unique<Temp>(*temp),
-                                     std::make_unique<Temp>((-static_cast<int>(MIPS::Register::v0)), Type::Int),
+                                     std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int),
                                      nullptr));
         return temp;
     } else {

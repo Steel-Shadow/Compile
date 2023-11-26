@@ -5,16 +5,16 @@
 #ifndef STACKMEMORY_H
 #define STACKMEMORY_H
 
+#include "middle/IR.h"
+
 #include <stack>
 #include <unordered_map>
-
-#include "middle/IR.h"
 
 namespace MIPS {
 constexpr int gp_init = 0x1000'8000;
 constexpr int data_segment = 0x1001'0000;
 
-int getStackOffset(IR::Var &var);
+int getStackOffset(const IR::Var &var);
 
 // MIPS stack memory map
 // In funcCall, StackMemory::curOffset = 0
@@ -35,7 +35,7 @@ extern std::unordered_map<IR::Var, int> varToOffset;
 
 extern int curOffset;
 extern std::stack<int> offsetStack;
-}
-}
+}// namespace StackMemory
+}// namespace MIPS
 
-#endif //STACKMEMORY_H
+#endif//STACKMEMORY_H

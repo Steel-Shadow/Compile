@@ -30,7 +30,7 @@ struct FuncFParam {
 
     const std::string &getId() const;
 
-    std::vector<int> getDims();
+    std::vector<int> getDims() const;
 };
 
 // FuncFParams → FuncFParam { ',' FuncFParam }

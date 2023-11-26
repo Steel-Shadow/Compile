@@ -38,7 +38,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     SymTab::add(n->ident, Symbol(n->funcType->getType(), params), SymTab::cur->getPrev());
 
-    Stmt::retVoid = (n->funcType->getType() == NodeType::VOIDTK);
+    Stmt::retVoid = n->funcType->getType() == NodeType::VOIDTK;
     n->block = Block::parse();
 
     if (!Stmt::retVoid) {
@@ -50,7 +50,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
         }
     }
 
-    SymTab::deepOut(); // FuncDef
+    SymTab::deepOut();// FuncDef
     output(NodeType::FuncDef);
     return n;
 }
@@ -79,7 +79,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
         }
     }
 
-    SymTab::deepOut(); // MainFuncDef
+    SymTab::deepOut();// MainFuncDef
     output(NodeType::MainFuncDef);
     return n;
 }
@@ -138,7 +138,7 @@ std::vector<Param> FuncFParams::getParameters() const {
     std::vector<Param> raws;
     raws.reserve(funcFParams.size());
     for (auto &i: funcFParams) {
-        raws.push_back(std::make_pair(i->ident, i->getDims()));
+        raws.emplace_back(i->ident, i->getDims());
     }
     return raws;
 }
@@ -148,7 +148,7 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
 
     n->type = Btype::parse();
 
-    int row = Lexer::curRow; // error handle
+    int row = Lexer::curRow;// error handle
     n->ident = Ident::parse();
     if (SymTab::reDefine(n->ident)) {
         Error::raise('b', row);
@@ -158,7 +158,7 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
     if (Lexer::curLexType == NodeType::LBRACK) {
         row = Lexer::curRow;
         Lexer::next();
-        n->dims.push_back(nullptr); // p[] is not p!
+        n->dims.push_back(nullptr);// p[] is not p!
         singleLex(NodeType::RBRACK, row);
 
         while (Lexer::curLexType == NodeType::LBRACK) {
@@ -179,7 +179,7 @@ const std::string &FuncFParam::getId() const {
     return ident;
 }
 
-std::vector<int> FuncFParam::getDims() {
+std::vector<int> FuncFParam::getDims() const {
     std::vector<int> dimsValue;
     dimsValue.reserve(dims.size());
     for (auto &i: dims) {
@@ -217,7 +217,7 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     block->genIR(bBlocks);
 
     if (bBlocks.back()->instructions.back().op != Op::Ret) {
-        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+        bBlocks.back()->addInst(Inst(Op::Ret,
                                      nullptr,
                                      nullptr,
                                      nullptr));

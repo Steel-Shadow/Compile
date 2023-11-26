@@ -13,15 +13,34 @@ enum class Op {
     // IR::Instruction.op == Empty
     // it's not nop
     none,
-    addu, subu, mul, div, mfhi, and_, or_,
+
+    addu,
+    subu,
+    mul,
+    div,
+    mfhi,
+    and_,
+    or_,
     addi,
+
+    slt,
+    sle,
+    sge,
+    sgt,
+    seq,
+    sne,
+
     move,
-    sw, lw,
-    li, la,
+    sw,
+    lw,
+    li,
+    la,
     syscall,
     j,
     jal,
     jr,
+    bgtz,
+    beqz,
 };
 
 std::string opToString(Op e);
@@ -43,8 +62,8 @@ struct R_Inst : public Instruction {
 };
 
 struct I_imm_Inst : public Instruction {
-    Register rs;
     Register rt;
+    Register rs;
     int immediate;
 
     I_imm_Inst(Op op, Register rt, Register rs, int immediate);
@@ -57,7 +76,7 @@ struct I_label_Inst : public Instruction {
     Register rt;
     Label label;
 
-    I_label_Inst(Op op, Register rs, Register rt, const Label &label);
+    I_label_Inst(Op op, Register rs, Register rt, Label label);
 
     std::string toString() override;
 };
@@ -65,60 +84,74 @@ struct I_label_Inst : public Instruction {
 struct J_Inst : public Instruction {
     Label label;
 
-    explicit J_Inst(Op op, const Label &label);
+    explicit J_Inst(Op op, Label label);
 
     std::string toString() override;
 };
 
-void InStack(IR::Inst &);
+void InStack(const IR::Inst &);
 
-void OutStack(IR::Inst &);
+void OutStack(const IR::Inst &);
 
-void Assign(IR::Inst &);
+void Assign(const IR::Inst &);
 
-void Add(IR::Inst &);
+void Add(const IR::Inst &);
 
-void Sub(IR::Inst &);
+void Sub(const IR::Inst &);
 
-void Mul(IR::Inst &);
+void Mul(const IR::Inst &);
 
-void Div(IR::Inst &);
+void Div(const IR::Inst &);
 
-void Mod(IR::Inst &);
+void Mod(const IR::Inst &);
 
-void And(IR::Inst &);
+void And(const IR::Inst &);
 
-void Or(IR::Inst &);
+void Or(const IR::Inst &);
 
-void Neg(IR::Inst &);
+void Neg(const IR::Inst &);
 
-void LoadImd(IR::Inst &);
+void LoadImd(const IR::Inst &);
 
-void GetInt(IR::Inst &);
+void GetInt(const IR::Inst &);
 
-void PrintInt(IR::Inst &);
+void PrintInt(const IR::Inst &);
 
-void PrintStr(IR::Inst &);
+void PrintStr(const IR::Inst &);
 
-void Cmp(IR::Inst &);
+void Cmp(const IR::Inst &);
 
-void Alloca(IR::Inst &);
+void Alloca(const IR::Inst &);
 
-void Load(IR::Inst &);
+void Load(const IR::Inst &);
 
-void Store(IR::Inst &);
+void Store(const IR::Inst &);
 
-void Br(IR::Inst &);
+void Br(const IR::Inst &);
 
-void Bif0(IR::Inst &);
+void Bif0(const IR::Inst &);
 
-void Call(IR::Inst &);
+void Call(const IR::Inst &);
 
-void PushParam(IR::Inst &);
+void PushParam(const IR::Inst &);
 
-void Ret(IR::Inst &);
+void Ret(const IR::Inst &);
 
-void NewMove(IR::Inst &);
+void NewMove(const IR::Inst &);
+
+void Leq(const IR::Inst &);
+
+void Lss(const IR::Inst &);
+
+void Geq(const IR::Inst &);
+
+void Gre(const IR::Inst &);
+
+void Eql(const IR::Inst &);
+
+void Neq(const IR::Inst &);
+
+void Bif1(const IR::Inst &);
 
 #endif //INSTRUCTION_H
 }

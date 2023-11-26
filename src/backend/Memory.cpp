@@ -11,6 +11,6 @@ std::unordered_map<IR::Var, int> StackMemory::varToOffset;
 int StackMemory::curOffset;
 std::stack<int> StackMemory::offsetStack{};
 
-int MIPS::getStackOffset(IR::Var &var) {
+int MIPS::getStackOffset(const IR::Var &var) {
     return StackMemory::varToOffset[var];
 }

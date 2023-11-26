@@ -35,7 +35,7 @@ std::unique_ptr<CompUnit> CompUnit::parse() {
     return n;
 }
 
-std::unique_ptr<IR::Module> CompUnit::genIR() {
+std::unique_ptr<IR::Module> CompUnit::genIR() const {
     using namespace IR;
 
     auto module = std::make_unique<Module>("Write by Steel Shadow");

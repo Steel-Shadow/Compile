@@ -39,7 +39,7 @@ struct BlockItem {
 struct Stmt : public BlockItem {
     static std::unique_ptr<Stmt> parse();
 
-    static bool retVoid; // check return in FuncDef
+    static bool retVoid;// check return in FuncDef
 };
 
 /*-----------------------------------------------------------*/
@@ -77,9 +77,9 @@ struct Block {
 
     static std::unique_ptr<Block> parse();
 
-    static int lastRow; // show return error message
+    static int lastRow;// show return error message
 
-    void genIR(IR::BasicBlocks &basicBlocks);
+    void genIR(IR::BasicBlocks &basicBlocks) const;
 };
 
 // Block
@@ -167,7 +167,7 @@ struct PrintStmt : public Stmt {
     std::string formatString;
     std::vector<std::unique_ptr<Exp>> exps;
 
-    int numOfFormat; // error handling
+    int numOfFormat;// error handling
 
     static std::unique_ptr<PrintStmt> parse();
 
@@ -176,7 +176,7 @@ struct PrintStmt : public Stmt {
 private:
     void checkFormatString(const std::string &str);
 
-    static void addStr(IR::BasicBlocks &bBlocks, std::string &buffer);
+    static void addStr(const IR::BasicBlocks &bBlocks, std::string &buffer);
 };
 
 #endif //COMPILER_STMT_H

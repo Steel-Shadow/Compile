@@ -3,9 +3,9 @@
 //
 
 #include "Register.h"
-#include "MIPS.h"
 #include "Instruction.h"
 #include "Memory.h"
+#include "MIPS.h"
 
 using namespace MIPS;
 
@@ -23,7 +23,7 @@ constexpr auto cleanRegQueue() {
 std::map<int, Register> MIPS::tempToRegs;
 std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
 
-Register MIPS::newReg(IR::Temp *temp) {
+Register MIPS::newReg(const IR::Temp *temp) {
     if (temp->id < 0) {
         return static_cast<Register>(-temp->id);
     } else if (freeTempRegs.empty()) {
@@ -36,7 +36,7 @@ Register MIPS::newReg(IR::Temp *temp) {
     }
 }
 
-Register MIPS::getReg(IR::Temp *temp) {
+Register MIPS::getReg(const IR::Temp *temp) {
     if (temp->id < 0) {
         return static_cast<Register>(-temp->id);
     } else {
@@ -47,8 +47,7 @@ Register MIPS::getReg(IR::Temp *temp) {
                     Op::lw,
                     Register::t8,
                     Register::sp,
-                    -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]
-            ));
+                    -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
             return Register::t8;
         } else {
             Register t = tempToReg->second;
@@ -137,7 +136,7 @@ void MIPS::clearTempRegs() {
     freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
 }
 
-void MIPS::checkTempReg(IR::Temp *temp, MIPS::Register reg) {
+void MIPS::checkTempReg(const IR::Temp *temp, Register reg) {
     if (reg == Register::t8) {
         // if freeTempRegs is empty (reg==$t8),
         // we should store temp on stack

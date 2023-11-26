@@ -2,7 +2,6 @@
 // Created by Steel_Shadow on 2023/10/12.
 //
 
-#include <regex>
 #include "Stmt.h"
 
 #include "AST/decl/Decl.h"
@@ -49,7 +48,7 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
     return n;
 }
 
-void Block::genIR(IR::BasicBlocks &basicBlocks) {
+void Block::genIR(IR::BasicBlocks &basicBlocks) const {
     using namespace IR;
     for (auto &i: blockItems) {
         i->genIR(basicBlocks);
@@ -176,38 +175,42 @@ std::stack<IR::Label> BigForStmt::stackEndLabel{};
 std::stack<IR::Label> BigForStmt::stackIterLabel{};
 
 void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
+    using namespace IR;
+
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
             IR::Op::InStack, nullptr, nullptr, nullptr));
 
-    using namespace IR;
     init->genIR(bBlocks);
 
-    auto forCondBlock = std::make_unique<BasicBlock>("ForCond");
-    auto forIterBlock = std::make_unique<BasicBlock>("ForIter");
+    auto forBodyBlock = std::make_unique<BasicBlock>("ForBody");
+    auto forIterCondBlock = std::make_unique<BasicBlock>("ForIter");
     auto forEndBlock = std::make_unique<BasicBlock>("ForEnd");
 
     stackEndLabel.push(forEndBlock->label);
-    stackIterLabel.push(forIterBlock->label);
+    stackIterLabel.push(forIterCondBlock->label);
 
-    auto pForCondBlock = forCondBlock.get();
-    auto pForIterBlock = forIterBlock.get();
+    // use unique_ptr after move
+    auto pForBodyBlock = forBodyBlock.get();
+    auto pForIterBlock = forIterCondBlock.get();
 
-    bBlocks.push_back(std::move(forCondBlock));
-    auto tempCond = cond->genIR(bBlocks);
-    pForCondBlock->addInst(Inst(IR::Op::Bif0,
-                                nullptr,
-                                std::move(tempCond),
-                                std::make_unique<Label>(forEndBlock->label)));
+    auto condRes = cond->genIR(bBlocks);
+    bBlocks.back()->addInst(Inst(IR::Op::Bif0,
+                                 nullptr,
+                                 std::move(condRes),
+                                 std::make_unique<Label>(forEndBlock->label)));
 
+    bBlocks.push_back(std::move(forBodyBlock));
     stmt->genIR(bBlocks);
 
-    bBlocks.push_back(std::move(forIterBlock));
+    bBlocks.push_back(std::move(forIterCondBlock));
     iter->genIR(bBlocks);
-    pForIterBlock->addInst(Inst(IR::Op::Br,
+    auto condRes2 = cond->genIR(bBlocks);
+
+    pForIterBlock->addInst(Inst(IR::Op::Bif1,
                                 nullptr,
-                                std::make_unique<Label>(pForCondBlock->label),
-                                nullptr));
+                                std::move(condRes2),
+                                std::make_unique<Label>(pForBodyBlock->label)));
 
     bBlocks.push_back(std::move(forEndBlock));
 
@@ -372,7 +375,7 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     return n;
 }
 
-void PrintStmt::addStr(IR::BasicBlocks &bBlocks, std::string &buffer) {
+void PrintStmt::addStr(const IR::BasicBlocks &bBlocks, std::string &buffer) {
     if (buffer.empty()) {
         return;
     }

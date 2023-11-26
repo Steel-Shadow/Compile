@@ -5,6 +5,7 @@
 #include "Instruction.h"
 
 #include <string>
+#include <utility>
 
 #include "Register.h"
 #include "Memory.h"
@@ -51,6 +52,22 @@ std::string MIPS::opToString(Op e) {
             return "addi";
         case Op::jr:
             return "jr";
+        case Op::slt:
+            return "slt";
+        case Op::sle:
+            return "sle";
+        case Op::sge:
+            return "sge";
+        case Op::sgt:
+            return "sgt";
+        case Op::seq:
+            return "seq";
+        case Op::sne:
+            return "sne";
+        case Op::bgtz:
+            return "bgtz";
+        case Op::beqz:
+            return "beqz";
         default:
             Error::raise("unknown Op");
             return "unknown";
@@ -58,79 +75,74 @@ std::string MIPS::opToString(Op e) {
 }
 
 Instruction::Instruction(Op op) :
-        op(op) {
-}
+    op(op) {}
 
 R_Inst::R_Inst(Op op, Register rd, Register rs, Register rt) :
-        Instruction(op),
-        rd(rd),
-        rs(rs),
-        rt(rt) {
-}
+    Instruction(op),
+    rd(rd),
+    rs(rs),
+    rt(rt) {}
 
 std::string R_Inst::toString() {
-    return opToString(op) + ' '
-           + regToString(rd) + ' '
-           + regToString(rs) + ' '
+    return opToString(op) + '\t'
+           + regToString(rd) + '\t'
+           + regToString(rs) + '\t'
            + regToString(rt);
 }
 
 I_imm_Inst::I_imm_Inst(Op op, Register rt, Register rs, int immediate) :
-        Instruction(op),
-        rt(rt),
-        rs(rs),
-        immediate(immediate) {
-}
+    Instruction(op),
+    rt(rt),
+    rs(rs),
+    immediate(immediate) {}
 
 std::string I_imm_Inst::toString() {
     if (op == Op::lw || op == Op::sw) {
-        return opToString(op) + ' '
-               + regToString(rt) + ' '
+        return opToString(op) + '\t'
+               + regToString(rt) + '\t'
                + std::to_string(immediate)
                + "(" + regToString(rs) + ")";
     } else {
-        return opToString(op) + ' '
-               + regToString(rt) + ' '
-               + regToString(rs) + ' '
+        return opToString(op) + '\t'
+               + regToString(rt) + '\t'
+               + regToString(rs) + '\t'
                + std::to_string(immediate);
     }
 }
 
-I_label_Inst::I_label_Inst(Op op, Register rs, Register rt, const Label &label) :
-        Instruction(op),
-        rs(rs),
-        rt(rt),
-        label(label) {
-}
+I_label_Inst::I_label_Inst(Op op, Register rs, Register rt, Label label) :
+    Instruction(op),
+    rs(rs),
+    rt(rt),
+    label(std::move(label)) {}
 
 std::string I_label_Inst::toString() {
-    return opToString(op) + ' '
-           + regToString(rs) + ' '
-           + regToString(rt) + ' '
+    return opToString(op) + '\t'
+           + regToString(rs) + '\t'
+           + regToString(rt) + '\t'
            + label.nameAndId;
 }
 
-J_Inst::J_Inst(Op op, const Label &label) :
-        Instruction(op),
-        label(label) {
-}
+J_Inst::J_Inst(Op op, Label label) :
+    Instruction(op),
+    label(std::move(label)) {}
 
 std::string J_Inst::toString() {
-    return opToString(op) + ' '
+    return opToString(op) + '\t'
            + label.nameAndId;
 }
 
-void MIPS::InStack(IR::Inst &) {
+void MIPS::InStack(const IR::Inst &) {
     StackMemory::offsetStack.push(StackMemory::curOffset);
 }
 
 
-void MIPS::OutStack(IR::Inst &) {
+void MIPS::OutStack(const IR::Inst &) {
     StackMemory::curOffset = StackMemory::offsetStack.top();
     StackMemory::offsetStack.pop();
 }
 
-void MIPS::Assign(IR::Inst &inst) {
+void MIPS::Assign(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Var *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
@@ -141,7 +153,7 @@ void MIPS::Assign(IR::Inst &inst) {
     }
 }
 
-void MIPS::Add(IR::Inst &inst) {
+void MIPS::Add(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -153,7 +165,7 @@ void MIPS::Add(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Sub(IR::Inst &inst) {
+void MIPS::Sub(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -165,7 +177,7 @@ void MIPS::Sub(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Mul(IR::Inst &inst) {
+void MIPS::Mul(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -177,7 +189,7 @@ void MIPS::Mul(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Div(IR::Inst &inst) {
+void MIPS::Div(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -189,7 +201,7 @@ void MIPS::Div(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Mod(IR::Inst &inst) {
+void MIPS::Mod(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -202,7 +214,7 @@ void MIPS::Mod(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::And(IR::Inst &inst) {
+void MIPS::And(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -214,7 +226,7 @@ void MIPS::And(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Or(IR::Inst &inst) {
+void MIPS::Or(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
     auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
@@ -226,7 +238,7 @@ void MIPS::Or(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Neg(IR::Inst &inst) {
+void MIPS::Neg(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
@@ -236,7 +248,7 @@ void MIPS::Neg(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::LoadImd(IR::Inst &inst) {
+void MIPS::LoadImd(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto imm = dynamic_cast<IR::ConstVal *>(inst.arg1.get());
 
@@ -245,7 +257,7 @@ void MIPS::LoadImd(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::GetInt(IR::Inst &inst) {
+void MIPS::GetInt(const IR::Inst &inst) {
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::li, Register::v0, Register::none, 5));
     assemblies.push_back(std::make_unique<R_Inst>(Op::syscall, Register::none, Register::none, Register::none));
 
@@ -257,7 +269,7 @@ void MIPS::GetInt(IR::Inst &inst) {
     }
 }
 
-void MIPS::PrintInt(IR::Inst &inst) {
+void MIPS::PrintInt(const IR::Inst &inst) {
     auto t = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
     assemblies.push_back(std::make_unique<R_Inst>(Op::move, Register::a0, getReg(t), Register::none));
@@ -265,7 +277,7 @@ void MIPS::PrintInt(IR::Inst &inst) {
     assemblies.push_back(std::make_unique<R_Inst>(Op::syscall, Register::none, Register::none, Register::none));
 }
 
-void MIPS::PrintStr(IR::Inst &inst) {
+void MIPS::PrintStr(const IR::Inst &inst) {
     auto str = dynamic_cast<IR::Str *>(inst.arg1.get());
 
     assemblies.push_back(std::make_unique<I_label_Inst>(Op::la, Register::a0, Register::none, Label(str->toString())));
@@ -273,11 +285,7 @@ void MIPS::PrintStr(IR::Inst &inst) {
     assemblies.push_back(std::make_unique<R_Inst>(Op::syscall, Register::none, Register::none, Register::none));
 }
 
-void MIPS::Cmp(IR::Inst &inst) {
-    // todo: 继续写 MIPS 代码生成
-}
-
-void MIPS::Alloca(IR::Inst &inst) {
+void MIPS::Alloca(const IR::Inst &inst) {
     auto var = dynamic_cast<IR::Var *>(inst.arg1.get());
     auto size = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
 
@@ -287,7 +295,7 @@ void MIPS::Alloca(IR::Inst &inst) {
     StackMemory::varToOffset[*var] = StackMemory::curOffset;
 }
 
-void MIPS::Load(IR::Inst &inst) {
+void MIPS::Load(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Var *>(inst.arg1.get());
 
@@ -300,7 +308,7 @@ void MIPS::Load(IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Store(IR::Inst &inst) {
+void MIPS::Store(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Var *>(inst.arg1.get());
 
@@ -311,16 +319,19 @@ void MIPS::Store(IR::Inst &inst) {
     }
 }
 
-void MIPS::Br(IR::Inst &inst) {
+void MIPS::Br(const IR::Inst &inst) {
     auto label = Label(dynamic_cast<IR::Label *>(inst.arg1.get()));
     assemblies.push_back(std::make_unique<J_Inst>(Op::j, label));
 }
 
-void MIPS::Bif0(IR::Inst &inst) {
-    // todo: 代码生成二
+void MIPS::Bif0(const IR::Inst &inst) {
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto label = Label(dynamic_cast<IR::Label *>(inst.arg2.get()));
+
+    assemblies.push_back(std::make_unique<I_label_Inst>(Op::beqz, getReg(arg1), Register::none, label));
 }
 
-void MIPS::Call(IR::Inst &inst) {
+void MIPS::Call(const IR::Inst &inst) {
     auto func = Label(dynamic_cast<IR::Label *>(inst.arg1.get()));
 
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, -StackMemory::curOffset));
@@ -361,14 +372,14 @@ void MIPS::Call(IR::Inst &inst) {
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::sp, Register::sp, -StackMemory::curOffset));
     StackMemory::curOffset -= wordSize;
 
-//    StackMemory::curOffset -= SymTab::find(func.nameAndId)->params.size() * wordSize;
+    // StackMemory::curOffset -= SymTab::find(func.nameAndId)->params.size() * wordSize;
     // deAllocate stack for call
     StackMemory::curOffset = StackMemory::offsetStack.top();
     StackMemory::offsetStack.pop();
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::addi, Register::sp, Register::sp, StackMemory::curOffset));
 }
 
-void MIPS::PushParam(IR::Inst &inst) {
+void MIPS::PushParam(const IR::Inst &inst) {
     // todo: 代码生成二 数组传参
     auto param = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
@@ -377,7 +388,7 @@ void MIPS::PushParam(IR::Inst &inst) {
     assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(param), Register::sp, -StackMemory::curOffset));
 }
 
-void MIPS::Ret(IR::Inst &inst) {
+void MIPS::Ret(const IR::Inst &inst) {
     static bool firstIsMainRet = true;
 
     auto ret = dynamic_cast<IR::Temp *>(inst.arg1.get());
@@ -396,7 +407,7 @@ void MIPS::Ret(IR::Inst &inst) {
     }
 }
 
-void MIPS::NewMove(IR::Inst &inst) {
+void MIPS::NewMove(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
@@ -404,4 +415,83 @@ void MIPS::NewMove(IR::Inst &inst) {
     Register reg1 = getReg(arg1);
     assemblies.push_back(std::make_unique<R_Inst>(Op::move, regRes, reg1, Register::none));
     checkTempReg(res, regRes);
+}
+
+void MIPS::Leq(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::sle, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Lss(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::slt, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Geq(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::sge, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Gre(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::sgt, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Eql(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::seq, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Neq(const IR::Inst &inst) {
+    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto arg2 = dynamic_cast<IR::Temp *>(inst.arg2.get());
+
+    Register reg1 = getReg(arg1);
+    Register reg2 = getReg(arg2);
+    Register regRes = newReg(res);
+    assemblies.push_back(std::make_unique<R_Inst>(Op::sne, regRes, reg1, reg2));
+    checkTempReg(res, regRes);
+}
+
+void MIPS::Bif1(const IR::Inst &inst) {
+    auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
+    auto label = Label(dynamic_cast<IR::Label *>(inst.arg2.get()));
+
+    assemblies.push_back(std::make_unique<I_label_Inst>(Op::bgtz, getReg(arg1), Register::none, label));
 }

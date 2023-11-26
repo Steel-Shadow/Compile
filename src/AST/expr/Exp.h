@@ -12,6 +12,7 @@
 #include "middle/IR.h"
 
 struct FuncRParams;
+struct Exp;
 
 struct BaseUnaryExp {
     virtual ~BaseUnaryExp() = default;
@@ -22,7 +23,31 @@ struct BaseUnaryExp {
     virtual std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) = 0;
 };
 
-struct LVal;
+// PrimaryExp → '(' Exp ')' | LVal | Number
+struct PrimaryExp : public BaseUnaryExp {
+    static std::unique_ptr<PrimaryExp> parse();
+
+    virtual size_t getRank();
+
+    virtual std::string getIdent();
+};
+
+// LVal → Ident {'[' Exp ']'}
+struct LVal : public PrimaryExp {
+    std::string ident;
+    std::vector<std::unique_ptr<Exp>> dims;
+
+    static std::unique_ptr<LVal> parse();
+
+    size_t getRank() override;
+
+    std::string getIdent() override;
+
+    // Load a Var to Temp
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+
+    int evaluate() override;
+};
 
 // UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
 // change syntax to
@@ -40,18 +65,9 @@ struct UnaryExp {
 
     std::string getIdent() const;
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks);
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const;
 
     LVal *getLVal() const;
-};
-
-// PrimaryExp → '(' Exp ')' | LVal | Number
-struct PrimaryExp : public BaseUnaryExp {
-    static std::unique_ptr<PrimaryExp> parse();
-
-    virtual size_t getRank();
-
-    virtual std::string getIdent();
 };
 
 // Ident '(' [FuncRParams] ')'
@@ -68,31 +84,12 @@ struct FuncCall : public BaseUnaryExp {
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
 };
 
-struct Exp;
-
 struct PareExp : public PrimaryExp {
     // '(' Exp ')'
     std::unique_ptr<Exp> exp;
 
     static std::unique_ptr<PareExp> parse();
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
-
-    int evaluate() override;
-};
-
-// LVal → Ident {'[' Exp ']'}
-struct LVal : public PrimaryExp {
-    std::string ident;
-    std::vector<std::unique_ptr<Exp>> dims;
-
-    static std::unique_ptr<LVal> parse();
-
-    size_t getRank() override;
-
-    std::string getIdent() override;
-
-    // Load a Var to Temp
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
 
     int evaluate() override;
@@ -133,7 +130,7 @@ struct MultiExp {
                     std::move(res),
                     std::move(lastRes),
                     std::move(t)
-            ));
+                    ));
             lastRes = std::move(resCopy);
         }
         return lastRes;
@@ -165,14 +162,14 @@ struct MultiExp {
 struct MulExp : MultiExp<UnaryExp> {
     static std::unique_ptr<MulExp> parse();
 
-    int evaluate();
+    int evaluate() const;
 };
 
 // AddExp → MulExp | AddExp ('+' | '−') MulExp
 struct AddExp : MultiExp<MulExp> {
     static std::unique_ptr<AddExp> parse();
 
-    int evaluate();
+    int evaluate() const;
 };
 
 // RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp

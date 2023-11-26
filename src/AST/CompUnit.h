@@ -19,7 +19,7 @@ struct CompUnit {
 
     static std::unique_ptr<CompUnit> parse();
 
-    std::unique_ptr<IR::Module> genIR();
+    std::unique_ptr<IR::Module> genIR() const;
 };
 
 #endif //COMPILER_COMPUNIT_H

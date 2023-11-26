@@ -4,6 +4,7 @@
 #include "MIPS.h"
 
 #include <iostream>
+#include <utility>
 
 #include "config.h"
 #include "Instruction.h"
@@ -30,11 +31,11 @@ void MIPS::output(const std::string &str, bool newLine) {
 #endif
 }
 
-Label::Label(const std::string &name_and_id) : nameAndId(name_and_id) {
-}
+Label::Label(std::string name_and_id) :
+    nameAndId(std::move(name_and_id)) {}
 
-Label::Label(const IR::Label *label) : nameAndId(label->nameAndId) {
-}
+Label::Label(const IR::Label *label) :
+    nameAndId(label->nameAndId) {}
 
 std::string Label::toString() {
     return nameAndId + ":";
@@ -52,7 +53,7 @@ void MIPS::outputAll(IR::Module &module) {
         output("");
     }
     int i = 0;
-    for (auto str: IR::Str::MIPS_strings) {
+    for (const auto &str: IR::Str::MIPS_strings) {
         output("str_" + std::to_string(i) + ": .asciiz " + str);
         i++;
     }
@@ -104,10 +105,9 @@ void MIPS::outputAll(IR::Module &module) {
     }
 }
 
-void MIPS::optimize() {
-}
+void MIPS::optimize() {}
 
-void MIPS::irToMips(IR::Inst &inst) {
+void MIPS::irToMips(const IR::Inst &inst) {
     switch (inst.op) {
         case IR::Op::Empty:
             break;
@@ -156,9 +156,6 @@ void MIPS::irToMips(IR::Inst &inst) {
         case IR::Op::PrintStr:
             PrintStr(inst);
             break;
-        case IR::Op::Cmp:
-            Cmp(inst);
-            break;
         case IR::Op::Alloca:
             Alloca(inst);
             break;
@@ -186,8 +183,28 @@ void MIPS::irToMips(IR::Inst &inst) {
         case IR::Op::NewMove:
             NewMove(inst);
             break;
+        case IR::Op::Leq:
+            Leq(inst);
+            break;
+        case IR::Op::Lss:
+            Lss(inst);
+            break;
+        case IR::Op::Geq:
+            Geq(inst);
+            break;
+        case IR::Op::Gre:
+            Gre(inst);
+            break;
+        case IR::Op::Eql:
+            Eql(inst);
+            break;
+        case IR::Op::Neq:
+            Neq(inst);
+            break;
+        case IR::Op::Bif1:
+            Bif1(inst);
+            break;
         default:
             Error::raise("Bad IR Op in MIPS gen");
     }
 }
-

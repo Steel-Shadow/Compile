@@ -5,10 +5,9 @@
 #ifndef COMPILER_MIPS_H
 #define COMPILER_MIPS_H
 
-#include <fstream>
-
 #include "middle/IR.h"
-#include "Register.h"
+
+#include <fstream>
 
 // init register at beginning
 namespace MIPS {
@@ -27,14 +26,14 @@ extern std::vector<std::unique_ptr<Assembly>> assemblies;
 struct Label : public Assembly {
     std::string nameAndId;
 
-    explicit Label(const std::string &name_and_id);
+    explicit Label(std::string name_and_id);
 
     explicit Label(const IR::Label *label);
 
     std::string toString() override;
 };
 
-void irToMips(IR::Inst &inst);
+void irToMips(const IR::Inst &inst);
 
 void optimize();
 

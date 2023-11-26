@@ -68,7 +68,7 @@ std::vector<int> ArrayInitVal::evaluate() {
     return res;
 }
 
-std::vector<ExpInitVal *> ArrayInitVal::getFlatten() {
+std::vector<ExpInitVal *> ArrayInitVal::getFlatten() const {
     std::vector<ExpInitVal *> flatten;
     for (auto &i: array) {
         if (auto p1 = dynamic_cast<ExpInitVal *>(i.get())) {

@@ -13,23 +13,20 @@ using namespace IR;
 std::ofstream IR::IRFileStream;
 std::vector<std::string> Str::MIPS_strings;
 
-Module::Module(std::string name)
-        : name(std::move(name)) {
-}
+Module::Module(std::string name) :
+    name(std::move(name)) {}
 
 std::vector<std::unique_ptr<Function>> &Module::getFunctions() {
     return functions;
 }
 
-Inst::Inst(
-        Op op,
-        std::unique_ptr<Element> res,
-        std::unique_ptr<Element> arg1,
-        std::unique_ptr<Element> arg2)
-        : op(op), res(std::move(res)),
-          arg1(std::move(arg1)),
-          arg2(std::move(arg2)) {
-}
+Inst::Inst(Op op,
+           std::unique_ptr<Element> res,
+           std::unique_ptr<Element> arg1,
+           std::unique_ptr<Element> arg2) :
+    op(op), res(std::move(res)),
+    arg1(std::move(arg1)),
+    arg2(std::move(arg2)) {}
 
 void Inst::outputIR() const {
     using namespace std;
@@ -37,19 +34,19 @@ void Inst::outputIR() const {
         return;
     }
 #if defined(STDOUT_IR)
-    cout << opToStr(op) << ' '
-         << (res ? res->toString() : "_") << ' '
-         << (arg1 ? arg1->toString() : "_") << ' '
-         << (arg2 ? arg2->toString() : "_") << ' '
+    cout << opToStr(op) << '\t'
+         << (res ? res->toString() : "_") << '\t'
+         << (arg1 ? arg1->toString() : "_") << '\t'
+         << (arg2 ? arg2->toString() : "_") << '\t'
          << '\n';
 #endif
 
 #if defined(FILEOUT_IR)
-    IRFileStream << opToStr(op) << ' '
-                 << (res ? res->toString() : "_") << ' '
-                 << (arg1 ? arg1->toString() : "_") << ' '
-                 << (arg2 ? arg2->toString() : "_") << ' '
-                 << '\n';
+    IRFileStream << opToStr(op) << '\t'
+            << (res ? res->toString() : "_") << '\t'
+            << (arg1 ? arg1->toString() : "_") << '\t'
+            << (arg2 ? arg2->toString() : "_") << '\t'
+            << '\n';
 #endif
 }
 
@@ -82,8 +79,6 @@ std::string Inst::opToStr(Op anOperator) {
             return "PrintInt";
         case Op::PrintStr:
             return "PrintStr";
-        case Op::Cmp:
-            return "Cmp";
         case Op::Alloca:
             return "Alloca";
         case Op::Load:
@@ -106,6 +101,20 @@ std::string Inst::opToStr(Op anOperator) {
             return "OutStack";
         case Op::NewMove:
             return "NewMove";
+        case Op::Leq:
+            return "Leq";
+        case Op::Lss:
+            return "Lss";
+        case Op::Geq:
+            return "Geq";
+        case Op::Gre:
+            return "Gre";
+        case Op::Eql:
+            return "Eql";
+        case Op::Neq:
+            return "Neq";
+        case Op::Bif1:
+            return "Bif1";
         default:
             Error::raise("Bad IR op");
             return "Bad IR op";
@@ -127,16 +136,15 @@ std::string Label::toString() const {
 
 GlobVar::GlobVar(
         bool cons,
-        const std::vector<int> &dims,
-        std::vector<int> &initVal)
-        : cons(cons),
-          dims(dims),
-          initVal(initVal) {
-}
+        std::vector<int> dims,
+        std::vector<int> initVal) :
+    cons(cons),
+    dims(std::move(dims)),
+    initVal(std::move(initVal)) {}
 
-GlobVar::GlobVar(bool cons, const std::vector<int> &dims)
-        : cons(cons),
-          dims(dims) {
+GlobVar::GlobVar(bool cons, const std::vector<int> &dims) :
+    cons(cons),
+    dims(dims) {
     int size = 1;
     for (const int i: dims) {
         size *= i;
@@ -147,9 +155,9 @@ GlobVar::GlobVar(bool cons, const std::vector<int> &dims)
 
 Function::Function(std::string name, Type reType,
                    const std::vector<Param> &params) :
-        name(std::move(name)),
-        reType(reType),
-        params(params) {
+    name(std::move(name)),
+    reType(reType),
+    params(params) {
     idAllocator = 0;
 }
 
@@ -204,9 +212,8 @@ void BasicBlock::addInst(Inst inst) {
     instructions.push_back(std::move(inst));
 }
 
-BasicBlock::BasicBlock(std::string labelName, bool isFunc)
-        : label(Label(std::move(labelName), isFunc)) {
-}
+BasicBlock::BasicBlock(std::string labelName, bool isFunc) :
+    label(Label(std::move(labelName), isFunc)) {}
 
 void BasicBlock::outputIR() const {
     using namespace std;
@@ -237,18 +244,16 @@ Var::Var(std::string name,
          bool cons,
          const std::vector<int> &dims,
          Type type) :
-        name(std::move(name)),
-        depth(depth),
-        cons(cons),
-        dims(dims),
-        type(type) {
-}
+    name(std::move(name)),
+    depth(depth),
+    cons(cons),
+    dims(dims),
+    type(type) {}
 
-Var::Var(const std::string &name, int depth) :
-        name(name),
-        depth(depth),
-        cons(false), type(Type::Int) {
-}
+Var::Var(std::string name, int depth) :
+    name(std::move(name)),
+    depth(depth),
+    cons(false), type(Type::Int) {}
 
 std::string Var::toString() const {
     std::string s = name + "(" + std::to_string(depth) + ")";
@@ -258,15 +263,14 @@ std::string Var::toString() const {
     return s;
 }
 
-Temp::Temp(Type type)
-        : type(type) {
+Temp::Temp(Type type) :
+    type(type) {
     id = Function::idAllocator++;
 }
 
-Temp::Temp(int id, Type type)
-        : id(id),
-          type(type) {
-}
+Temp::Temp(int id, Type type) :
+    id(id),
+    type(type) {}
 
 std::string Temp::toString() const {
     return "%" + std::to_string(id);
@@ -278,9 +282,8 @@ Temp::Temp(const Temp &other) {
 }
 
 ConstVal::ConstVal(int value, Type type) :
-        value(value),
-        type(type) {
-}
+    value(value),
+    type(type) {}
 
 std::string ConstVal::toString() const {
     return std::to_string(value);
@@ -302,6 +305,18 @@ Op IR::NodeTypeToIROp(NodeType n) {
             return Op::And;
         case NodeType::OR:
             return Op::Or;
+        case NodeType::LEQ:
+            return Op::Leq;
+        case NodeType::LSS:
+            return Op::Lss;
+        case NodeType::GEQ:
+            return Op::Geq;
+        case NodeType::GRE:
+            return Op::Gre;
+        case NodeType::EQL:
+            return Op::Eql;
+        case NodeType::NEQ:
+            return Op::Neq;
         default:
             Error::raise("Bad IR Operator");
             return Op::Empty;

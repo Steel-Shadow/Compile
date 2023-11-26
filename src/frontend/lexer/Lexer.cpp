@@ -4,12 +4,12 @@
 
 #include "Lexer.h"
 
-#include <sstream>
-#include <utility>
-
 #include "config.h"
 #include "frontend/error/Error.h"
 #include "tools/LinkedHashMap.h"
+
+#include <sstream>
+#include <utility>
 
 std::ofstream Lexer::outFileStream;
 std::string Lexer::fileContents;
@@ -18,12 +18,13 @@ Word words[Lexer::deep];
 NodeType &Lexer::curLexType = words[0].first;
 Token &Lexer::curToken = words[0].second;
 
-int Lexer::pos[deep]; // count from 1
-int Lexer::column[deep]; // count from 1
-int Lexer::row[deep]; // count from 1.
+int Lexer::pos[deep];   // count from 1
+int Lexer::column[deep];// count from 1
+int Lexer::row[deep];   // count from 1.
+// ReSharper disable once CppRedundantQualifier
 int &Lexer::curRow = Lexer::row[0];
 
-char c; // c = fileContents[posTemp - 1]
+char c;// c = fileContents[posTemp - 1]
 int posTemp;
 int columnTemp;
 int rowTemp{1};
@@ -102,20 +103,17 @@ Word Lexer::next() {
         nextChar();
         if (c == '/') {
             // q2
-            while (nextChar() != '\n') {
-            }
+            while (nextChar() != '\n') {}
             // line comment //
             token = "";
             lexType = NodeType::COMMENT;
         } else if (c == '*') {
             // q5
-            q5:
-            while (nextChar() != '*') {
-            }
+        q5:
+            while (nextChar() != '*') {}
             do {
-                if (c == '*') {
-                } else if (c == '/') {
-                    break; // q7
+                if (c == '*') {} else if (c == '/') {
+                    break;// q7
                 } else {
                     goto q5;
                 }
@@ -125,7 +123,7 @@ Word Lexer::next() {
             lexType = NodeType::COMMENT;
             nextChar();
         } else {
-            token = "/"; // q4
+            token = "/";// q4
             lexType = NodeType::DIV;
         }
     } else if (c == '\"') {
@@ -134,7 +132,7 @@ Word Lexer::next() {
             token += c;
             if (c == '\"') {
                 break;
-            } // error: bad char in format string
+            }// error: bad char in format string
         }
 
         lexType = NodeType::STRCON;
@@ -283,8 +281,7 @@ void Lexer::init(const std::string &inFile, const std::string &outFile) {
     buffer << inFileStream.rdbuf();
     fileContents = buffer.str();
 
-    while (isspace(nextChar())) {
-    }
+    while (isspace(nextChar())) {}
     for (int i = 0; i < deep; ++i) {
         next();
     }

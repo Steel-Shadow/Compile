@@ -36,7 +36,7 @@ std::unique_ptr<MulExp> MulExp::parse() {
     return n;
 }
 
-int MulExp::evaluate() {
+int MulExp::evaluate() const {
     int val = first->evaluate();
     for (int i = 0; i < ops.size(); ++i) {
         auto op = ops[i];
@@ -68,7 +68,7 @@ std::unique_ptr<AddExp> AddExp::parse() {
     return n;
 }
 
-int AddExp::evaluate() {
+int AddExp::evaluate() const {
     int val = first->evaluate();
     for (int i = 0; i < ops.size(); ++i) {
         auto op = ops[i];

@@ -5,12 +5,12 @@
 #ifndef COMPILER_IR_H
 #define COMPILER_IR_H
 
+#include "frontend/lexer/NodeType.h"
+#include "frontend/symTab/Symbol.h"
+
 #include <fstream>
 #include <memory>
 #include <vector>
-
-#include "frontend/lexer/NodeType.h"
-#include "frontend/symTab/Symbol.h"
 
 // Intermediate Representation
 // like the Parser, specific genIR method is distributed in respective AST node struct.
@@ -45,21 +45,29 @@ enum class Op {
     Mod,
     And,
     Or,
-
-    // res(Temp) = arg1(Temp)
-    NewMove,
+    Leq,
+    Lss,
+    Geq,
+    Gre,
+    Eql,
+    Neq,
 
     // arg1(Temp) = -arg1
     Neg,
 
+    // res(Temp) = arg1(Temp)
+    NewMove,
+
     LoadImd,
 
-    GetInt,
     // res(Var) = getint()
-    PrintInt,
+    GetInt,
+
     // arg1(Temp)
-    PrintStr,
+    PrintInt,
+
     // arg1(Label)
+    PrintStr,
 
     // 1 0 -1
     Cmp,
@@ -77,6 +85,7 @@ enum class Op {
     Br,
     // if arg1(Temp)==0, jump to arg2(label)
     Bif0,
+    Bif1,
 
     Call,
 
@@ -97,13 +106,13 @@ struct Var : public Element {
     std::string name;
     int depth;
 
-    bool cons; // const | var
-    std::vector<int> dims; // At most 2 dimensions in our work.
+    bool cons;            // const | var
+    std::vector<int> dims;// At most 2 dimensions in our work.
     Type type;
 
     Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type = Type::Int);
 
-    Var(const std::string &name, int depth);
+    Var(std::string name, int depth);
 
     friend bool operator==(const Var &lhs, const Var &rhs);
 
@@ -170,7 +179,7 @@ private:
 // like llvm, Label and Temp share id allocator
 // nameAndId: Function has no id
 struct Label : public Element {
-    std::string nameAndId; // nameAndId of BasicBlock
+    std::string nameAndId;// nameAndId of BasicBlock
 
     explicit Label(std::string name, bool isFunc = false);
 
@@ -179,7 +188,7 @@ struct Label : public Element {
 
 struct BasicBlock {
     // go to next BasicBlock
-    Label label; // string is good for debugging
+    Label label;// string is good for debugging
     std::vector<Inst> instructions;
 
     // if isFunc, no suffix number
@@ -196,8 +205,8 @@ using BasicBlocks = std::vector<std::unique_ptr<BasicBlock>>;
 // Function init with a basicBlocks has an empty BasicBlock (can be optimized)
 class Function {
     std::string name;
-    Type reType; // void int
-    std::vector<Param> params; // Param -> p | p[] | p[][...]
+    Type reType;              // void int
+    std::vector<Param> params;// Param -> p | p[] | p[][...]
     BasicBlocks basicBlocks;
 
 public:
@@ -213,22 +222,22 @@ public:
 
     static Type convertType(NodeType type);
 
-    [[nodiscard]] std::vector<Param> getParams() const;
+    std::vector<Param> getParams() const;
 };
 
 // backend CodeGen should not rely on SymTab
 // we should store information in IR
 // opt: const GlobVar can be simplified to ConstVal
 struct GlobVar {
-    bool cons; // const | var
-    std::vector<int> dims; // At most 2 dimensions in our work.
+    bool cons;            // const | var
+    std::vector<int> dims;// At most 2 dimensions in our work.
 
     // filled with 0 if not initialized
     std::vector<int> initVal;
 
     // the teaching team guarantees that
     // "whenever an array initialization exists, a value must be assigned to each array member."
-    GlobVar(bool cons, const std::vector<int> &dims, std::vector<int> &initVal);
+    GlobVar(bool cons, std::vector<int> dims, std::vector<int> initVal);
 
     GlobVar(bool cons, const std::vector<int> &dims);
 };
@@ -253,13 +262,11 @@ public:
 Op NodeTypeToIROp(NodeType n);
 }
 
-namespace std {
 template<>
-struct hash<IR::Var> {
-    std::size_t operator()(const IR::Var &key) const noexcept {
+struct std::hash<IR::Var> {
+    size_t operator()(const IR::Var &key) const noexcept {
         return hash_value(key);
     }
 };
-}
 
 #endif //COMPILER_IR_H
