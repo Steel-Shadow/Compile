@@ -25,6 +25,7 @@ enum class Type {
 
 int sizeOfType(Type type);
 
+// @formatter:off
 enum class Op {
     // not a valid Op, only for init
     Empty,
@@ -38,19 +39,8 @@ enum class Op {
     Assign,
 
     // res(Temp) = arg1(Temp) op arg2(Temp)
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
-    And,
-    Or,
-    Leq,
-    Lss,
-    Geq,
-    Gre,
-    Eql,
-    Neq,
+    Add, Sub, Mul, Div, Mod,
+    And, Or, Leq, Lss, Geq, Gre, Eql, Neq,
 
     // arg1(Temp) = -arg1
     Neg,
@@ -62,15 +52,10 @@ enum class Op {
 
     // res(Var) = getint()
     GetInt,
-
     // arg1(Temp)
     PrintInt,
-
     // arg1(Label)
     PrintStr,
-
-    // 1 0 -1
-    Cmp,
 
     // allocates memory on the stack frame.
     // arg1: Var
@@ -78,27 +63,23 @@ enum class Op {
     Alloca,
 
     // index doesn't consider sizeof(type)
-    Load,
-    Store,
+    Load, Store,
 
     // no condition jump to arg1(Label)
     Br,
     // if arg1(Temp)==0, jump to arg2(label)
-    Bif0,
-    Bif1,
+    Bif0, Bif1,
 
-    Call,
+    Call, Ret,
 
     // arg1: value   | base address of array Var
     // arg2: nullptr | offset of array Var
     PushParam,
-    Ret,
-};
+}; // @formatter:on
 
 // Var Temp ConstVal Str
 struct Element {
     virtual ~Element() = default;
-
     virtual std::string toString() const = 0;
 };
 
@@ -106,16 +87,14 @@ struct Var : public Element {
     std::string name;
     int depth;
 
-    bool cons;            // const | var
-    std::vector<int> dims;// At most 2 dimensions in our work.
+    bool cons;             // const | var
+    std::vector<int> dims; // At most 2 dimensions in our work.
     Type type;
 
     Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type = Type::Int);
-
     Var(std::string name, int depth);
 
     friend bool operator==(const Var &lhs, const Var &rhs);
-
     friend std::size_t hash_value(const Var &obj);
 
     std::string toString() const override;
@@ -127,12 +106,10 @@ struct Temp : public Element {
     int id;
     Type type;
 
-    explicit Temp(Type type = Type::Int);
-
     // function return Temp
     // id must be -2 -3
     explicit Temp(int id, Type type);
-
+    explicit Temp(Type type = Type::Int);
     Temp(Temp const &other);
 
     std::string toString() const override;
@@ -179,7 +156,7 @@ private:
 // like llvm, Label and Temp share id allocator
 // nameAndId: Function has no id
 struct Label : public Element {
-    std::string nameAndId;// nameAndId of BasicBlock
+    std::string nameAndId; // nameAndId of BasicBlock
 
     explicit Label(std::string name, bool isFunc = false);
 
@@ -188,7 +165,7 @@ struct Label : public Element {
 
 struct BasicBlock {
     // go to next BasicBlock
-    Label label;// string is good for debugging
+    Label label; // string is good for debugging
     std::vector<Inst> instructions;
 
     // if isFunc, no suffix number
@@ -205,8 +182,8 @@ using BasicBlocks = std::vector<std::unique_ptr<BasicBlock>>;
 // Function init with a basicBlocks has an empty BasicBlock (can be optimized)
 class Function {
     std::string name;
-    Type reType;              // void int
-    std::vector<Param> params;// Param -> p | p[] | p[][...]
+    Type reType;               // void int
+    std::vector<Param> params; // Param -> p | p[] | p[][...]
     BasicBlocks basicBlocks;
 
 public:
@@ -229,8 +206,8 @@ public:
 // we should store information in IR
 // opt: const GlobVar can be simplified to ConstVal
 struct GlobVar {
-    bool cons;            // const | var
-    std::vector<int> dims;// At most 2 dimensions in our work.
+    bool cons;             // const | var
+    std::vector<int> dims; // At most 2 dimensions in our work.
 
     // filled with 0 if not initialized
     std::vector<int> initVal;
@@ -260,7 +237,7 @@ public:
 };
 
 Op NodeTypeToIROp(NodeType n);
-}
+} // namespace IR
 
 template<>
 struct std::hash<IR::Var> {

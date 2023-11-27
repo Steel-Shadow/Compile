@@ -275,7 +275,7 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
 
     if (Lexer::curLexType != NodeType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
-        checkParams(n, row, funcSym);// SymTab error handle
+        checkParams(n, row, funcSym); // SymTab error handle
     }
 
     singleLex(NodeType::RPARENT, row);
@@ -330,7 +330,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
         for (auto rParam = funcRParams->params.rbegin(); rParam != funcRParams->params.rend(); ++rParam) {
             auto name = (*rParam)->getIdent();
 
-            auto symbol = SymTab::find(name);// LVal / FuncCall
+            auto symbol = SymTab::find(name); // LVal / FuncCall
             size_t formalRank = funcSym->params[i].second.size();
 
             if (formalRank == 0) {

@@ -5,11 +5,12 @@
 #ifndef COMPILER_EXP_H
 #define COMPILER_EXP_H
 
-#include <memory>
-#include <vector>
 #include "frontend/lexer/NodeType.h"
 #include "frontend/symTab/Symbol.h"
 #include "middle/IR.h"
+
+#include <memory>
+#include <vector>
 
 struct FuncRParams;
 struct Exp;

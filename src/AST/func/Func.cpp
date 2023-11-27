@@ -4,10 +4,7 @@
 
 #include "Func.h"
 
-#include <utility>
-
 #include "frontend/error/Error.h"
-
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
@@ -50,7 +47,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
         }
     }
 
-    SymTab::deepOut();// FuncDef
+    SymTab::deepOut(); // FuncDef
     output(NodeType::FuncDef);
     return n;
 }
@@ -79,7 +76,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
         }
     }
 
-    SymTab::deepOut();// MainFuncDef
+    SymTab::deepOut(); // MainFuncDef
     output(NodeType::MainFuncDef);
     return n;
 }
@@ -148,7 +145,7 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
 
     n->type = Btype::parse();
 
-    int row = Lexer::curRow;// error handle
+    int row = Lexer::curRow; // error handle
     n->ident = Ident::parse();
     if (SymTab::reDefine(n->ident)) {
         Error::raise('b', row);
@@ -158,7 +155,7 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
     if (Lexer::curLexType == NodeType::LBRACK) {
         row = Lexer::curRow;
         Lexer::next();
-        n->dims.push_back(nullptr);// p[] is not p!
+        n->dims.push_back(nullptr); // p[] is not p!
         singleLex(NodeType::RBRACK, row);
 
         while (Lexer::curLexType == NodeType::LBRACK) {

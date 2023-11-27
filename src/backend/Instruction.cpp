@@ -350,7 +350,7 @@ void MIPS::Call(const IR::Inst &inst) {
     // I choose to use more stack memory, but fewer instructions.
     // Another way is, before jal , save the number of used tempRegs to a realReg $?,
     // use the realReg $? to locate parameters instead of $sp. (slower but less memory use of stack)
-    for (auto [tempId, reg]: tempToRegs) {
+    for (auto &[tempId, reg]: tempToRegs) {
         StackMemory::curOffset += wordSize;
         assemblies.push_back(std::make_unique<I_imm_Inst>(
                 Op::sw, reg, Register::sp, -StackMemory::curOffset));

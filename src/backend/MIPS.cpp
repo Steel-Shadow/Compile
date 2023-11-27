@@ -45,7 +45,7 @@ void MIPS::outputAll(IR::Module &module) {
     /*---- .data generate & output ----------------------*/
     output("#### MIPS ####");
     output(".data");
-    for (auto [name, globVar]: module.getGlobVars()) {
+    for (auto &[name, globVar]: module.getGlobVars()) {
         output(name + ": .word ", false);
         for (auto i = globVar.initVal.rbegin(); i != globVar.initVal.rend(); ++i) {
             output(std::to_string(*i) + ",", false);
@@ -81,16 +81,14 @@ void MIPS::outputAll(IR::Module &module) {
         // set function's parameters to varToOffset
         // stack memory map explain is in markdown and Memory.h
         int offset = 0;
-        for (auto [ident, dimensions]: (*func)->getParams()) {
+        for (auto &[ident, dimensions]: (*func)->getParams()) {
             StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
             offset += wordSize;
         }
 
-        for (auto basicBlock = (*func)->getBasicBlocks().begin();
-             basicBlock != (*func)->getBasicBlocks().end();
-             ++basicBlock) {
-            assemblies.push_back(std::make_unique<Label>((*basicBlock)->label.nameAndId));
-            for (auto &inst: (*basicBlock)->instructions) {
+        for (auto &basicBlock: (*func)->getBasicBlocks()) {
+            assemblies.push_back(std::make_unique<Label>(basicBlock->label.nameAndId));
+            for (auto &inst: basicBlock->instructions) {
                 irToMips(inst);
             }
         }
