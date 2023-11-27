@@ -114,10 +114,7 @@ struct MultiExp {
     std::vector<NodeType> ops;
     std::vector<std::unique_ptr<T>> elements;
 
-    // we don't need the destructor
-    //     virtual ~MultiExp() = default;
-
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) {
+    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const {
         using namespace IR;
         auto lastRes = first->genIR(bBlocks);
         for (int i = 0; i < ops.size(); i++) {
@@ -180,16 +177,19 @@ struct RelExp : MultiExp<AddExp> {
 // EqExp → RelExp | EqExp ('==' | '!=') RelExp
 struct EqExp : MultiExp<RelExp> {
     static std::unique_ptr<EqExp> parse();
+    void genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const;
 };
 
 // LAndExp → EqExp | LAndExp '&&' EqExp
 struct LAndExp : MultiExp<EqExp> {
     static std::unique_ptr<LAndExp> parse();
+    void genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const;
 };
 
 // LOrExp → LAndExp | LOrExp '||' LAndExp
 struct LOrExp : MultiExp<LAndExp> {
     static std::unique_ptr<LOrExp> parse();
+    void genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const;
 };
 
 // Cond → LOrExp
@@ -198,7 +198,7 @@ struct Cond {
 
     static std::unique_ptr<Cond> parse();
 
-    std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &basicBlocks) const;
+    void genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const;
 };
 
 // Exp → AddExp

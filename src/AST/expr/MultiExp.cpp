@@ -15,8 +15,8 @@ std::unique_ptr<Cond> Cond::parse() {
     return n;
 }
 
-std::unique_ptr<IR::Temp> Cond::genIR(IR::BasicBlocks &basicBlocks) const {
-    return lorExp->genIR(basicBlocks);
+void Cond::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
+    lorExp->genIR(basicBlocks, trueBranch, falseBranch);
 }
 
 std::unique_ptr<MulExp> MulExp::parse() {
@@ -115,6 +115,18 @@ std::unique_ptr<EqExp> EqExp::parse() {
     return n;
 }
 
+void EqExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
+    auto t = MultiExp::genIR(basicBlocks);
+    basicBlocks.back()->addInst(IR::Inst(IR::Op::Bif1,
+                                         nullptr,
+                                         std::move(t),
+                                         std::make_unique<IR::Label>(trueBranch)));
+    basicBlocks.back()->addInst(IR::Inst(IR::Op::Br,
+                                         nullptr,
+                                         std::make_unique<IR::Label>(falseBranch),
+                                         nullptr));
+}
+
 std::unique_ptr<LAndExp> LAndExp::parse() {
     auto n = std::make_unique<LAndExp>();
 
@@ -131,6 +143,24 @@ std::unique_ptr<LAndExp> LAndExp::parse() {
     return n;
 }
 
+void LAndExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
+    if (elements.empty()) {
+        first->genIR(basicBlocks, trueBranch, falseBranch);
+    } else {
+        auto firstBasicBlock = std::make_unique<IR::BasicBlock>("EqExp");
+        first->genIR(basicBlocks, firstBasicBlock->label, falseBranch);
+        basicBlocks.emplace_back(std::move(firstBasicBlock));
+
+        for (auto e = elements.begin(); e != std::prev(elements.end()); ++e) {
+            auto newBasicBlock = std::make_unique<IR::BasicBlock>("EqExp");
+            (*e)->genIR(basicBlocks, newBasicBlock->label, falseBranch);
+            basicBlocks.emplace_back(std::move(newBasicBlock));
+        }
+
+        elements.back()->genIR(basicBlocks, trueBranch, falseBranch);
+    }
+}
+
 std::unique_ptr<LOrExp> LOrExp::parse() {
     auto n = std::make_unique<LOrExp>();
 
@@ -145,4 +175,22 @@ std::unique_ptr<LOrExp> LOrExp::parse() {
     }
 
     return n;
+}
+
+void LOrExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
+    if (elements.empty()) {
+        first->genIR(basicBlocks, trueBranch, falseBranch);
+    } else {
+        auto firstBasicBlock = std::make_unique<IR::BasicBlock>("LAndExp");
+        first->genIR(basicBlocks, trueBranch, firstBasicBlock->label);
+        basicBlocks.emplace_back(std::move(firstBasicBlock));
+
+        for (int i = 0; !elements.empty() && i < elements.size() - 1; ++i) {
+            auto newBasicBlock = std::make_unique<IR::BasicBlock>("LAndExp");
+            elements[i]->genIR(basicBlocks, trueBranch, newBasicBlock->label);
+            basicBlocks.emplace_back(std::move(newBasicBlock));
+        }
+
+        elements.back()->genIR(basicBlocks, trueBranch, falseBranch);
+    }
 }

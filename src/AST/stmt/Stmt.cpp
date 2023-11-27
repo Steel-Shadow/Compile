@@ -118,7 +118,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
 
     if (Lexer::curLexType == NodeType::ELSETK) {
         Lexer::next();
-        n->ifStmt = Stmt::parse();
+        n->elseStmt = Stmt::parse();
     }
 
     SymTab::deepOut(); // IfStmt
@@ -130,7 +130,18 @@ void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     bBlocks.back()->addInst(IR::Inst(
             IR::Op::InStack, nullptr, nullptr, nullptr));
 
-    // todo: 代码生成2
+    auto trueBranch = std::make_unique<IR::BasicBlock>("IfTrueBranch");
+    auto falseBranch = std::make_unique<IR::BasicBlock>("IfFalseBranch");
+
+    cond->genIR(bBlocks, trueBranch->label, falseBranch->label);
+
+    bBlocks.emplace_back(std::move(trueBranch));
+    ifStmt->genIR(bBlocks);
+
+    bBlocks.emplace_back(std::move(falseBranch));
+    if (elseStmt) {
+        elseStmt->genIR(bBlocks);
+    }
 
     bBlocks.back()->addInst(IR::Inst(
             IR::Op::OutStack, nullptr, nullptr, nullptr));
@@ -192,25 +203,16 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     // use unique_ptr after move
     auto pForBodyBlock = forBodyBlock.get();
-    auto pForIterBlock = forIterCondBlock.get();
+    // auto pForIterCondBlock = forIterCondBlock.get();
 
-    auto condRes = cond->genIR(bBlocks);
-    bBlocks.back()->addInst(Inst(IR::Op::Bif0,
-                                 nullptr,
-                                 std::move(condRes),
-                                 std::make_unique<Label>(forEndBlock->label)));
+    cond->genIR(bBlocks, forBodyBlock->label, forEndBlock->label);
 
     bBlocks.push_back(std::move(forBodyBlock));
     stmt->genIR(bBlocks);
 
     bBlocks.push_back(std::move(forIterCondBlock));
     iter->genIR(bBlocks);
-    auto condRes2 = cond->genIR(bBlocks);
-
-    pForIterBlock->addInst(Inst(IR::Op::Bif1,
-                                nullptr,
-                                std::move(condRes2),
-                                std::make_unique<Label>(pForBodyBlock->label)));
+    cond->genIR(bBlocks, pForBodyBlock->label, forEndBlock->label);
 
     bBlocks.push_back(std::move(forEndBlock));
 
