@@ -43,4 +43,4 @@ struct ArrayInitVal : public InitVal {
     std::vector<ExpInitVal *> getFlatten() const;
 };
 
-#endif //COMPILER_INITVAL_H
+#endif

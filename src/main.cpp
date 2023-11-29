@@ -1,6 +1,6 @@
 #include "AST/CompUnit.h"
 #include "backend/MIPS.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 
 void compile(const std::string &inFile,
              const std::string &outFile,

@@ -5,7 +5,7 @@
 #include "Stmt.h"
 
 #include "AST/decl/Decl.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
@@ -16,9 +16,9 @@ int Block::lastRow;
 std::unique_ptr<Block> Block::parse() {
     auto n = std::make_unique<Block>();
 
-    singleLex(NodeType::LBRACE);
+    singleLex(LexType::LBRACE);
 
-    while (Lexer::curLexType != NodeType::RBRACE) {
+    while (Lexer::curLexType != LexType::RBRACE) {
         auto i = BlockItem::parse();
         n->blockItems.push_back(std::move(i));
     }
@@ -26,7 +26,7 @@ std::unique_ptr<Block> Block::parse() {
     lastRow = Lexer::curRow;
     Lexer::next(); // }
 
-    output(NodeType::Block);
+    output(AST::Block);
     return n;
 }
 
@@ -38,7 +38,7 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
     std::unique_ptr<BlockItem> n;
 
     // Maybe error when neither Decl nor Stmt. But it's too complicated.
-    if (Lexer::curLexType == NodeType::CONSTTK || Lexer::curLexType == NodeType::INTTK) {
+    if (Lexer::curLexType == LexType::CONSTTK || Lexer::curLexType == LexType::INTTK) {
         n = Decl::parse();
     } else {
         n = Stmt::parse();
@@ -61,32 +61,32 @@ std::unique_ptr<Stmt> Stmt::parse() {
     std::unique_ptr<Stmt> n;
 
     switch (Lexer::curLexType) {
-        case NodeType::LBRACE:
+        case LexType::LBRACE:
             n = BlockStmt::parse();
             break;
-        case NodeType::IFTK:
+        case LexType::IFTK:
             n = IfStmt::parse();
             break;
-        case NodeType::BREAKTK:
+        case LexType::BREAKTK:
             n = BreakStmt::parse();
             break;
-        case NodeType::CONTINUETK:
+        case LexType::CONTINUETK:
             n = ContinueStmt::parse();
             break;
-        case NodeType::FORTK:
+        case LexType::FORTK:
             n = BigForStmt::parse();
             break;
-        case NodeType::RETURNTK:
+        case LexType::RETURNTK:
             n = ReturnStmt::parse();
             break;
-        case NodeType::PRINTFTK:
+        case LexType::PRINTFTK:
             n = PrintStmt::parse();
             break;
-        case NodeType::SEMICN:
+        case LexType::SEMICN:
             n = std::make_unique<ExpStmt>();
             Lexer::next();
             break;
-        case NodeType::IDENFR:
+        case LexType::IDENFR:
             //find '=' to distinguish LVal and Exp
             if (Lexer::findAssignBeforeSemicolon()) {
                 n = LValStmt::parse();
@@ -99,7 +99,7 @@ std::unique_ptr<Stmt> Stmt::parse() {
             break;
     }
 
-    output(NodeType::Stmt);
+    output(AST::Stmt);
     return n;
 }
 
@@ -109,14 +109,14 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
     Lexer::next();
 
     SymTab::deepIn();
-    singleLex(NodeType::LPARENT);
+    singleLex(LexType::LPARENT);
 
     int row = Lexer::curRow;
     n->cond = Cond::parse();
-    singleLex(NodeType::RPARENT, row);
+    singleLex(LexType::RPARENT, row);
     n->ifStmt = Stmt::parse();
 
-    if (Lexer::curLexType == NodeType::ELSETK) {
+    if (Lexer::curLexType == LexType::ELSETK) {
         Lexer::next();
         n->elseStmt = Stmt::parse();
     }
@@ -128,7 +128,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
 void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::InStack, nullptr, nullptr, nullptr));
+        IR::Op::InStack, nullptr, nullptr, nullptr));
 
     auto trueBranch = std::make_unique<IR::BasicBlock>("IfTrueBranch");
     auto falseBranch = std::make_unique<IR::BasicBlock>("IfFalseBranch");
@@ -144,7 +144,7 @@ void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     }
 
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::OutStack, nullptr, nullptr, nullptr));
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }
 
@@ -156,24 +156,24 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
     inFor = true;
 
     Lexer::next();
-    singleLex(NodeType::LPARENT);
+    singleLex(LexType::LPARENT);
 
     SymTab::deepIn();
 
-    if (Lexer::curLexType != NodeType::SEMICN) {
+    if (Lexer::curLexType != LexType::SEMICN) {
         n->init = ForStmt::parse();
     }
-    singleLex(NodeType::SEMICN);
+    singleLex(LexType::SEMICN);
 
-    if (Lexer::curLexType != NodeType::SEMICN) {
+    if (Lexer::curLexType != LexType::SEMICN) {
         n->cond = Cond::parse();
     }
-    singleLex(NodeType::SEMICN);
+    singleLex(LexType::SEMICN);
 
-    if (Lexer::curLexType != NodeType::RPARENT) {
+    if (Lexer::curLexType != LexType::RPARENT) {
         n->iter = ForStmt::parse();
     }
-    singleLex(NodeType::RPARENT);
+    singleLex(LexType::RPARENT);
 
     n->stmt = Stmt::parse();
 
@@ -190,7 +190,7 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::InStack, nullptr, nullptr, nullptr));
+        IR::Op::InStack, nullptr, nullptr, nullptr));
 
     init->genIR(bBlocks);
 
@@ -219,7 +219,7 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
     stackEndLabel.pop();
     stackIterLabel.pop();
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::OutStack, nullptr, nullptr, nullptr));
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }
 
@@ -227,10 +227,10 @@ std::unique_ptr<ForStmt> ForStmt::parse() {
     auto n = std::make_unique<ForStmt>();
 
     n->lVal = LVal::parse();
-    singleLex(NodeType::ASSIGN);
+    singleLex(LexType::ASSIGN);
     n->exp = Exp::parse(false);
 
-    output(NodeType::ForStmt);
+    output(AST::ForStmt);
     return n;
 }
 
@@ -257,7 +257,7 @@ std::unique_ptr<BreakStmt> BreakStmt::parse() {
     }
 
     Lexer::next();
-    singleLex(NodeType::SEMICN, row);
+    singleLex(LexType::SEMICN, row);
     return std::make_unique<BreakStmt>();
 }
 
@@ -277,7 +277,7 @@ std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
     }
 
     Lexer::next();
-    singleLex(NodeType::SEMICN, row);
+    singleLex(LexType::SEMICN, row);
     return std::make_unique<ContinueStmt>();
 }
 
@@ -294,7 +294,7 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
 
     Lexer::next();
 
-    if (Lexer::curLexType == NodeType::SEMICN) {
+    if (Lexer::curLexType == LexType::SEMICN) {
         Lexer::next();
     } else {
         if (Stmt::retVoid) {
@@ -302,7 +302,7 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
         }
         int row = Lexer::curRow; // error handle
         n->exp = Exp::parse(false);
-        singleLex(NodeType::SEMICN, row);
+        singleLex(LexType::SEMICN, row);
     }
 
     return n;
@@ -351,9 +351,9 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     int row = Lexer::curRow;
     Lexer::next();
 
-    singleLex(NodeType::LPARENT);
+    singleLex(LexType::LPARENT);
 
-    if (Lexer::curLexType == NodeType::STRCON) {
+    if (Lexer::curLexType == LexType::STRCON) {
         n->checkFormatString(Lexer::curToken);
         n->formatString = Lexer::curToken;
         Lexer::next();
@@ -362,7 +362,7 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
     }
 
     int numOfExp = 0;
-    while (Lexer::curLexType == NodeType::COMMA) {
+    while (Lexer::curLexType == LexType::COMMA) {
         Lexer::next();
         numOfExp++;
         n->exps.push_back(Exp::parse(false));
@@ -372,8 +372,8 @@ std::unique_ptr<PrintStmt> PrintStmt::parse() {
         Error::raise('l', row);
     }
 
-    singleLex(NodeType::RPARENT, row);
-    singleLex(NodeType::SEMICN, row);
+    singleLex(LexType::RPARENT, row);
+    singleLex(LexType::SEMICN, row);
     return n;
 }
 
@@ -428,9 +428,9 @@ std::unique_ptr<LValStmt> LValStmt::parse() {
         Error::raise('h', row);
     }
 
-    singleLex(NodeType::ASSIGN);
+    singleLex(LexType::ASSIGN);
 
-    if (Lexer::curLexType == NodeType::GETINTTK) {
+    if (Lexer::curLexType == LexType::GETINTTK) {
         n = GetIntStmt::parse();
         n->lVal = std::move(lVal);
     } else {
@@ -446,10 +446,10 @@ std::unique_ptr<GetIntStmt> GetIntStmt::parse() {
 
     int row = Lexer::curRow;
 
-    singleLex(NodeType::GETINTTK);
-    singleLex(NodeType::LPARENT);
-    singleLex(NodeType::RPARENT, row);
-    singleLex(NodeType::SEMICN, row); // ugly error handling!
+    singleLex(LexType::GETINTTK);
+    singleLex(LexType::LPARENT);
+    singleLex(LexType::RPARENT, row);
+    singleLex(LexType::SEMICN, row); // ugly error handling!
 
     return n;
 }
@@ -473,7 +473,7 @@ std::unique_ptr<AssignStmt> AssignStmt::parse() {
 
     int row = Lexer::curRow;
     n->exp = Exp::parse(false);
-    singleLex(NodeType::SEMICN, row);
+    singleLex(LexType::SEMICN, row);
 
     return n;
 }
@@ -484,15 +484,18 @@ void AssignStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     auto symbol = SymTab::find(lVal->ident);
     auto var = std::make_unique<IR::Var>(
-            lVal->ident,
-            SymTab::findDepth(lVal->ident),
-            symbol->cons,
-            symbol->dims);
+        lVal->ident,
+        SymTab::findDepth(lVal->ident),
+        symbol->cons,
+        symbol->dims);
 
     bBlocks.back()->addInst(Inst(IR::Op::Assign,
                                  std::move(var),
                                  std::move(t),
                                  nullptr));
+
+    // todo: 数组写
+    // a[1]=... a[x]=...
 }
 
 std::unique_ptr<ExpStmt> ExpStmt::parse() {
@@ -500,7 +503,7 @@ std::unique_ptr<ExpStmt> ExpStmt::parse() {
 
     int row = Lexer::curRow;
     n->exp = Exp::parse(false);
-    singleLex(NodeType::SEMICN, row);
+    singleLex(LexType::SEMICN, row);
 
     return n;
 }
@@ -526,11 +529,11 @@ std::unique_ptr<BlockStmt> BlockStmt::parse() {
 void BlockStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::InStack, nullptr, nullptr, nullptr));
+        IR::Op::InStack, nullptr, nullptr, nullptr));
 
     block->genIR(bBlocks);
 
     bBlocks.back()->addInst(IR::Inst(
-            IR::Op::OutStack, nullptr, nullptr, nullptr));
+        IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }

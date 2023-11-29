@@ -5,7 +5,7 @@
 #include "AST/decl/Decl.h"
 #include "AST/func/Func.h"
 #include "backend/Register.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
@@ -19,14 +19,14 @@ std::unique_ptr<LVal> LVal::parse() {
         Error::raise('c');
     }
 
-    while (Lexer::curLexType == NodeType::LBRACK) {
+    while (Lexer::curLexType == LexType::LBRACK) {
         Lexer::next();
         int row = Lexer::curRow;
         n->dims.push_back(Exp::parse(false));
-        singleLex(NodeType::RBRACK, row);
+        singleLex(LexType::RBRACK, row);
     }
 
-    output(NodeType::LVal);
+    output(AST::LVal);
     return n;
 }
 
@@ -42,18 +42,19 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
     auto symbol = SymTab::find(ident);
     auto var = std::make_unique<IR::Var>(
-            ident,
-            SymTab::findDepth(ident),
-            symbol->cons,
-            symbol->dims);
+        ident,
+        SymTab::findDepth(ident),
+        symbol->cons,
+        symbol->dims,
+        symbol->type);
 
-    auto res = std::make_unique<Temp>();
+    auto res = std::make_unique<Temp>(symbol->type);
     bBlocks.back()->addInst(Inst(IR::Op::Load,
                                  std::make_unique<Temp>(*res),
                                  std::move(var),
                                  nullptr
-            ));
-
+    ));
+    //todo: 数组元素定位
     return res;
 }
 
@@ -74,14 +75,14 @@ int LVal::evaluate() {
 
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     std::unique_ptr<PrimaryExp> n;
-    if (Lexer::curLexType == NodeType::LPARENT) {
+    if (Lexer::curLexType == LexType::LPARENT) {
         n = PareExp::parse();
-    } else if (Lexer::curLexType == NodeType::IDENFR) {
+    } else if (Lexer::curLexType == LexType::IDENFR) {
         n = LVal::parse();
-    } else if (Lexer::curLexType == NodeType::INTCON) {
+    } else if (Lexer::curLexType == LexType::INTCON) {
         n = Number::parse();
     }
-    output(NodeType::PrimaryExp);
+    output(AST::PrimaryExp);
     return n;
 }
 
@@ -105,7 +106,7 @@ std::unique_ptr<PareExp> PareExp::parse() {
     Lexer::next();
     int row = Lexer::curRow;
     n->exp = Exp::parse(false);
-    singleLex(NodeType::RPARENT, row);
+    singleLex(LexType::RPARENT, row);
 
     return n;
 }
@@ -121,14 +122,14 @@ int PareExp::evaluate() {
 std::unique_ptr<Number> Number::parse() {
     auto n = std::make_unique<Number>();
 
-    if (Lexer::curLexType == NodeType::INTCON) {
+    if (Lexer::curLexType == LexType::INTCON) {
         n->intConst = std::stoi(Lexer::curToken);
         Lexer::next();
     } else {
         Error::raise();
     }
 
-    output(NodeType::Number);
+    output(AST::Number);
     return n;
 }
 
@@ -138,11 +139,11 @@ int Number::evaluate() {
 
 std::unique_ptr<IR::Temp> Number::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
-    auto n = std::make_unique<Temp>();
+    auto n = std::make_unique<Temp>(Type::Int);
 
     bBlocks.back()->addInst(Inst(Op::LoadImd,
                                  std::make_unique<Temp>(*n),
-                                 std::make_unique<ConstVal>(intConst),
+                                 std::make_unique<ConstVal>(intConst, Type::Int),
                                  nullptr));
     return n;
 }
@@ -154,38 +155,38 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
     while (!getBaseUnaryExp) {
         // UnaryExp → {UnaryOp} ( PrimaryExp | Ident '(' [FuncRParams] ')' )
         switch (Lexer::curLexType) {
-            case NodeType::PLUS:
-            case NodeType::MINU:
-            case NodeType::NOT:
+            case LexType::PLUS:
+            case LexType::MINU:
+            case LexType::NOT:
                 // UnaryOp → '+' | '−' | '!'
                 n->ops.push_back(Lexer::curLexType);
                 Lexer::next();
 
-                output(NodeType::UnaryOp);
+                output(AST::UnaryOp);
                 break;
 
-            case NodeType::LPARENT:
-            case NodeType::INTCON:
+            case LexType::LPARENT:
+            case LexType::INTCON:
                 // PrimaryExp → '(' Exp ')' | LVal | Number
                 n->baseUnaryExp = PrimaryExp::parse();
                 getBaseUnaryExp = true;
 
-                output(NodeType::UnaryExp);
+                output(AST::UnaryExp);
                 break;
 
-            case NodeType::IDENFR:
+            case LexType::IDENFR:
                 // PrimaryExp → '(' Exp ')' | LVal | Number
                 // LVal → Ident {'[' Exp ']'}
 
                 // Ident '(' [FuncRParams] ')'
-                if (Lexer::peek(1).first == NodeType::LPARENT) {
+                if (Lexer::peek(1).first == LexType::LPARENT) {
                     n->baseUnaryExp = FuncCall::parse();
                 } else {
                     n->baseUnaryExp = PrimaryExp::parse();
                 }
                 getBaseUnaryExp = true;
 
-                output(NodeType::UnaryExp);
+                output(AST::UnaryExp);
                 break;
 
             default:
@@ -194,7 +195,7 @@ std::unique_ptr<UnaryExp> UnaryExp::parse() {
     }
 
     for (int i = 0; i < n->ops.size(); i++) {
-        output(NodeType::UnaryExp);
+        output(AST::UnaryExp);
     }
 
     return n;
@@ -204,7 +205,7 @@ int UnaryExp::evaluate() const {
     int val = baseUnaryExp->evaluate();
 
     for (auto op: ops) {
-        if (op == NodeType::MINU) {
+        if (op == LexType::MINU) {
             val = -val;
         }
     }
@@ -234,19 +235,19 @@ std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) const {
     auto res = baseUnaryExp->genIR(bBlocks);
 
     bool negative = false;
-    for (NodeType op: ops) {
-        if (op == NodeType::MINU) {
+    for (LexType op: ops) {
+        if (op == LexType::MINU) {
             negative = !negative;
         }
     }
     if (negative) {
-        auto negRes = std::make_unique<Temp>();
+        auto negRes = std::make_unique<Temp>(res->type);
         bBlocks.back()->addInst(Inst(
-                Op::Neg,
-                std::make_unique<Temp>(*negRes),
-                std::move(res),
-                nullptr
-                ));
+            Op::Neg,
+            std::make_unique<Temp>(*negRes),
+            std::move(res),
+            nullptr
+        ));
         return negRes;
     }
 
@@ -271,14 +272,14 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
         Error::raise('c', row);
     }
 
-    singleLex(NodeType::LPARENT);
+    singleLex(LexType::LPARENT);
 
-    if (Lexer::curLexType != NodeType::RPARENT) {
+    if (Lexer::curLexType != LexType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
         checkParams(n, row, funcSym); // SymTab error handle
     }
 
-    singleLex(NodeType::RPARENT, row);
+    singleLex(LexType::RPARENT, row);
     return n;
 }
 
@@ -304,10 +305,10 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Sy
                 symRank = 0;
             } else {
                 auto sym = SymTab::find(ident);
-                if (sym->type == SymType::Func) {
+                if (sym->symType == SymType::Func) {
                     // FuncCall
                     // void | int
-                    symRank = sym->reType == NodeType::VOIDTK ? -1 : 0;
+                    symRank = sym->type == Type::Void ? -1 : 0;
                 } else {
                     // LVal
                     symRank = sym->dims.size();
@@ -327,7 +328,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
 
     if (funcRParams) {
         int i = 0;
-        for (auto rParam = funcRParams->params.rbegin(); rParam != funcRParams->params.rend(); ++rParam) {
+        for (auto rParam = funcRParams->params.rbegin(); rParam != funcRParams->params.rend(); ++rParam, ++i) {
             auto name = (*rParam)->getIdent();
 
             auto symbol = SymTab::find(name); // LVal / FuncCall
@@ -344,10 +345,11 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
             } else {
                 // array (pass param by address)
                 auto var = std::make_unique<Var>(
-                        name,
-                        SymTab::findDepth(name),
-                        symbol->cons,
-                        symbol->dims);
+                    name,
+                    SymTab::findDepth(name),
+                    symbol->cons,
+                    symbol->dims,
+                    symbol->type);
                 /*todo: 代码生成2 函数参数为数组
                  * int a[2][2] = {{1,2},{3,4}};
                  * void f(int p[]){}
@@ -358,12 +360,13 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
                  */
                 LVal *lVar = (*rParam)->getLVal();
                 int offset;
-                bBlocks.back()->addInst(Inst(Op::PushParam,
-                                             nullptr,
-                                             std::move(var),
-                                             std::make_unique<ConstVal>(offset)));
+                bBlocks.back()->addInst(Inst(
+                    Op::PushParam,
+                    nullptr,
+                    std::move(var),
+                    std::make_unique<ConstVal>(offset, symbol->type)
+                ));
             }
-            i++;
         }
     }
 
@@ -372,9 +375,8 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
                                  std::make_unique<Label>(ident, true),
                                  nullptr));
 
-    NodeType reType = funcSym->reType;
-    if (reType == NodeType::INTTK) {
-        auto temp = std::make_unique<Temp>();
+    if (funcSym->type == Type::Int) {
+        auto temp = std::make_unique<Temp>(Type::Int);
         bBlocks.back()->addInst(Inst(IR::Op::NewMove,
                                      std::make_unique<Temp>(*temp),
                                      std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int),

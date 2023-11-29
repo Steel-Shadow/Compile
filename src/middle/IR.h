@@ -5,7 +5,7 @@
 #ifndef COMPILER_IR_H
 #define COMPILER_IR_H
 
-#include "frontend/lexer/NodeType.h"
+#include "frontend/lexer/LexType.h"
 #include "frontend/symTab/Symbol.h"
 
 #include <fstream>
@@ -18,13 +18,6 @@
 namespace IR {
 extern std::ofstream IRFileStream;
 
-enum class Type {
-    Void,
-    Int,
-};
-
-int sizeOfType(Type type);
-
 // @formatter:off
 enum class Op {
     // not a valid Op, only for init
@@ -35,7 +28,8 @@ enum class Op {
     InStack,
     OutStack,
 
-    // res(Var) = arg1(Temp)
+    // res(Var)[offset = arg2(ConstVal)] = arg1(Temp)
+    // Var would plus offset
     Assign,
 
     // res(Temp) = arg1(Temp) op arg2(Temp)
@@ -63,7 +57,7 @@ enum class Op {
     Alloca,
 
     // index doesn't consider sizeof(type)
-    Load, Store,
+    Load,
 
     // no condition jump to arg1(Label)
     Br,
@@ -87,7 +81,7 @@ struct Var : public Element {
     std::string name;
     int depth;
 
-    bool cons;             // const | var
+    bool cons; // const | var
     std::vector<int> dims; // At most 2 dimensions in our work.
     Type type;
 
@@ -109,7 +103,7 @@ struct Temp : public Element {
     // function return Temp
     // id must be -2 -3
     explicit Temp(int id, Type type);
-    explicit Temp(Type type = Type::Int);
+    explicit Temp(Type type);
     Temp(Temp const &other);
 
     std::string toString() const override;
@@ -119,7 +113,7 @@ struct ConstVal : public Element {
     int value;
     Type type;
 
-    explicit ConstVal(int value, Type type = Type::Int);
+    ConstVal(int value, Type type);
 
     std::string toString() const override;
 };
@@ -182,7 +176,7 @@ using BasicBlocks = std::vector<std::unique_ptr<BasicBlock>>;
 // Function init with a basicBlocks has an empty BasicBlock (can be optimized)
 class Function {
     std::string name;
-    Type reType;               // void int
+    Type reType; // void int
     std::vector<Param> params; // Param -> p | p[] | p[][...]
     BasicBlocks basicBlocks;
 
@@ -197,8 +191,6 @@ public:
 
     const BasicBlocks &getBasicBlocks() const;
 
-    static Type convertType(NodeType type);
-
     std::vector<Param> getParams() const;
 };
 
@@ -206,7 +198,7 @@ public:
 // we should store information in IR
 // opt: const GlobVar can be simplified to ConstVal
 struct GlobVar {
-    bool cons;             // const | var
+    bool cons; // const | var
     std::vector<int> dims; // At most 2 dimensions in our work.
 
     // filled with 0 if not initialized
@@ -225,18 +217,24 @@ class Module {
     std::string name;
     std::vector<std::pair<std::string, GlobVar>> globVars;
     std::vector<std::unique_ptr<Function>> functions;
+    std::unique_ptr<Function> mainFunction;
 
 public:
     explicit Module(std::string name);
 
-    std::vector<std::unique_ptr<Function>> &getFunctions();
-
     void outputIR() const;
 
-    std::vector<std::pair<std::string, GlobVar>> &getGlobVars();
+    const std::vector<std::pair<std::string, GlobVar>> &getGlobVars() const;
+    const std::vector<std::unique_ptr<Function>> &getFunctions() const;
+
+    const Function &getMainFunction() const;
+    void setMainFunction(std::unique_ptr<Function> main_function);
+
+    void addFunction(std::unique_ptr<Function> function);
+    void addGlobVar(std::string name, GlobVar globVar);
 };
 
-Op NodeTypeToIROp(NodeType n);
+Op NodeTypeToIROp(LexType n);
 } // namespace IR
 
 template<>
@@ -246,4 +244,4 @@ struct std::hash<IR::Var> {
     }
 };
 
-#endif //COMPILER_IR_H
+#endif

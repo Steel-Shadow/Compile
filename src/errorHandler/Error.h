@@ -18,4 +18,4 @@ public:
 };
 
 
-#endif //COMPILER_ERROR_H
+#endif

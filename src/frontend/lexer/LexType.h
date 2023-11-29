@@ -7,7 +7,7 @@
 
 #include <string>
 
-enum class NodeType {
+enum class LexType {
     // LexType
     LEX_EMPTY,
     COMMENT,
@@ -53,43 +53,8 @@ enum class NodeType {
     RBRACE,
 
     LEX_END,
-
-    // SynType
-    CompUnit,
-    Decl,
-    FuncDef,
-    MainFuncDef,
-    FuncType,
-    ConstDecl,
-    VarDecl,
-    ConstDef,
-    ConstExp,
-    ConstInitVal,
-    VarDef,
-    InitVal,
-    FuncFParams,
-    FuncFParam,
-    Btype,
-    Block,
-    BlockItem,
-    Stmt,
-    ForStmt,
-    Exp,
-    Cond,
-    LVal,
-    PrimaryExp,
-    Number,
-    UnaryExp,
-    UnaryOp,
-    FuncRParams,
-    MulExp,
-    AddExp,
-    RelExp,
-    EqExp,
-    LAndExp,
-    LOrExp,
 };
 
-std::string typeToStr(NodeType type);
+std::string toString(LexType type);
 
-#endif //COMPILER_NODETYPE_H
+#endif

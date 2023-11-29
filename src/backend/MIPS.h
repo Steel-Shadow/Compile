@@ -37,9 +37,9 @@ void irToMips(const IR::Inst &inst);
 
 void optimize();
 
-void outputAll(IR::Module &module);
+void outputAll(const IR::Module &module);
 
 void output(const std::string &str, bool newLine = true);
 
 }
-#endif //COMPILER_MIPS_H
+#endif

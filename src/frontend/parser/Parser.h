@@ -5,15 +5,15 @@
 #ifndef COMPILER_PARSER_H
 #define COMPILER_PARSER_H
 
+#include "AST/AST.h"
 #include "frontend/lexer/Lexer.h"
 
 // Specific parser method is distributed in respective class.
 namespace Parser {
 // check the type and Lexer::next()
-void singleLex(NodeType type, int row = Lexer::curRow);
+void singleLex(LexType type, int row = Lexer::curRow);
 
-// don't use/print in <BlockItem>, <Decl>, <BType>
-void output(NodeType type);
+void output(AST type);
 }
 
-#endif //COMPILER_PARSER_H
+#endif

@@ -3,7 +3,7 @@
 //
 #include "Exp.h"
 #include "frontend/parser/Parser.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 
 using namespace Parser;
 
@@ -13,9 +13,9 @@ std::unique_ptr<Exp> Exp::parse(bool cons) {
     n->addExp = AddExp::parse();
 
     if (cons) {
-        output(NodeType::ConstExp);
+        output(AST::ConstExp);
     } else {
-        output(NodeType::Exp);
+        output(AST::Exp);
     }
     return n;
 }

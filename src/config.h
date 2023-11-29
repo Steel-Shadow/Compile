@@ -12,8 +12,8 @@
 #if defined(ERROR)
 #define FILEOUT_ERROR
 #else
-//#define FILEOUT_LEXER
-//#define FILEOUT_PARSER
+#define FILEOUT_LEXER
+#define FILEOUT_PARSER
 #endif
 
 
@@ -32,4 +32,4 @@
 #endif
 
 
-#endif //COMPILER_CONFIG_H
+#endif

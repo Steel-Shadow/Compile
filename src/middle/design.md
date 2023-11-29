@@ -1,26 +1,13 @@
-将 glob 变量和 const 变量初值存储在符号表中， evaluate 访问符号表获取 const var。
-CompUnit::genIR()中，使用符号表的常量信息优化。
+## 数组开发进度
 
-临时寄存器分配策略：
-IR::Temp -> real Register
-t0 开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器数量。
-若没有可用临时寄存器，则将临时寄存器存储为局部变量。
-所有临时寄存器只生成一次，只使用一次，getReg()使用后马上释放实际寄存器。
+数组初始化完成。
+数组静态读写未完成。
+动态读/写都需要获取动态的数组偏移量 getelementptr
 
-目前 LorExp 不可作为表达式部分计算，可以修改实现（课程组没有要求）。
+## 数据类型系统
 
-## todo:
-
-函数调用保存现场时，保存使用到了的临时寄存器，但分配 MAX_TEMP_REGS 的栈内存，这样被调用的子函数在定位栈内存时就无需考虑父函数使用了多少临时寄存器了。
-
-另一种方法是，在 jal 之前将已使用的 tempRegs 数量保存到 realReg $?，
-使用 realReg $? 代替 $sp 来定位内存（速度较慢，但栈内存占用较少）。
-
-竞速仅考虑速度，这里不考虑爆栈。
-
-完善代码生成的变量类型系统?
-
-遇到特殊 IR (InStack outStack) 时，将当前的 sp 当前偏移量 curOffset 入栈 stack<int> offsetStack，在结束时出栈恢复相应的curOffset。
+完善代码生成的变量类型系统：
+前端Parser需要将类型录入 SymTab，还需要添加函数参数和函数返回值(变量已经实现)，再将类型录入IR::Module
 
 ## 中间表示
 
@@ -30,6 +17,9 @@ t0 开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存�
 Module{Global}{Function}
 Function{BasicBlock}  
 BasicBlock{Instruction}
+
+将 glob 变量和 const 变量初值存储在符号表中， evaluate 访问符号表获取 const var。
+CompUnit::genIR()中，使用符号表的常量信息优化。
 
 ## 中间代码生成
 
@@ -59,6 +49,26 @@ if (simple instanceof AssignStmt) {
 生成指令用于维护 Activation Record(Stack Frame)
 
 编译器内部存有AR(SF)，变量名->AR地址
+
+## 栈内存分配
+
+遇到特殊 IR (InStack outStack) 时，将当前的 sp 当前偏移量 curOffset 入栈 stack<int> offsetStack，在结束时出栈恢复相应的curOffset。
+
+## 临时寄存器分配策略
+
+IR::Temp -> real Register
+t0 开始设置临时寄存器，只需修改 MAX_TEMP_REGS 即可调整寄存器数量。
+若没有可用临时寄存器，则将临时寄存器存储为局部变量。
+所有临时寄存器只生成一次，只使用一次，getReg()使用后马上释放实际寄存器。
+
+## 函数调用
+
+函数调用保存现场时，保存使用到了的临时寄存器，但分配 MAX_TEMP_REGS 的栈内存，这样被调用的子函数在定位栈内存时就无需考虑父函数使用了多少临时寄存器了。
+
+另一种方法是，在 jal 之前将已使用的 tempRegs 数量保存到 realReg $?，
+使用 realReg $? 代替 $sp 来定位内存（速度较慢，但栈内存占用较少）。
+
+竞速仅考虑速度，这里不考虑爆栈。
 
 ## 优化
 

@@ -5,14 +5,14 @@
 #ifndef COMPILER_DECL_H
 #define COMPILER_DECL_H
 
-#include <memory>
-#include <vector>
-
 #include "Def.h"
 #include "AST/stmt/Stmt.h"
 
+#include <memory>
+#include <vector>
+
 struct Btype {
-    NodeType type;
+    LexType type;
 
     static std::unique_ptr<Btype> parse();
 };
@@ -30,7 +30,7 @@ struct Decl : public BlockItem {
 
     static std::unique_ptr<Decl> parse();
 
-    // local decl (global decl is included in IR::Module)
+    // local decl (global decl is evaluated in IR::Module)
     void genIR(IR::BasicBlocks &bBlocks) override;
 };
 
@@ -39,4 +39,4 @@ struct Ident {
     static std::string parse();
 };
 
-#endif //COMPILER_DECL_H
+#endif

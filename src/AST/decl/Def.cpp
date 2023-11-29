@@ -6,11 +6,11 @@
 #include "Decl.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 
 using namespace Parser;
 
-std::unique_ptr<Def> Def::parse(bool cons) {
+std::unique_ptr<Def> Def::parse(bool cons, Type type) {
     auto n = std::make_unique<Def>();
     n->cons = cons;
 
@@ -23,7 +23,7 @@ std::unique_ptr<Def> Def::parse(bool cons) {
 
     std::vector<int> dims; // SymTab dims
 
-    while (Lexer::curLexType == NodeType::LBRACK) {
+    while (Lexer::curLexType == LexType::LBRACK) {
         Lexer::next();
 
         row = Lexer::curRow;
@@ -31,26 +31,76 @@ std::unique_ptr<Def> Def::parse(bool cons) {
         dims.push_back(exp->evaluate());
         n->dims.push_back(std::move(exp));
 
-        singleLex(NodeType::RBRACK, row);
+        singleLex(LexType::RBRACK, row);
     }
 
-    if (cons || Lexer::curLexType == NodeType::ASSIGN) {
+    if (cons || Lexer::curLexType == LexType::ASSIGN) {
         Lexer::next();
         n->initVal = InitVal::parse(cons);
     }
 
     if (cons || SymTab::cur->getDepth() == 0) {
-        SymTab::add(n->ident, Symbol(n->cons, dims, n->initVal->evaluate()));
+        SymTab::add(n->ident, Symbol(n->cons, type, dims, n->initVal->evaluate()));
     } else {
-        SymTab::add(n->ident, Symbol(n->cons, dims));
+        SymTab::add(n->ident, Symbol(n->cons, type, dims, {}));
     }
 
     if (cons) {
-        output(NodeType::ConstDef);
+        output(AST::ConstDef);
     } else {
-        output(NodeType::VarDef);
+        output(AST::VarDef);
     }
     return n;
+}
+
+void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
+    using namespace IR;
+
+    auto var = std::make_unique<Var>(
+        ident,
+        SymTab::cur->getDepth(),
+        cons,
+        SymTab::find(ident)->dims,
+        type
+    );
+    auto pVar = var.get();
+
+    auto size = std::make_unique<ConstVal>(getArraySize(), type);
+    bBlocks.back()->addInst(Inst(
+        Op::Alloca,
+        nullptr,
+        std::move(var),
+        std::move(size)
+    ));
+
+    if (initVal) {
+        if (dims.empty()) {
+            // single value assign
+            auto *p = dynamic_cast<ExpInitVal *>(initVal.get());
+            auto value = p->exp->genIR(bBlocks);
+
+            bBlocks.back()->addInst(Inst(
+                Op::Assign,
+                std::make_unique<Var>(*pVar),
+                std::move(value),
+                nullptr
+            ));
+        } else {
+            // array init
+            auto array = dynamic_cast<ArrayInitVal *>(initVal.get());
+
+            int index = 0;
+            for (auto &expInit: array->getFlatten()) {
+                auto value = expInit->exp->genIR(bBlocks);
+                bBlocks.back()->addInst(Inst(
+                    Op::Assign,
+                    std::make_unique<Var>(*pVar),
+                    std::move(value),
+                    std::make_unique<ConstVal>(index++, type)
+                ));
+            }
+        }
+    }
 }
 
 const std::string &Def::getIdent() const {

@@ -58,4 +58,4 @@ public:
 };
 
 
-#endif //COMPILER_SYMTAB_H
+#endif

@@ -22,4 +22,4 @@ struct CompUnit {
     std::unique_ptr<IR::Module> genIR() const;
 };
 
-#endif //COMPILER_COMPUNIT_H
+#endif

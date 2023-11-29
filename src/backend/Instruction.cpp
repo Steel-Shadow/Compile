@@ -10,7 +10,7 @@
 #include "Register.h"
 #include "Memory.h"
 #include "frontend/symTab/SymTab.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 
 using namespace MIPS;
 
@@ -146,10 +146,17 @@ void MIPS::Assign(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Var *>(inst.res.get());
     auto arg1 = dynamic_cast<IR::Temp *>(inst.arg1.get());
 
+    // static index of array
+    int offset = 0;
+    if (inst.arg2) {
+        auto arg2 = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
+        offset = sizeOfType(arg2->type) * arg2->value;
+    }
+
     if (res->depth == 0) {
         assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(arg1), Register::none, Label(res->name)));
     } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, -getStackOffset(*res)));
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(arg1), Register::sp, -getStackOffset(*res) + offset));
     }
 }
 
@@ -308,17 +315,6 @@ void MIPS::Load(const IR::Inst &inst) {
     checkTempReg(res, regRes);
 }
 
-void MIPS::Store(const IR::Inst &inst) {
-    auto res = dynamic_cast<IR::Temp *>(inst.res.get());
-    auto arg1 = dynamic_cast<IR::Var *>(inst.arg1.get());
-
-    if (arg1->depth == 0) {
-        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(res), Register::none, Label(arg1->name)));
-    } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(res), Register::sp, -getStackOffset(*arg1)));
-    }
-}
-
 void MIPS::Br(const IR::Inst &inst) {
     auto label = Label(dynamic_cast<IR::Label *>(inst.arg1.get()));
     assemblies.push_back(std::make_unique<J_Inst>(Op::j, label));
@@ -353,7 +349,7 @@ void MIPS::Call(const IR::Inst &inst) {
     for (auto &[tempId, reg]: tempToRegs) {
         StackMemory::curOffset += wordSize;
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-                Op::sw, reg, Register::sp, -StackMemory::curOffset));
+            Op::sw, reg, Register::sp, -StackMemory::curOffset));
     }
 
     // jal to function body
@@ -362,7 +358,7 @@ void MIPS::Call(const IR::Inst &inst) {
     // restore tempRegs
     for (auto i = tempToRegs.rbegin(); i != tempToRegs.rend(); ++i) {
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-                Op::lw, i->second, Register::sp, -StackMemory::curOffset));
+            Op::lw, i->second, Register::sp, -StackMemory::curOffset));
         StackMemory::curOffset -= wordSize;
     }
 

@@ -75,4 +75,4 @@ std::string regToString(Register reg);
 
 }
 
-#endif //REGISTER_H
+#endif

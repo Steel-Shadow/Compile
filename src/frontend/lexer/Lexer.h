@@ -8,10 +8,10 @@
 #include <fstream>
 #include <string>
 
-#include "NodeType.h"
+#include "LexType.h"
 
 using Token = std::string;
-using Word = std::pair<NodeType, Token>;
+using Word = std::pair<LexType, Token>;
 
 // commented var and func are private
 namespace Lexer {
@@ -32,7 +32,7 @@ extern int &curRow; // row[0]
 Word peek(int n = 0);
 
 // Word words[deep];
-extern NodeType &curLexType;
+extern LexType &curLexType;
 extern Token &curToken;
 
 // LinkedHashMap<std::string, NodeType> buildReserveWords();
@@ -47,4 +47,4 @@ Word next();
 bool findAssignBeforeSemicolon();
 }
 
-#endif  // COMPILER_LEXER_H
+#endif

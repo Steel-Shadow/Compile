@@ -5,7 +5,7 @@
 #ifndef COMPILER_EXP_H
 #define COMPILER_EXP_H
 
-#include "frontend/lexer/NodeType.h"
+#include "frontend/lexer/LexType.h"
 #include "frontend/symTab/Symbol.h"
 #include "middle/IR.h"
 
@@ -55,7 +55,7 @@ struct LVal : public PrimaryExp {
 // UnaryExp → {UnaryOp} ( PrimaryExp | Ident '(' [FuncRParams] ')' )
 // Note: UnaryOp is not a separate class!
 struct UnaryExp {
-    std::vector<NodeType> ops;
+    std::vector<LexType> ops;
     std::unique_ptr<BaseUnaryExp> baseUnaryExp;
 
     static std::unique_ptr<UnaryExp> parse();
@@ -112,7 +112,7 @@ struct Number : public PrimaryExp {
 template<class T>
 struct MultiExp {
     std::unique_ptr<T> first;
-    std::vector<NodeType> ops;
+    std::vector<LexType> ops;
     std::vector<std::unique_ptr<T>> elements;
 
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const {
@@ -121,14 +121,14 @@ struct MultiExp {
         for (int i = 0; i < ops.size(); i++) {
             auto &e = elements[i];
             auto t = e->genIR(bBlocks);
-            auto res = std::make_unique<Temp>();
+            auto res = std::make_unique<Temp>(Type::Int); // mix t.type & lastRes.type
             auto resCopy = std::make_unique<Temp>(*res);
             bBlocks.back()->addInst(Inst(
-                    NodeTypeToIROp(ops[i]),
-                    std::move(res),
-                    std::move(lastRes),
-                    std::move(t)
-                    ));
+                NodeTypeToIROp(ops[i]),
+                std::move(res),
+                std::move(lastRes),
+                std::move(t)
+            ));
             lastRes = std::move(resCopy);
         }
         return lastRes;
@@ -228,4 +228,4 @@ struct Exp {
     LVal *getLVal() const;
 };
 
-#endif  // COMPILER_EXP_H
+#endif

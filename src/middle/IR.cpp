@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "config.h"
 
 using namespace IR;
@@ -16,7 +16,7 @@ std::vector<std::string> Str::MIPS_strings;
 Module::Module(std::string name) :
     name(std::move(name)) {}
 
-std::vector<std::unique_ptr<Function>> &Module::getFunctions() {
+const std::vector<std::unique_ptr<Function>> &Module::getFunctions() const {
     return functions;
 }
 
@@ -83,8 +83,6 @@ std::string Inst::opToStr(Op anOperator) {
             return "Alloca";
         case Op::Load:
             return "Load";
-        case Op::Store:
-            return "Store";
         case Op::Br:
             return "Br";
         case Op::Bif0:
@@ -135,9 +133,9 @@ std::string Label::toString() const {
 }
 
 GlobVar::GlobVar(
-        bool cons,
-        std::vector<int> dims,
-        std::vector<int> initVal) :
+    bool cons,
+    std::vector<int> dims,
+    std::vector<int> initVal) :
     cons(cons),
     dims(std::move(dims)),
     initVal(std::move(initVal)) {}
@@ -175,6 +173,10 @@ void Module::outputIR() const {
         IRFileStream << ident << '\n';
 #endif
     }
+    for (auto &i: mainFunction->getBasicBlocks()) {
+        i->outputIR();
+    }
+
     for (auto &i: functions) {
         for (auto &j: i->getBasicBlocks()) {
             j->outputIR();
@@ -182,26 +184,30 @@ void Module::outputIR() const {
     }
 }
 
-std::vector<std::pair<std::string, GlobVar>> &Module::getGlobVars() {
+const std::vector<std::pair<std::string, GlobVar>> &Module::getGlobVars() const {
     return globVars;
+}
+
+const Function &Module::getMainFunction() const {
+    return *mainFunction;
+}
+
+void Module::setMainFunction(std::unique_ptr<Function> main_function) {
+    mainFunction = std::move(main_function);
+}
+
+void Module::addFunction(std::unique_ptr<Function> function) {
+    functions.emplace_back(std::move(function));
+}
+
+void Module::addGlobVar(std::string name, GlobVar globVar) {
+    globVars.emplace_back(std::move(name), std::move(globVar));
 }
 
 int Function::idAllocator = 0;
 
 const BasicBlocks &Function::getBasicBlocks() const {
     return basicBlocks;
-}
-
-Type Function::convertType(NodeType type) {
-    switch (type) {
-        case NodeType::INTTK:
-            return Type::Int;
-        case NodeType::VOIDTK:
-            return Type::Void;
-        default:
-            Error::raise("Bad Function reType");
-            return Type::Void;
-    }
 }
 
 std::vector<Param> Function::getParams() const {
@@ -225,17 +231,6 @@ void BasicBlock::outputIR() const {
 #endif
     for (auto &i: instructions) {
         i.outputIR();
-    }
-}
-
-int IR::sizeOfType(Type type) {
-    switch (type) {
-        case Type::Void:
-            return 0;
-        case Type::Int:
-            return 4;
-        default:
-            return 0;
     }
 }
 
@@ -289,33 +284,33 @@ std::string ConstVal::toString() const {
     return std::to_string(value);
 }
 
-Op IR::NodeTypeToIROp(NodeType n) {
+Op IR::NodeTypeToIROp(LexType n) {
     switch (n) {
-        case NodeType::PLUS:
+        case LexType::PLUS:
             return Op::Add;
-        case NodeType::MINU:
+        case LexType::MINU:
             return Op::Sub;
-        case NodeType::MULT:
+        case LexType::MULT:
             return Op::Mul;
-        case NodeType::DIV:
+        case LexType::DIV:
             return Op::Div;
-        case NodeType::MOD:
+        case LexType::MOD:
             return Op::Mod;
-        case NodeType::AND:
+        case LexType::AND:
             return Op::And;
-        case NodeType::OR:
+        case LexType::OR:
             return Op::Or;
-        case NodeType::LEQ:
+        case LexType::LEQ:
             return Op::Leq;
-        case NodeType::LSS:
+        case LexType::LSS:
             return Op::Lss;
-        case NodeType::GEQ:
+        case LexType::GEQ:
             return Op::Geq;
-        case NodeType::GRE:
+        case LexType::GRE:
             return Op::Gre;
-        case NodeType::EQL:
+        case LexType::EQL:
             return Op::Eql;
-        case NodeType::NEQ:
+        case LexType::NEQ:
             return Op::Neq;
         default:
             Error::raise("Bad IR Operator");

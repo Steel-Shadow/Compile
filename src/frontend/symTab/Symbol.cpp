@@ -4,20 +4,44 @@
 
 #include "Symbol.h"
 
-Symbol::Symbol(bool cons, const std::vector<int> &dims, const std::vector<int> &initVal) :
-        type(SymType::Value),
-        cons(cons),
-        dims(dims),
-        initVal(initVal) {
+#include "errorHandler/Error.h"
+
+Type toType(LexType type) {
+    switch (type) {
+        case LexType::INTTK:
+            return Type::Int;
+        case LexType::VOIDTK:
+            return Type::Void;
+        default:
+            Error::raise("Bad Btype to IR");
+            return Type::Void;
+    }
 }
 
-Symbol::Symbol(NodeType reType, const std::vector<Param> &params) :
-        type(SymType::Func),
-        reType(reType),
-        params(params) {
+int sizeOfType(Type type) {
+    switch (type) {
+        case Type::Void:
+            return 0;
+        case Type::Int:
+            return 4;
+        default:
+            Error::raise("Bad Type in sizeOfType(...)");
+            return 0;
+    }
 }
+
+Symbol::Symbol(bool cons, Type type, const std::vector<int> &dims, const std::vector<int> &initVal) :
+    symType(SymType::Value),
+    type(type),
+    cons(cons),
+    dims(dims),
+    initVal(initVal) {}
+
+Symbol::Symbol(Type reType, const std::vector<Param> &params) :
+    symType(SymType::Func),
+    type(reType),
+    params(params) {}
 
 Symbol::Symbol(const std::vector<int> &dims) :
-        type(SymType::Param),
-        dims(dims) {
-}
+    symType(SymType::Param),
+    dims(dims) {}

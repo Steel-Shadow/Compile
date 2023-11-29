@@ -4,7 +4,7 @@
 
 #include "Func.h"
 
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
@@ -26,16 +26,16 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     std::vector<Param> params;
 
-    singleLex(NodeType::LPARENT);
-    if (Lexer::curLexType != NodeType::RPARENT) {
+    singleLex(LexType::LPARENT);
+    if (Lexer::curLexType != LexType::RPARENT) {
         n->funcFParams = FuncFParams::parse();
         params = n->funcFParams->getParameters();
     }
-    singleLex(NodeType::RPARENT, row);
+    singleLex(LexType::RPARENT, row);
 
     SymTab::add(n->ident, Symbol(n->funcType->getType(), params), SymTab::cur->getPrev());
 
-    Stmt::retVoid = n->funcType->getType() == NodeType::VOIDTK;
+    Stmt::retVoid = n->funcType->getType() == Type::Void;
     n->block = Block::parse();
 
     if (!Stmt::retVoid) {
@@ -48,21 +48,21 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
     }
 
     SymTab::deepOut(); // FuncDef
-    output(NodeType::FuncDef);
+    output(AST::FuncDef);
     return n;
 }
 
 std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
     auto n = std::make_unique<MainFuncDef>();
 
-    singleLex(NodeType::INTTK);
-    singleLex(NodeType::MAINTK);
+    singleLex(LexType::INTTK);
+    singleLex(LexType::MAINTK);
 
     SymTab::deepIn();
 
     int row = Lexer::curRow;
-    singleLex(NodeType::LPARENT);
-    singleLex(NodeType::RPARENT, row);
+    singleLex(LexType::LPARENT);
+    singleLex(LexType::RPARENT, row);
 
     Stmt::retVoid = false;
     n->block = Block::parse();
@@ -77,14 +77,14 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
     }
 
     SymTab::deepOut(); // MainFuncDef
-    output(NodeType::MainFuncDef);
+    output(AST::MainFuncDef);
     return n;
 }
 
 std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     using namespace IR;
     auto main = std::make_unique<Function>(
-            "main", Function::convertType(NodeType::INTTK), std::vector<Param>());
+        "main", Type::Int, std::vector<Param>());
 
     BasicBlocks bBlocks;
     bBlocks.emplace_back(std::make_unique<BasicBlock>("main", true));
@@ -102,19 +102,19 @@ std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
 std::unique_ptr<FuncType> FuncType::parse() {
     auto n = std::make_unique<FuncType>();
 
-    if (Lexer::curLexType == NodeType::VOIDTK || Lexer::curLexType == NodeType::INTTK) {
+    if (Lexer::curLexType == LexType::VOIDTK || Lexer::curLexType == LexType::INTTK) {
         n->type = Lexer::curLexType;
         Lexer::next();
     } else {
         Error::raise();
     }
 
-    output(NodeType::FuncType);
+    output(AST::FuncType);
     return n;
 }
 
-NodeType FuncType::getType() const {
-    return type;
+Type FuncType::getType() const {
+    return toType(type);
 }
 
 std::unique_ptr<FuncFParams> FuncFParams::parse() {
@@ -122,12 +122,12 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
 
     n->funcFParams.push_back(FuncFParam::parse());
 
-    while (Lexer::curLexType == NodeType::COMMA) {
+    while (Lexer::curLexType == LexType::COMMA) {
         Lexer::next();
         n->funcFParams.push_back(FuncFParam::parse());
     }
 
-    output(NodeType::FuncFParams);
+    output(AST::FuncFParams);
     return n;
 }
 
@@ -152,23 +152,23 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
     }
 
     // ['[' ']' { '[' ConstExp ']' }]
-    if (Lexer::curLexType == NodeType::LBRACK) {
+    if (Lexer::curLexType == LexType::LBRACK) {
         row = Lexer::curRow;
         Lexer::next();
         n->dims.push_back(nullptr); // p[] is not p!
-        singleLex(NodeType::RBRACK, row);
+        singleLex(LexType::RBRACK, row);
 
-        while (Lexer::curLexType == NodeType::LBRACK) {
+        while (Lexer::curLexType == LexType::LBRACK) {
             Lexer::next();
 
             row = Lexer::curRow;
             n->dims.push_back(Exp::parse(true));
-            singleLex(NodeType::RBRACK, row);
+            singleLex(LexType::RBRACK, row);
         }
     }
 
     SymTab::add(n->getId(), Symbol(n->getDims()));
-    output(NodeType::FuncFParam);
+    output(AST::FuncFParam);
     return n;
 }
 
@@ -189,21 +189,20 @@ std::unique_ptr<FuncRParams> FuncRParams::parse() {
     auto n = std::make_unique<FuncRParams>();
 
     n->params.push_back(Exp::parse(false));
-    while (Lexer::curLexType == NodeType::COMMA) {
+    while (Lexer::curLexType == LexType::COMMA) {
         Lexer::next();
 
         n->params.push_back(Exp::parse(false));
     }
 
-    output(NodeType::FuncRParams);
+    output(AST::FuncRParams);
     return n;
 }
 
 std::unique_ptr<IR::Function> FuncDef::genIR() {
     using namespace IR;
-    NodeType reType = funcType->getType();
     auto params = SymTab::find(ident)->params;
-    auto function = std::make_unique<Function>(ident, Function::convertType(reType), params);
+    auto function = std::make_unique<Function>(ident, funcType->getType(), params);
 
     BasicBlocks bBlocks;
     Function::idAllocator = 0;

@@ -13,16 +13,16 @@ using namespace Parser;
 std::unique_ptr<CompUnit> CompUnit::parse() {
     auto n = std::make_unique<CompUnit>();
 
-    while (Lexer::curLexType == NodeType::CONSTTK || Lexer::curLexType == NodeType::INTTK) {
-        if (Lexer::peek(1).first == NodeType::IDENFR && Lexer::peek(2).first == NodeType::LPARENT
-            || Lexer::curLexType == NodeType::INTTK && Lexer::peek(1).first == NodeType::MAINTK) {
+    while (Lexer::curLexType == LexType::CONSTTK || Lexer::curLexType == LexType::INTTK) {
+        if (Lexer::peek(1).first == LexType::IDENFR && Lexer::peek(2).first == LexType::LPARENT
+            || Lexer::curLexType == LexType::INTTK && Lexer::peek(1).first == LexType::MAINTK) {
             break;
         }
         n->decls.push_back(Decl::parse());
     }
 
-    while (Lexer::curLexType == NodeType::VOIDTK || Lexer::curLexType == NodeType::INTTK) {
-        if (Lexer::curLexType == NodeType::INTTK && Lexer::peek(1).first == NodeType::MAINTK) {
+    while (Lexer::curLexType == LexType::VOIDTK || Lexer::curLexType == LexType::INTTK) {
+        if (Lexer::curLexType == LexType::INTTK && Lexer::peek(1).first == LexType::MAINTK) {
             break;
         }
         n->funcDefs.push_back(FuncDef::parse());
@@ -30,7 +30,7 @@ std::unique_ptr<CompUnit> CompUnit::parse() {
 
     n->mainFuncDef = MainFuncDef::parse();
 
-    output(NodeType::CompUnit);
+    output(AST::CompUnit);
 
     return n;
 }
@@ -48,13 +48,15 @@ std::unique_ptr<IR::Module> CompUnit::genIR() const {
             auto sym = SymTab::find(def->ident);
 
             auto globVar = GlobVar(sym->cons, sym->dims, sym->initVal);
-            module->getGlobVars().emplace_back(def->ident, globVar);
+            module->addGlobVar(def->ident, globVar);
         }
     }
 
     for (auto &funcDef: funcDefs) {
-        module->getFunctions().push_back(funcDef->genIR());
+        module->addFunction(funcDef->genIR());
     }
-    module->getFunctions().push_back(mainFuncDef->genIR());
+
+    module->setMainFunction(mainFuncDef->genIR());
+
     return module;
 }

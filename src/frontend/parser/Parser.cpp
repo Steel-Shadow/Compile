@@ -4,31 +4,31 @@
 
 #include "Parser.h"
 
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "config.h"
 
-void Parser::singleLex(NodeType type, int row) {
+void Parser::singleLex(LexType type, int row) {
     if (Lexer::curLexType == type) {
         Lexer::next();
     } else {
-        if (type == NodeType::SEMICN) {
+        if (type == LexType::SEMICN) {
             Error::raise('i', row);
-        } else if (type == NodeType::RPARENT) {
+        } else if (type == LexType::RPARENT) {
             Error::raise('j', row);
-        } else if (type == NodeType::RBRACK) {
+        } else if (type == LexType::RBRACK) {
             Error::raise('k', row);
         } else {
-            Error::raise(std::string("Miss singleLex ") + typeToStr(type));
+            Error::raise(std::string("Miss singleLex ") + toString(type));
         }
     }
 }
 
-void Parser::output(NodeType type) {
+void Parser::output(AST type) {
 #ifdef STDOUT_PARSER
-    std::cout << "<" << typeToStr(type) << ">" << '\n';
+    std::cout << "<" << toString(type) << ">" << '\n';
 #endif
 #ifdef FILEOUT_PARSER
-    Lexer::outFileStream << "<" << typeToStr(type) << ">" << '\n';
+    Lexer::outFileStream << "<" << toString((type)) << ">" << '\n';
 #endif
 }
 

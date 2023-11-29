@@ -11,7 +11,7 @@ std::unique_ptr<Cond> Cond::parse() {
 
     n->lorExp = LOrExp::parse();
 
-    output(NodeType::Cond);
+    output(AST::Cond);
     return n;
 }
 
@@ -23,14 +23,14 @@ std::unique_ptr<MulExp> MulExp::parse() {
     auto n = std::make_unique<MulExp>();
 
     n->first = UnaryExp::parse();
-    output(NodeType::MulExp);
+    output(AST::MulExp);
 
-    while (Lexer::curLexType == NodeType::MULT || Lexer::curLexType == NodeType::DIV ||
-           Lexer::curLexType == NodeType::MOD) {
+    while (Lexer::curLexType == LexType::MULT || Lexer::curLexType == LexType::DIV ||
+           Lexer::curLexType == LexType::MOD) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(UnaryExp::parse());
-        output(NodeType::MulExp);
+        output(AST::MulExp);
     }
 
     return n;
@@ -41,11 +41,11 @@ int MulExp::evaluate() const {
     for (int i = 0; i < ops.size(); ++i) {
         auto op = ops[i];
         auto e = elements[i]->evaluate();
-        if (op == NodeType::MULT) {
+        if (op == LexType::MULT) {
             val *= e;
-        } else if (op == NodeType::DIV) {
+        } else if (op == LexType::DIV) {
             val /= e;
-        } else if (op == NodeType::MOD) {
+        } else if (op == LexType::MOD) {
             val %= e;
         }
     }
@@ -56,13 +56,13 @@ std::unique_ptr<AddExp> AddExp::parse() {
     auto n = std::make_unique<AddExp>();
 
     n->first = MulExp::parse();
-    output(NodeType::AddExp);
+    output(AST::AddExp);
 
-    while (Lexer::curLexType == NodeType::PLUS || Lexer::curLexType == NodeType::MINU) {
+    while (Lexer::curLexType == LexType::PLUS || Lexer::curLexType == LexType::MINU) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(MulExp::parse());
-        output(NodeType::AddExp);
+        output(AST::AddExp);
     }
 
     return n;
@@ -73,9 +73,9 @@ int AddExp::evaluate() const {
     for (int i = 0; i < ops.size(); ++i) {
         auto op = ops[i];
         auto e = elements[i]->evaluate();
-        if (op == NodeType::PLUS) {
+        if (op == LexType::PLUS) {
             val += e;
-        } else if (op == NodeType::MINU) {
+        } else if (op == LexType::MINU) {
             val -= e;
         }
     }
@@ -86,14 +86,14 @@ std::unique_ptr<RelExp> RelExp::parse() {
     auto n = std::make_unique<RelExp>();
 
     n->first = AddExp::parse();
-    output(NodeType::RelExp);
+    output(AST::RelExp);
 
-    while (Lexer::curLexType == NodeType::LSS || Lexer::curLexType == NodeType::GRE ||
-           Lexer::curLexType == NodeType::LEQ || Lexer::curLexType == NodeType::GEQ) {
+    while (Lexer::curLexType == LexType::LSS || Lexer::curLexType == LexType::GRE ||
+           Lexer::curLexType == LexType::LEQ || Lexer::curLexType == LexType::GEQ) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(AddExp::parse());
-        output(NodeType::RelExp);
+        output(AST::RelExp);
     }
 
     return n;
@@ -103,13 +103,13 @@ std::unique_ptr<EqExp> EqExp::parse() {
     auto n = std::make_unique<EqExp>();
 
     n->first = RelExp::parse();
-    output(NodeType::EqExp);
+    output(AST::EqExp);
 
-    while (Lexer::curLexType == NodeType::EQL || Lexer::curLexType == NodeType::NEQ) {
+    while (Lexer::curLexType == LexType::EQL || Lexer::curLexType == LexType::NEQ) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(RelExp::parse());
-        output(NodeType::EqExp);
+        output(AST::EqExp);
     }
 
     return n;
@@ -117,6 +117,8 @@ std::unique_ptr<EqExp> EqExp::parse() {
 
 void EqExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
     auto t = MultiExp::genIR(basicBlocks);
+    // todo: 中间代码优化:哪种写法好呢？
+    // 目标代码优化：合并最后一条计算指令与跳转指令
     basicBlocks.back()->addInst(IR::Inst(IR::Op::Bif1,
                                          nullptr,
                                          std::move(t),
@@ -125,19 +127,27 @@ void EqExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label
                                          nullptr,
                                          std::make_unique<IR::Label>(falseBranch),
                                          nullptr));
+    // basicBlocks.back()->addInst(IR::Inst(IR::Op::Bif0,
+    //                                      nullptr,
+    //                                      std::move(t),
+    //                                      std::make_unique<IR::Label>(falseBranch)));
+    // basicBlocks.back()->addInst(IR::Inst(IR::Op::Br,
+    //                                      nullptr,
+    //                                      std::make_unique<IR::Label>(trueBranch),
+    //                                      nullptr));
 }
 
 std::unique_ptr<LAndExp> LAndExp::parse() {
     auto n = std::make_unique<LAndExp>();
 
     n->first = EqExp::parse();
-    output(NodeType::LAndExp);
+    output(AST::LAndExp);
 
-    while (Lexer::curLexType == NodeType::AND) {
+    while (Lexer::curLexType == LexType::AND) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(EqExp::parse());
-        output(NodeType::LAndExp);
+        output(AST::LAndExp);
     }
 
     return n;
@@ -165,13 +175,13 @@ std::unique_ptr<LOrExp> LOrExp::parse() {
     auto n = std::make_unique<LOrExp>();
 
     n->first = LAndExp::parse();
-    output(NodeType::LOrExp);
+    output(AST::LOrExp);
 
-    while (Lexer::curLexType == NodeType::OR) {
+    while (Lexer::curLexType == LexType::OR) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(LAndExp::parse());
-        output(NodeType::LOrExp);
+        output(AST::LOrExp);
     }
 
     return n;

@@ -6,20 +6,27 @@
 #define COMPILER_SYMBOL_H
 
 #include <vector>
-#include "frontend/lexer/NodeType.h"
-
-struct Symbol;
+#include "frontend/lexer/LexType.h"
 
 using Dimensions = std::vector<int>;
 using Param = std::pair<std::string, Dimensions>;
 
 enum class SymType {
-    Value,
     // const var
+    Value,
+
     Func,
     Param
 };
 
+enum class Type {
+    Void,
+    Int,
+};
+
+Type toType(LexType type);
+
+int sizeOfType(Type type);
 
 // all information in a Symbol (also redundant info)
 // use SymType type to distinguish
@@ -27,21 +34,22 @@ struct Symbol {
     // Value -> a | a[...] | a[...][...]
     // Func -> func
     // Param -> p | p[] | p[][...]
-    SymType type;
+    SymType symType;
+
+    // Value's type | Func's return type
+    Type type;
 
     // value & array. dims also share for param
     bool cons{false}; // const | var
     std::vector<int> dims; // At most 2 dimensions in our work.
     std::vector<int> initVal; // for const Value
 
-
     // func
-    NodeType reType{NodeType::LEX_EMPTY};
-    std::vector<Param> params; // only save dimension
+    std::vector<Param> params;
 
-    Symbol(bool cons, const std::vector<int> &dims, const std::vector<int> &initVal = {}); // const var
-    Symbol(NodeType reType, const std::vector<Param> &params); // func
+    Symbol(bool cons, Type type, const std::vector<int> &dims, const std::vector<int> &initVal); // const var
+    Symbol(Type reType, const std::vector<Param> &params); // func
     explicit Symbol(const std::vector<int> &dims); // param
 };
 
-#endif //COMPILER_SYMBOL_H
+#endif

@@ -8,14 +8,14 @@
 #include <memory>
 #include <vector>
 
-#include "frontend/lexer/NodeType.h"
+#include "frontend/lexer/LexType.h"
 #include "AST/decl/Decl.h"
 
 // FuncType → 'void' | 'int'
 struct FuncType {
-    NodeType type;
+    LexType type;
 
-    NodeType getType() const;
+    Type getType() const;
 
     static std::unique_ptr<FuncType> parse();
 };
@@ -71,4 +71,4 @@ struct FuncRParams {
     static std::unique_ptr<FuncRParams> parse();
 };
 
-#endif //COMPILER_FUNC_H
+#endif

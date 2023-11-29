@@ -2,6 +2,7 @@ cmake --build cmake-build-debug
 
 cd bin
 
+rm *.pdb, *.ilk
 .\Compiler.exe | Select-String -Pattern "error"
 
 mkdir output -f >nul

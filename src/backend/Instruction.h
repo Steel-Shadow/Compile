@@ -106,7 +106,6 @@ void PrintInt(const IR::Inst &);
 void PrintStr(const IR::Inst &);
 void Alloca(const IR::Inst &);
 void Load(const IR::Inst &);
-void Store(const IR::Inst &);
 void Br(const IR::Inst &);
 void Bif0(const IR::Inst &);
 void Call(const IR::Inst &);
@@ -121,5 +120,5 @@ void Eql(const IR::Inst &);
 void Neq(const IR::Inst &);
 void Bif1(const IR::Inst &);
 
-#endif //INSTRUCTION_H
+#endif
 }

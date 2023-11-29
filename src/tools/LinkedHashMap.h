@@ -68,4 +68,4 @@ private:
     std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator> key_to_iterator;
 };
 
-#endif //COMPILER_LINKEDHASHMAP_H
+#endif

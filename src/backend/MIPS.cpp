@@ -9,7 +9,9 @@
 #include "config.h"
 #include "Instruction.h"
 #include "Memory.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
+
+#include <string>
 
 using namespace MIPS;
 
@@ -41,14 +43,14 @@ std::string Label::toString() {
     return nameAndId + ":";
 }
 
-void MIPS::outputAll(IR::Module &module) {
+void MIPS::outputAll(const IR::Module &module) {
     /*---- .data generate & output ----------------------*/
     output("#### MIPS ####");
     output(".data");
     for (auto &[name, globVar]: module.getGlobVars()) {
         output(name + ": .word ", false);
-        for (auto i = globVar.initVal.rbegin(); i != globVar.initVal.rend(); ++i) {
-            output(std::to_string(*i) + ",", false);
+        for (auto i: globVar.initVal) {
+            output(std::to_string(i) + ", ", false);
         }
         output("");
     }
@@ -62,17 +64,15 @@ void MIPS::outputAll(IR::Module &module) {
     output("");
     output(".text");
     // main
-    for (auto &basicBlock: module.getFunctions().back()->getBasicBlocks()) {
+    for (auto &basicBlock: module.getMainFunction().getBasicBlocks()) {
         assemblies.push_back(std::make_unique<Label>(basicBlock->label.nameAndId));
         for (auto &inst: basicBlock->instructions) {
             irToMips(inst);
         }
     }
 
-    // other function (except main)
-    for (auto func = module.getFunctions().begin();
-         func != std::prev(module.getFunctions().end());
-         ++func) {
+    // other function
+    for (auto &func: module.getFunctions()) {
         clearTempRegs();
         // Use part of tempRegs, but move stackOffset for MAX_TEMP_REGS.
         StackMemory::curOffset = wordSize * (2 + MAX_TEMP_REGS);
@@ -81,12 +81,12 @@ void MIPS::outputAll(IR::Module &module) {
         // set function's parameters to varToOffset
         // stack memory map explain is in markdown and Memory.h
         int offset = 0;
-        for (auto &[ident, dimensions]: (*func)->getParams()) {
+        for (auto &[ident, dimensions]: func->getParams()) {
             StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
             offset += wordSize;
         }
 
-        for (auto &basicBlock: (*func)->getBasicBlocks()) {
+        for (auto &basicBlock: func->getBasicBlocks()) {
             assemblies.push_back(std::make_unique<Label>(basicBlock->label.nameAndId));
             for (auto &inst: basicBlock->instructions) {
                 irToMips(inst);
@@ -159,9 +159,6 @@ void MIPS::irToMips(const IR::Inst &inst) {
             break;
         case IR::Op::Load:
             Load(inst);
-            break;
-        case IR::Op::Store:
-            Store(inst);
             break;
         case IR::Op::Br:
             Br(inst);

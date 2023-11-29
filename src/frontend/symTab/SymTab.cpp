@@ -3,7 +3,7 @@
 //
 
 #include "SymTab.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 
 SymTab SymTab::global{nullptr};
 
@@ -53,7 +53,8 @@ SymTab *SymTab::getPrev() const {
     return prev;
 }
 
-SymTab::SymTab(SymTab *prev) : prev(prev) {
+SymTab::SymTab(SymTab *prev) :
+    prev(prev) {
     depth = prev == nullptr ? 0 : prev->depth + 1;
 }
 

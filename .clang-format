@@ -1,8 +1,9 @@
 # Generated from CLion C/C++ Code Style settings
 BasedOnStyle: LLVM
+AlignTrailingComments: false
 SortIncludes: CaseInsensitive
 AccessModifierOffset: -4
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: BlockIndent
 AlignConsecutiveAssignments: None
 AlignOperands: Align
 AllowAllArgumentsOnNextLine: false

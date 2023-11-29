@@ -5,7 +5,7 @@
 #include "Lexer.h"
 
 #include "config.h"
-#include "frontend/error/Error.h"
+#include "errorHandler/Error.h"
 #include "tools/LinkedHashMap.h"
 
 #include <sstream>
@@ -15,26 +15,26 @@ std::ofstream Lexer::outFileStream;
 std::string Lexer::fileContents;
 
 Word words[Lexer::deep];
-NodeType &Lexer::curLexType = words[0].first;
+LexType &Lexer::curLexType = words[0].first;
 Token &Lexer::curToken = words[0].second;
 
-int Lexer::pos[deep];   // count from 1
-int Lexer::column[deep];// count from 1
-int Lexer::row[deep];   // count from 1.
+int Lexer::pos[deep]; // count from 1
+int Lexer::column[deep]; // count from 1
+int Lexer::row[deep]; // count from 1.
 // ReSharper disable once CppRedundantQualifier
 int &Lexer::curRow = Lexer::row[0];
 
-char c;// c = fileContents[posTemp - 1]
+char c; // c = fileContents[posTemp - 1]
 int posTemp;
 int columnTemp;
 int rowTemp{1};
 
 // synchronize output of parser and lexer
 bool firstOutput = true;
-NodeType lastLexType;
+LexType lastLexType;
 Token lastToken;
 
-LinkedHashMap<std::string, NodeType> reserveWords;
+LinkedHashMap<std::string, LexType> reserveWords;
 
 Word Lexer::peek(int n) {
     return words[n];
@@ -59,17 +59,17 @@ char nextChar() {
     return c;
 }
 
-void reserve(const Token &t, NodeType &l) {
+void reserve(const Token &t, LexType &l) {
     if (reserveWords.containsKey(t)) {
         l = reserveWords.get(t);
     } else {
-        l = NodeType::IDENFR;
+        l = LexType::IDENFR;
     }
 }
 
 void output();
 
-void updateWords(NodeType l, Token t);
+void updateWords(LexType l, Token t);
 
 // stop if you read NodeType::Lex_END
 // or the file will be read in loop
@@ -79,12 +79,12 @@ Word Lexer::next() {
     // FormatString
 
     if (posTemp > fileContents.length()) {
-        updateWords(NodeType::LEX_END, "");
+        updateWords(LexType::LEX_END, "");
         output();
         return words[0];
     }
 
-    NodeType lexType = NodeType::LEX_EMPTY;
+    LexType lexType = LexType::LEX_EMPTY;
     Token token = std::string(1, c);
 
     if (c >= '0' && c <= '9') {
@@ -92,7 +92,7 @@ Word Lexer::next() {
             token += c;
         }
         // error: bad number
-        lexType = NodeType::INTCON;
+        lexType = LexType::INTCON;
     } else if (c == '_' || isalpha(c)) {
         while (nextChar(), c == '_' || isalpha(c) || isdigit(c)) {
             token += c;
@@ -106,25 +106,25 @@ Word Lexer::next() {
             while (nextChar() != '\n') {}
             // line comment //
             token = "";
-            lexType = NodeType::COMMENT;
+            lexType = LexType::COMMENT;
         } else if (c == '*') {
             // q5
         q5:
             while (nextChar() != '*') {}
             do {
                 if (c == '*') {} else if (c == '/') {
-                    break;// q7
+                    break; // q7
                 } else {
                     goto q5;
                 }
             } while (nextChar());
             // block comment /**/
             token = "";
-            lexType = NodeType::COMMENT;
+            lexType = LexType::COMMENT;
             nextChar();
         } else {
-            token = "/";// q4
-            lexType = NodeType::DIV;
+            token = "/"; // q4
+            lexType = LexType::DIV;
         }
     } else if (c == '\"') {
         // STRCON
@@ -132,10 +132,10 @@ Word Lexer::next() {
             token += c;
             if (c == '\"') {
                 break;
-            }// error: bad char in format string
+            } // error: bad char in format string
         }
 
-        lexType = NodeType::STRCON;
+        lexType = LexType::STRCON;
         nextChar();
     } else {
         // special operator +-*/ && &
@@ -152,7 +152,7 @@ Word Lexer::next() {
         }
     }
 
-    if (lexType == NodeType::COMMENT) {
+    if (lexType == LexType::COMMENT) {
         while (isspace(c)) {
             nextChar();
         }
@@ -172,41 +172,41 @@ void buildReserveWords() {
     // IDENFR
     // INTCON
     // STRCON
-    reserveWords.put("main", NodeType::MAINTK);
-    reserveWords.put("const", NodeType::CONSTTK);
-    reserveWords.put("int", NodeType::INTTK);
-    reserveWords.put("break", NodeType::BREAKTK);
-    reserveWords.put("continue", NodeType::CONTINUETK);
-    reserveWords.put("if", NodeType::IFTK);
-    reserveWords.put("else", NodeType::ELSETK);
-    reserveWords.put("&&", NodeType::AND);
-    reserveWords.put("||", NodeType::OR);
-    reserveWords.put("for", NodeType::FORTK);
-    reserveWords.put("getint", NodeType::GETINTTK);
-    reserveWords.put("printf", NodeType::PRINTFTK);
-    reserveWords.put("return", NodeType::RETURNTK);
-    reserveWords.put("+", NodeType::PLUS);
-    reserveWords.put("-", NodeType::MINU);
-    reserveWords.put("void", NodeType::VOIDTK);
-    reserveWords.put("*", NodeType::MULT);
-    reserveWords.put("/", NodeType::DIV);
-    reserveWords.put("%", NodeType::MOD);
-    reserveWords.put("<=", NodeType::LEQ);
-    reserveWords.put("<", NodeType::LSS);
-    reserveWords.put(">=", NodeType::GEQ);
-    reserveWords.put(">", NodeType::GRE);
-    reserveWords.put("==", NodeType::EQL);
-    reserveWords.put("!=", NodeType::NEQ);
-    reserveWords.put("!", NodeType::NOT);
-    reserveWords.put("=", NodeType::ASSIGN);
-    reserveWords.put(";", NodeType::SEMICN);
-    reserveWords.put(",", NodeType::COMMA);
-    reserveWords.put("(", NodeType::LPARENT);
-    reserveWords.put(")", NodeType::RPARENT);
-    reserveWords.put("[", NodeType::LBRACK);
-    reserveWords.put("]", NodeType::RBRACK);
-    reserveWords.put("{", NodeType::LBRACE);
-    reserveWords.put("}", NodeType::RBRACE);
+    reserveWords.put("main", LexType::MAINTK);
+    reserveWords.put("const", LexType::CONSTTK);
+    reserveWords.put("int", LexType::INTTK);
+    reserveWords.put("break", LexType::BREAKTK);
+    reserveWords.put("continue", LexType::CONTINUETK);
+    reserveWords.put("if", LexType::IFTK);
+    reserveWords.put("else", LexType::ELSETK);
+    reserveWords.put("&&", LexType::AND);
+    reserveWords.put("||", LexType::OR);
+    reserveWords.put("for", LexType::FORTK);
+    reserveWords.put("getint", LexType::GETINTTK);
+    reserveWords.put("printf", LexType::PRINTFTK);
+    reserveWords.put("return", LexType::RETURNTK);
+    reserveWords.put("+", LexType::PLUS);
+    reserveWords.put("-", LexType::MINU);
+    reserveWords.put("void", LexType::VOIDTK);
+    reserveWords.put("*", LexType::MULT);
+    reserveWords.put("/", LexType::DIV);
+    reserveWords.put("%", LexType::MOD);
+    reserveWords.put("<=", LexType::LEQ);
+    reserveWords.put("<", LexType::LSS);
+    reserveWords.put(">=", LexType::GEQ);
+    reserveWords.put(">", LexType::GRE);
+    reserveWords.put("==", LexType::EQL);
+    reserveWords.put("!=", LexType::NEQ);
+    reserveWords.put("!", LexType::NOT);
+    reserveWords.put("=", LexType::ASSIGN);
+    reserveWords.put(";", LexType::SEMICN);
+    reserveWords.put(",", LexType::COMMA);
+    reserveWords.put("(", LexType::LPARENT);
+    reserveWords.put(")", LexType::RPARENT);
+    reserveWords.put("[", LexType::LBRACK);
+    reserveWords.put("]", LexType::RBRACK);
+    reserveWords.put("{", LexType::LBRACE);
+    reserveWords.put("}", LexType::RBRACE);
 }
 
 void output() {
@@ -215,15 +215,15 @@ void output() {
         lastLexType = Lexer::curLexType;
         lastToken = Lexer::curToken;
     } else {
-        if (!(lastLexType == NodeType::LEX_EMPTY ||
-              lastLexType == NodeType::LEX_END)) {
+        if (!(lastLexType == LexType::LEX_EMPTY ||
+              lastLexType == LexType::LEX_END)) {
 #ifdef STDOUT_LEXER
-            std::cout << typeToStr(lastLexType) << " " << lastToken
+            std::cout << toString(lastLexType) << " " << lastToken
                       << '\n';
 #endif
 #ifdef FILEOUT_LEXER
-            Lexer::outFileStream << typeToStr(lastLexType) << " " << lastToken
-                                 << '\n';
+            Lexer::outFileStream << toString(lastLexType) << " " << lastToken
+                    << '\n';
 #endif
         }
 
@@ -232,7 +232,7 @@ void output() {
     }
 }
 
-void updateWords(NodeType l, Token t) {
+void updateWords(LexType l, Token t) {
     using namespace Lexer;
     for (int i = 0; i < deep - 1; ++i) {
         words[i] = words[i + 1];

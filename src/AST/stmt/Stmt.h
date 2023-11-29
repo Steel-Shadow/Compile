@@ -179,4 +179,4 @@ private:
     static void addStr(const IR::BasicBlocks &bBlocks, std::string &buffer);
 };
 
-#endif //COMPILER_STMT_H
+#endif

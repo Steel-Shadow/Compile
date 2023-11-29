@@ -12,16 +12,16 @@ using namespace Parser;
 std::unique_ptr<InitVal> InitVal::parse(bool cons) {
     std::unique_ptr<InitVal> n;
 
-    if (Lexer::curLexType == NodeType::LBRACE) {
+    if (Lexer::curLexType == LexType::LBRACE) {
         n = ArrayInitVal::parse(cons);
     } else {
         n = ExpInitVal::parse(cons);
     }
 
     if (cons) {
-        output(NodeType::ConstInitVal);
+        output(AST::ConstInitVal);
     } else {
-        output(NodeType::InitVal);
+        output(AST::InitVal);
     }
 
     return n;
@@ -42,18 +42,18 @@ std::vector<int> ExpInitVal::evaluate() {
 std::unique_ptr<ArrayInitVal> ArrayInitVal::parse(bool cons) {
     auto n = std::make_unique<ArrayInitVal>();
     n->cons = cons;
-    singleLex(NodeType::LBRACE);
+    singleLex(LexType::LBRACE);
 
-    if (Lexer::curLexType != NodeType::RBRACE) {
+    if (Lexer::curLexType != LexType::RBRACE) {
         n->array.push_back(InitVal::parse(cons));
 
-        while (Lexer::curLexType == NodeType::COMMA) {
+        while (Lexer::curLexType == LexType::COMMA) {
             Lexer::next();
             n->array.push_back(InitVal::parse(cons));
         }
     }
 
-    singleLex(NodeType::RBRACE);
+    singleLex(LexType::RBRACE);
     return n;
 }
 
