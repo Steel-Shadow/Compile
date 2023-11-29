@@ -71,7 +71,7 @@ void output();
 
 void updateWords(LexType l, Token t);
 
-// stop if you read NodeType::Lex_END
+// stop if you read LexType::Lex_END
 // or the file will be read in loop
 Word Lexer::next() {
     // Ident

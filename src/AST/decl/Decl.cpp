@@ -38,7 +38,7 @@ std::unique_ptr<Decl> Decl::parse() {
     } else {
         output(AST::VarDecl);
     }
-    //    output(NodeType::Decl);
+    //    output(AST::Decl);
     return n;
 }
 
@@ -67,7 +67,7 @@ std::unique_ptr<Btype> Btype::parse() {
 
     singleLex(LexType::INTTK);
     n->type = LexType::INTTK;
-    //    output(NodeType::Btype);
+    //    output(AST::Btype);
     return n;
 }
 

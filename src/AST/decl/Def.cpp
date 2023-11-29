@@ -40,7 +40,15 @@ std::unique_ptr<Def> Def::parse(bool cons, Type type) {
     }
 
     if (cons || SymTab::cur->getDepth() == 0) {
-        SymTab::add(n->ident, Symbol(n->cons, type, dims, n->initVal->evaluate()));
+        if (n->initVal) {
+            SymTab::add(n->ident, Symbol(n->cons, type, dims, n->initVal->evaluate()));
+        } else {
+            int size = 1;
+            for (auto &i: dims) {
+                size *= i;
+            }
+            SymTab::add(n->ident, Symbol(n->cons, type, dims, std::vector<int>(size)));
+        }
     } else {
         SymTab::add(n->ident, Symbol(n->cons, type, dims, {}));
     }
@@ -65,13 +73,15 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
     );
     auto pVar = var.get();
 
-    auto size = std::make_unique<ConstVal>(getArraySize(), type);
+    auto size = std::make_unique<ConstVal>(getArraySize(), Type::Int);
     bBlocks.back()->addInst(Inst(
         Op::Alloca,
         nullptr,
         std::move(var),
         std::move(size)
     ));
+
+    SymTab::knownVars.back().emplace(ident, SymTab::cur->getDepth());
 
     if (initVal) {
         if (dims.empty()) {
@@ -80,9 +90,9 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
             auto value = p->exp->genIR(bBlocks);
 
             bBlocks.back()->addInst(Inst(
-                Op::Assign,
-                std::make_unique<Var>(*pVar),
+                Op::Store,
                 std::move(value),
+                std::make_unique<Var>(*pVar),
                 nullptr
             ));
         } else {
@@ -93,10 +103,10 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
             for (auto &expInit: array->getFlatten()) {
                 auto value = expInit->exp->genIR(bBlocks);
                 bBlocks.back()->addInst(Inst(
-                    Op::Assign,
-                    std::make_unique<Var>(*pVar),
+                    Op::Store,
                     std::move(value),
-                    std::make_unique<ConstVal>(index++, type)
+                    std::make_unique<Var>(*pVar),
+                    std::make_unique<ConstVal>(index++, Type::Int)
                 ));
             }
         }

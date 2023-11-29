@@ -39,14 +39,7 @@ Lexer 共存储 3 个单词(便于 Parser 预读分析，具体深度在 Parser 
 
 之前的 Lexer 为了方便输出，直接将 `LexType` 定义为 `std::string`。  
 开发 Parser 考虑建造语法树时，如果使用 `string` 作为节点标识符，效率太低。   
-后现将 LexType 和 SynType 重构为枚举类，两者都是 `enum class NodeType` (语法树节点类型)。
-
-```c++
-// old
-typedef std::string LexType;
-// new
-enum class NodeType {/*...*/}
-```
+后现将 LexType 和 AST 重构为枚举类。
 
 ### `标识符` 和 `保留字`
 

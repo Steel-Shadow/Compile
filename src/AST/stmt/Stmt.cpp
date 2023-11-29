@@ -5,6 +5,7 @@
 #include "Stmt.h"
 
 #include "AST/decl/Decl.h"
+#include "backend/Instruction.h"
 #include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
@@ -44,7 +45,7 @@ std::unique_ptr<BlockItem> BlockItem::parse() {
         n = Stmt::parse();
     }
 
-    // output(NodeType::BlockItem);
+    // output(AST::BlockItem);
     return n;
 }
 
@@ -132,16 +133,20 @@ void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     auto trueBranch = std::make_unique<IR::BasicBlock>("IfTrueBranch");
     auto falseBranch = std::make_unique<IR::BasicBlock>("IfFalseBranch");
+    auto ifEnd = std::make_unique<IR::BasicBlock>("IfEnd");
 
     cond->genIR(bBlocks, trueBranch->label, falseBranch->label);
 
     bBlocks.emplace_back(std::move(trueBranch));
     ifStmt->genIR(bBlocks);
+    bBlocks.back()->addInst(IR::Inst(IR::Op::Br, nullptr, std::make_unique<IR::Label>(ifEnd->label), nullptr));
 
     bBlocks.emplace_back(std::move(falseBranch));
     if (elseStmt) {
         elseStmt->genIR(bBlocks);
     }
+
+    bBlocks.emplace_back(std::move(ifEnd));
 
     bBlocks.back()->addInst(IR::Inst(
         IR::Op::OutStack, nullptr, nullptr, nullptr));
@@ -191,8 +196,9 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
         IR::Op::InStack, nullptr, nullptr, nullptr));
-
-    init->genIR(bBlocks);
+    if (init) {
+        init->genIR(bBlocks);
+    }
 
     auto forBodyBlock = std::make_unique<BasicBlock>("ForBody");
     auto forIterCondBlock = std::make_unique<BasicBlock>("ForIter");
@@ -205,22 +211,33 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
     auto pForBodyBlock = forBodyBlock.get();
     // auto pForIterCondBlock = forIterCondBlock.get();
 
-    cond->genIR(bBlocks, forBodyBlock->label, forEndBlock->label);
+    if (cond) {
+        cond->genIR(bBlocks, forBodyBlock->label, forEndBlock->label);
+    }
 
     bBlocks.push_back(std::move(forBodyBlock));
-    stmt->genIR(bBlocks);
+    if (stmt) {
+        stmt->genIR(bBlocks);
+    }
 
     bBlocks.push_back(std::move(forIterCondBlock));
-    iter->genIR(bBlocks);
-    cond->genIR(bBlocks, pForBodyBlock->label, forEndBlock->label);
+    if (iter) {
+        iter->genIR(bBlocks);
+    }
+    if (cond) {
+        cond->genIR(bBlocks, pForBodyBlock->label, forEndBlock->label);
+    } else {
+        bBlocks.back()->addInst(Inst(Op::Br, nullptr, std::make_unique<Label>(pForBodyBlock->label), nullptr));
+    }
 
     bBlocks.push_back(std::move(forEndBlock));
 
     stackEndLabel.pop();
     stackIterLabel.pop();
+
+    SymTab::iterOut();
     bBlocks.back()->addInst(IR::Inst(
         IR::Op::OutStack, nullptr, nullptr, nullptr));
-    SymTab::iterOut();
 }
 
 std::unique_ptr<ForStmt> ForStmt::parse() {
@@ -242,10 +259,11 @@ void ForStmt::genIR(IR::BasicBlocks &basicBlocks) const {
     auto irLVal = std::make_unique<Var>(lVal->ident,
                                         SymTab::findDepth(lVal->ident),
                                         sym->cons,
-                                        sym->dims);
-    basicBlocks.back()->addInst(Inst(IR::Op::Assign,
-                                     std::move(irLVal),
+                                        sym->dims,
+                                        sym->type);
+    basicBlocks.back()->addInst(Inst(IR::Op::Store,
                                      std::move(t),
+                                     std::move(irLVal),
                                      nullptr));
 }
 
@@ -308,16 +326,18 @@ std::unique_ptr<ReturnStmt> ReturnStmt::parse() {
     return n;
 }
 
+bool ReturnStmt::inMainGen;
+
 void ReturnStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
     if (exp) {
         auto temp = exp->genIR(bBlocks);
-        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+        bBlocks.back()->addInst(Inst(inMainGen ? Op::RetMain : Op::Ret,
                                      nullptr,
                                      std::move(temp),
                                      nullptr));
     } else {
-        bBlocks.back()->addInst(Inst(IR::Op::Ret,
+        bBlocks.back()->addInst(Inst(inMainGen ? Op::RetMain : Op::Ret,
                                      nullptr,
                                      nullptr,
                                      nullptr));
@@ -456,16 +476,43 @@ std::unique_ptr<GetIntStmt> GetIntStmt::parse() {
 
 void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
-    auto sym = SymTab::find(lVal->ident);
-    auto irLVal = std::make_unique<Var>(lVal->ident,
-                                        SymTab::findDepth(lVal->ident),
-                                        sym->cons,
-                                        sym->dims);
-
     bBlocks.back()->addInst(Inst(IR::Op::GetInt,
-                                 std::move(irLVal),
+                                 nullptr,
                                  nullptr,
                                  nullptr));
+
+    auto rValue = std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int);
+
+    auto [symbol,depth] = SymTab::findInGen(lVal->ident);
+    auto var = std::make_unique<IR::Var>(
+        lVal->ident,
+        depth,
+        symbol->cons,
+        symbol->dims,
+        symbol->type,
+        symbol->symType);
+
+    if (lVal->dims.empty()) {
+        bBlocks.back()->addInst(Inst(IR::Op::Store,
+                                     std::move(rValue),
+                                     std::move(var),
+                                     nullptr));
+    } else {
+        int constOffset;
+        std::unique_ptr<Temp> dynamicOffset;
+        bool getNonConstIndex = lVal->getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+        if (getNonConstIndex) {
+            bBlocks.back()->addInst(Inst(IR::Op::StoreDynamic,
+                                         std::move(rValue),
+                                         std::move(var),
+                                         std::move(dynamicOffset)));
+        } else {
+            bBlocks.back()->addInst(Inst(IR::Op::Store,
+                                         std::move(rValue),
+                                         std::move(var),
+                                         std::make_unique<ConstVal>(constOffset, Type::Int)));
+        }
+    }
 }
 
 std::unique_ptr<AssignStmt> AssignStmt::parse() {
@@ -480,22 +527,38 @@ std::unique_ptr<AssignStmt> AssignStmt::parse() {
 
 void AssignStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
-    auto t = exp->genIR(bBlocks);
+    auto rValue = exp->genIR(bBlocks);
 
-    auto symbol = SymTab::find(lVal->ident);
+    auto [symbol,depth] = SymTab::findInGen(lVal->ident);
     auto var = std::make_unique<IR::Var>(
         lVal->ident,
-        SymTab::findDepth(lVal->ident),
+        depth,
         symbol->cons,
-        symbol->dims);
+        symbol->dims,
+        symbol->type,
+        symbol->symType);
 
-    bBlocks.back()->addInst(Inst(IR::Op::Assign,
-                                 std::move(var),
-                                 std::move(t),
-                                 nullptr));
-
-    // todo: 数组写
-    // a[1]=... a[x]=...
+    if (lVal->dims.empty()) {
+        bBlocks.back()->addInst(Inst(IR::Op::Store,
+                                     std::move(rValue),
+                                     std::move(var),
+                                     nullptr));
+    } else {
+        int constOffset;
+        std::unique_ptr<Temp> dynamicOffset;
+        bool getNonConstIndex = lVal->getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+        if (getNonConstIndex) {
+            bBlocks.back()->addInst(Inst(IR::Op::StoreDynamic,
+                                         std::move(rValue),
+                                         std::move(var),
+                                         std::move(dynamicOffset)));
+        } else {
+            bBlocks.back()->addInst(Inst(IR::Op::Store,
+                                         std::move(rValue),
+                                         std::move(var),
+                                         std::make_unique<ConstVal>(constOffset, Type::Int)));
+        }
+    }
 }
 
 std::unique_ptr<ExpStmt> ExpStmt::parse() {

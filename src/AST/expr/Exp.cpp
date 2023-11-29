@@ -20,7 +20,10 @@ std::unique_ptr<Exp> Exp::parse(bool cons) {
     return n;
 }
 
+bool Exp::getNonConstValueInEvaluate = false;
+
 int Exp::evaluate() const {
+    Exp::getNonConstValueInEvaluate = false;
     return addExp->evaluate();
 }
 
@@ -41,6 +44,6 @@ LVal *Exp::getLVal() const {
 }
 
 int BaseUnaryExp::evaluate() {
-    Error::raise("evaluate non-Number non-ConstLVal BaseUnaryExp");
+    Exp::getNonConstValueInEvaluate = true;
     return 0;
 }

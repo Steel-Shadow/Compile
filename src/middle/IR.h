@@ -28,47 +28,63 @@ enum class Op {
     InStack,
     OutStack,
 
-    // res(Var)[offset = arg2(ConstVal)] = arg1(Temp)
-    // Var would plus offset
-    Assign,
-
-    // res(Temp) = arg1(Temp) op arg2(Temp)
-    Add, Sub, Mul, Div, Mod,
-    And, Or, Leq, Lss, Geq, Gre, Eql, Neq,
-
-    // arg1(Temp) = -arg1
-    Neg,
-
-    // res(Temp) = arg1(Temp)
-    NewMove,
-
-    LoadImd,
-
-    // res(Var) = getint()
-    GetInt,
-    // arg1(Temp)
-    PrintInt,
-    // arg1(Label)
-    PrintStr,
-
     // allocates memory on the stack frame.
     // arg1: Var
     // arg2: size (number of element, times sizeof(type) in backend)
     Alloca,
 
+    // store res to arg1 with offset arg2
+    // *(&arg1[Var]+ arg2[ConstVal]) = res[Temp]
+    Store,
+
+    // store res to arg1 with offset arg2
+    // *(&arg1[Var]+ arg2[Temp]) = res[Temp]
+    StoreDynamic,
+
     // index doesn't consider sizeof(type)
     Load,
 
-    // no condition jump to arg1(Label)
+    LoadPtr,
+
+    LoadDynamic,
+
+    // res[Temp] = arg1[Temp] op arg2[Temp]
+    Add, Sub, Mul, Div, Mod,
+    And, Or, Leq, Lss, Geq, Gre, Eql, Neq,
+
+    LoadImd,
+    MulImd,
+
+    // res[Temp] = -arg1[Temp]
+    Neg,
+    // res[Temp] = arg1[Temp] << 2
+    Mult4,
+
+    // res[Temp] = arg1[Temp]
+    NewMove,
+
+    // res[Var] = getint()
+    GetInt,
+    // arg1[Temp]
+    PrintInt,
+    // arg1[Label]
+    PrintStr,
+
+    // no condition jump to arg1[Label]
     Br,
-    // if arg1(Temp)==0, jump to arg2(label)
+    // if arg1[Temp]==0, jump to arg2[Label]
     Bif0, Bif1,
 
-    Call, Ret,
+    Call, Ret, RetMain,
 
-    // arg1: value   | base address of array Var
-    // arg2: nullptr | offset of array Var
+    // arg1: value
+    // arg2: nullptr
     PushParam,
+
+    // arg1: base address of array Var
+    // arg2: offset of array Var
+    PushAddressParam,
+    Not,
 }; // @formatter:on
 
 // Var Temp ConstVal Str
@@ -84,8 +100,9 @@ struct Var : public Element {
     bool cons; // const | var
     std::vector<int> dims; // At most 2 dimensions in our work.
     Type type;
+    SymType symType = SymType::Value;
 
-    Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type = Type::Int);
+    Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type, SymType symType = SymType::Value);
     Var(std::string name, int depth);
 
     friend bool operator==(const Var &lhs, const Var &rhs);
@@ -151,7 +168,6 @@ private:
 // nameAndId: Function has no id
 struct Label : public Element {
     std::string nameAndId; // nameAndId of BasicBlock
-
     explicit Label(std::string name, bool isFunc = false);
 
     std::string toString() const override;
@@ -235,7 +251,7 @@ public:
 };
 
 Op NodeTypeToIROp(LexType n);
-} // namespace IR
+}
 
 template<>
 struct std::hash<IR::Var> {

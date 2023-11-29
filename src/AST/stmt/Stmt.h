@@ -39,7 +39,7 @@ struct BlockItem {
 struct Stmt : public BlockItem {
     static std::unique_ptr<Stmt> parse();
 
-    static bool retVoid;// check return in FuncDef
+    static bool retVoid; // check return in FuncDef
 };
 
 /*-----------------------------------------------------------*/
@@ -77,7 +77,7 @@ struct Block {
 
     static std::unique_ptr<Block> parse();
 
-    static int lastRow;// show return error message
+    static int lastRow; // show return error message
 
     void genIR(IR::BasicBlocks &basicBlocks) const;
 };
@@ -150,6 +150,8 @@ struct BigForStmt : public Stmt {
 struct ReturnStmt : public Stmt {
     std::unique_ptr<Exp> exp;
 
+    static bool inMainGen;
+
     static std::unique_ptr<ReturnStmt> parse();
 
     void genIR(IR::BasicBlocks &bBlocks) override;
@@ -167,7 +169,7 @@ struct PrintStmt : public Stmt {
     std::string formatString;
     std::vector<std::unique_ptr<Exp>> exps;
 
-    int numOfFormat;// error handling
+    int numOfFormat; // error handling
 
     static std::unique_ptr<PrintStmt> parse();
 

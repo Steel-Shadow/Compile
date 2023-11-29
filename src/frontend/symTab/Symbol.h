@@ -8,8 +8,9 @@
 #include <vector>
 #include "frontend/lexer/LexType.h"
 
-using Dimensions = std::vector<int>;
-using Param = std::pair<std::string, Dimensions>;
+struct Symbol;
+
+using Param = std::pair<std::string, Symbol *>;
 
 enum class SymType {
     // const var
@@ -22,6 +23,7 @@ enum class SymType {
 enum class Type {
     Void,
     Int,
+    IntPtr,
 };
 
 Type toType(LexType type);
@@ -47,9 +49,12 @@ struct Symbol {
     // func
     std::vector<Param> params;
 
-    Symbol(bool cons, Type type, const std::vector<int> &dims, const std::vector<int> &initVal); // const var
-    Symbol(Type reType, const std::vector<Param> &params); // func
-    explicit Symbol(const std::vector<int> &dims); // param
+    // const var
+    Symbol(bool cons, Type type, const std::vector<int> &dims, const std::vector<int> &initVal);
+    // func
+    Symbol(Type reType, const std::vector<Param> &params);
+    // param
+    explicit Symbol(Type type, std::vector<int> dims);
 };
 
 #endif

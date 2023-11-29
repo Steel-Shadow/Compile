@@ -81,9 +81,9 @@ void MIPS::outputAll(const IR::Module &module) {
         // set function's parameters to varToOffset
         // stack memory map explain is in markdown and Memory.h
         int offset = 0;
-        for (auto &[ident, dimensions]: func->getParams()) {
-            StackMemory::varToOffset.emplace(IR::Var(ident, 1), -offset);
-            offset += wordSize;
+        for (auto &[ident, sym]: func->getParams()) {
+            StackMemory::varToOffset.emplace(IR::Var(ident, 1, false, sym->dims, sym->type), -offset);
+            offset += sizeOfType(sym->type);
         }
 
         for (auto &basicBlock: func->getBasicBlocks()) {
@@ -115,8 +115,11 @@ void MIPS::irToMips(const IR::Inst &inst) {
         case IR::Op::OutStack:
             OutStack(inst);
             break;
-        case IR::Op::Assign:
-            Assign(inst);
+        case IR::Op::Store:
+            Store(inst);
+            break;
+        case IR::Op::StoreDynamic:
+            StoreDynamic(inst);
             break;
         case IR::Op::Add:
             Add(inst);
@@ -160,6 +163,9 @@ void MIPS::irToMips(const IR::Inst &inst) {
         case IR::Op::Load:
             Load(inst);
             break;
+        case IR::Op::LoadPtr:
+            LoadPtr(inst);
+            break;
         case IR::Op::Br:
             Br(inst);
             break;
@@ -174,6 +180,9 @@ void MIPS::irToMips(const IR::Inst &inst) {
             break;
         case IR::Op::Ret:
             Ret(inst);
+            break;
+        case IR::Op::RetMain:
+            RetMain(inst);
             break;
         case IR::Op::NewMove:
             NewMove(inst);
@@ -198,6 +207,21 @@ void MIPS::irToMips(const IR::Inst &inst) {
             break;
         case IR::Op::Bif1:
             Bif1(inst);
+            break;
+        case IR::Op::LoadDynamic:
+            LoadDynamic(inst);
+            break;
+        case IR::Op::MulImd:
+            MulImd(inst);
+            break;
+        case IR::Op::Mult4:
+            Mult4(inst);
+            break;
+        case IR::Op::PushAddressParam:
+            PushAddressParam(inst);
+            break;
+        case IR::Op::Not:
+            Not(inst);
             break;
         default:
             Error::raise("Bad IR Op in MIPS gen");

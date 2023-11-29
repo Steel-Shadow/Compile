@@ -11,5 +11,3 @@ endif ()
 project(Compiler)
 
 add_subdirectory(src)
-
-add_executable(test test/test.c)

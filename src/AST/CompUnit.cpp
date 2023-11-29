@@ -42,12 +42,13 @@ std::unique_ptr<IR::Module> CompUnit::genIR() const {
 
     // maybe redundant, but still set it for safety
     SymTab::cur = &SymTab::global;
-
+    SymTab::knownVars.emplace_back();
     for (auto &decl: decls) {
         for (auto &def: decl->getDefs()) {
             auto sym = SymTab::find(def->ident);
 
             auto globVar = GlobVar(sym->cons, sym->dims, sym->initVal);
+            SymTab::knownVars.back().emplace(def->ident, 0);
             module->addGlobVar(def->ident, globVar);
         }
     }
@@ -56,6 +57,7 @@ std::unique_ptr<IR::Module> CompUnit::genIR() const {
         module->addFunction(funcDef->genIR());
     }
 
+    ReturnStmt::inMainGen = true;
     module->setMainFunction(mainFuncDef->genIR());
 
     return module;

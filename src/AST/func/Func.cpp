@@ -24,7 +24,7 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
 
     SymTab::deepIn();
 
-    std::vector<Param> params;
+    std::vector<Param> params{};
 
     singleLex(LexType::LPARENT);
     if (Lexer::curLexType != LexType::RPARENT) {
@@ -93,9 +93,8 @@ std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     Function::idAllocator = 0;
     block->genIR(bBlocks);
 
-    SymTab::iterOut();
-
     main->moveBasicBlocks(std::move(bBlocks));
+    SymTab::iterOut();
     return main;
 }
 
@@ -132,12 +131,13 @@ std::unique_ptr<FuncFParams> FuncFParams::parse() {
 }
 
 std::vector<Param> FuncFParams::getParameters() const {
-    std::vector<Param> raws;
-    raws.reserve(funcFParams.size());
+    std::vector<Param> params;
+    params.reserve(funcFParams.size());
     for (auto &i: funcFParams) {
-        raws.emplace_back(i->ident, i->getDims());
+        auto sym = SymTab::find(i->ident);
+        params.emplace_back(i->ident, sym);
     }
-    return raws;
+    return params;
 }
 
 std::unique_ptr<FuncFParam> FuncFParam::parse() {
@@ -167,7 +167,11 @@ std::unique_ptr<FuncFParam> FuncFParam::parse() {
         }
     }
 
-    SymTab::add(n->getId(), Symbol(n->getDims()));
+    if (n->dims.empty()) {
+        SymTab::add(n->getId(), Symbol(toType(n->type->type), std::vector<int>{}));
+    } else {
+        SymTab::add(n->getId(), Symbol(Type::IntPtr, n->getDims()));
+    }
     output(AST::FuncFParam);
     return n;
 }
@@ -212,15 +216,14 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
     block->genIR(bBlocks);
 
-    if (bBlocks.back()->instructions.back().op != Op::Ret) {
+    if (bBlocks.back()->instructions.empty() || bBlocks.back()->instructions.back().op != Op::Ret) {
         bBlocks.back()->addInst(Inst(Op::Ret,
                                      nullptr,
                                      nullptr,
                                      nullptr));
     }
 
-    SymTab::iterOut();
-
     function->moveBasicBlocks(std::move(bBlocks));
+    SymTab::iterOut();
     return function;
 }

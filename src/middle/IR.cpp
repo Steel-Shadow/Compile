@@ -53,8 +53,10 @@ void Inst::outputIR() const {
 
 std::string Inst::opToStr(Op anOperator) {
     switch (anOperator) {
-        case Op::Assign:
-            return "Assign";
+        case Op::Store:
+            return "Store";
+        case Op::StoreDynamic:
+            return "StoreDynamic";
         case Op::Add:
             return "Add";
         case Op::Sub:
@@ -83,6 +85,10 @@ std::string Inst::opToStr(Op anOperator) {
             return "Alloca";
         case Op::Load:
             return "Load";
+        case Op::LoadPtr:
+            return "LoadPtr";
+        case Op::LoadDynamic:
+            return "LoadDynamic";
         case Op::Br:
             return "Br";
         case Op::Bif0:
@@ -93,6 +99,8 @@ std::string Inst::opToStr(Op anOperator) {
             return "PushParam";
         case Op::Ret:
             return "Ret";
+        case Op::RetMain:
+            return "RetMain";
         case Op::InStack:
             return "InStack";
         case Op::OutStack:
@@ -113,18 +121,29 @@ std::string Inst::opToStr(Op anOperator) {
             return "Neq";
         case Op::Bif1:
             return "Bif1";
+        case Op::MulImd:
+            return "MulImd";
+        case Op::Mult4:
+            return "Mult4";
+        case Op::PushAddressParam:
+            return "PushAddressParam";
+        case Op::Not:
+            return "Not";
         default:
             Error::raise("Bad IR op");
             return "Bad IR op";
     }
 }
 
+
 Label::Label(std::string name, bool isFunc) {
+    static int idAllocator = 0;
+
     if (isFunc) {
         this->nameAndId = std::move(name);
     } else {
         this->nameAndId = std::move(name) + "_" +
-                          std::to_string(Function::idAllocator++);
+                          std::to_string(idAllocator++);
     }
 }
 
@@ -238,12 +257,13 @@ Var::Var(std::string name,
          int depth,
          bool cons,
          const std::vector<int> &dims,
-         Type type) :
+         Type type,
+         SymType symType) :
     name(std::move(name)),
     depth(depth),
     cons(cons),
     dims(dims),
-    type(type) {}
+    type(type), symType(symType) {}
 
 Var::Var(std::string name, int depth) :
     name(std::move(name)),

@@ -28,7 +28,6 @@ void Parser::output(AST type) {
     std::cout << "<" << toString(type) << ">" << '\n';
 #endif
 #ifdef FILEOUT_PARSER
-    Lexer::outFileStream << "<" << toString((type)) << ">" << '\n';
+    Lexer::outFileStream << "<" << toString(type) << ">" << '\n';
 #endif
 }
-

@@ -25,7 +25,7 @@ if ($diff.Count -eq 0)
 }
 else
 {
-    Write-Host "Bad`n<= ans >= myOutput"
+    Write-Host "Bad`n<= ans => myOutput"
     # 输出不同的部分
     foreach ($item in $diff)
     {

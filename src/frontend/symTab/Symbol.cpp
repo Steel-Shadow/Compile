@@ -23,6 +23,7 @@ int sizeOfType(Type type) {
         case Type::Void:
             return 0;
         case Type::Int:
+        case Type::IntPtr:
             return 4;
         default:
             Error::raise("Bad Type in sizeOfType(...)");
@@ -42,6 +43,7 @@ Symbol::Symbol(Type reType, const std::vector<Param> &params) :
     type(reType),
     params(params) {}
 
-Symbol::Symbol(const std::vector<int> &dims) :
+Symbol::Symbol(Type type, std::vector<int> dims) :
     symType(SymType::Param),
-    dims(dims) {}
+    type(type),
+    dims(std::move(dims)) {}

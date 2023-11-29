@@ -5,10 +5,14 @@
 #ifndef COMPILER_SYMTAB_H
 #define COMPILER_SYMTAB_H
 
-#include <unordered_map>
-#include <string>
-#include <memory>
 #include "Symbol.h"
+
+#include <list>
+#include <memory>
+#include <set>
+#include <stack>
+#include <string>
+#include <unordered_map>
 
 // tree
 // global -next-> SymTab... -next-> *cur
@@ -22,15 +26,20 @@ class SymTab {
 
     int depth;
 
+    static std::list<SymTab *> symTabs;
+
 public:
     static SymTab *cur;
     static SymTab global;
+
+    static std::vector<std::set<std::pair<std::string, int>>> knownVars;
 
     explicit SymTab(SymTab *prev);
 
     static bool reDefine(const std::string &ident);
 
     static Symbol *find(const std::string &ident);
+    static std::pair<Symbol *, int> findInGen(const std::string &ident);
 
     // find depth of Symbol from current SymTab
     // return -1 if not found
@@ -46,15 +55,13 @@ public:
 
     SymTab *getPrev() const;
 
-
     // breadth-first search
     static void iterIn();
-
-    // same as deepOut
-    // used in IR gen
     static void iterOut();
 
     int getDepth() const;
+
+    // std::queue<SymTab *> dfs();
 };
 
 

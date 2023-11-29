@@ -14,7 +14,7 @@ namespace MIPS {
 constexpr int gp_init = 0x1000'8000;
 constexpr int data_segment = 0x1001'0000;
 
-int getStackOffset(const IR::Var &var);
+int getStackOffset(const IR::Var *var);
 
 // MIPS stack memory map
 // In funcCall, StackMemory::curOffset = 0

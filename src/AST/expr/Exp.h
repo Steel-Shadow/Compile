@@ -48,6 +48,9 @@ struct LVal : public PrimaryExp {
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
 
     int evaluate() override;
+
+    // return whether getNonConstIndex in LVal's indexes
+    bool getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset, IR::BasicBlocks &bBlocks, const std::vector<int> &symDims) const;
 };
 
 // UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
@@ -119,17 +122,15 @@ struct MultiExp {
         using namespace IR;
         auto lastRes = first->genIR(bBlocks);
         for (int i = 0; i < ops.size(); i++) {
-            auto &e = elements[i];
-            auto t = e->genIR(bBlocks);
+            auto t = elements[i]->genIR(bBlocks);
             auto res = std::make_unique<Temp>(Type::Int); // mix t.type & lastRes.type
-            auto resCopy = std::make_unique<Temp>(*res);
             bBlocks.back()->addInst(Inst(
                 NodeTypeToIROp(ops[i]),
-                std::move(res),
+                std::make_unique<Temp>(*res),
                 std::move(lastRes),
                 std::move(t)
             ));
-            lastRes = std::move(resCopy);
+            lastRes = std::move(res);
         }
         return lastRes;
     }
@@ -212,6 +213,7 @@ struct Exp {
 
     static std::unique_ptr<Exp> parse(bool cons);
 
+    static bool getNonConstValueInEvaluate;
     int evaluate() const;
 
     // get the indexRank of LVal

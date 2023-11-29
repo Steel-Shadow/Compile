@@ -35,12 +35,12 @@ Word peek(int n = 0);
 extern LexType &curLexType;
 extern Token &curToken;
 
-// LinkedHashMap<std::string, NodeType> buildReserveWords();
-// LinkedHashMap<std::string, NodeType> reserveWords;
+// LinkedHashMap<std::string, LexType> buildReserveWords();
+// LinkedHashMap<std::string, LexType> reserveWords;
 // char nextChar();
-// void reserve(const Token &t, NodeType &l);
+// void reserve(const Token &t, LexType &l);
 // void output();
-// void updateWords(NodeType l, Token t);
+// void updateWords(LexType l, Token t);
 
 Word next();
 

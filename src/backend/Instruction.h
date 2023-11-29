@@ -23,6 +23,8 @@ enum class Op {
     or_,
     addi,
 
+    add,
+
     slt,
     sle,
     sge,
@@ -41,6 +43,8 @@ enum class Op {
     jr,
     bgtz,
     beqz,
+    sll,
+    bne,
 };
 
 std::string opToString(Op e);
@@ -75,8 +79,9 @@ struct I_label_Inst : public Instruction {
     Register rs;
     Register rt;
     Label label;
+    int offset;
 
-    I_label_Inst(Op op, Register rs, Register rt, Label label);
+    I_label_Inst(Op op, Register rs, Register rt, Label label, int offset = 0);
 
     std::string toString() override;
 };
@@ -91,7 +96,8 @@ struct J_Inst : public Instruction {
 
 void InStack(const IR::Inst &);
 void OutStack(const IR::Inst &);
-void Assign(const IR::Inst &);
+void Store(const IR::Inst &);
+void StoreDynamic(const IR::Inst &);
 void Add(const IR::Inst &);
 void Sub(const IR::Inst &);
 void Mul(const IR::Inst &);
@@ -100,17 +106,21 @@ void Mod(const IR::Inst &);
 void And(const IR::Inst &);
 void Or(const IR::Inst &);
 void Neg(const IR::Inst &);
+void Not(const IR::Inst &);
 void LoadImd(const IR::Inst &);
 void GetInt(const IR::Inst &);
 void PrintInt(const IR::Inst &);
 void PrintStr(const IR::Inst &);
 void Alloca(const IR::Inst &);
 void Load(const IR::Inst &);
+void LoadPtr(const IR::Inst &);
 void Br(const IR::Inst &);
 void Bif0(const IR::Inst &);
 void Call(const IR::Inst &);
 void PushParam(const IR::Inst &);
+void PushAddressParam(const IR::Inst &);
 void Ret(const IR::Inst &);
+void RetMain(const IR::Inst &);
 void NewMove(const IR::Inst &);
 void Leq(const IR::Inst &);
 void Lss(const IR::Inst &);
@@ -119,6 +129,8 @@ void Gre(const IR::Inst &);
 void Eql(const IR::Inst &);
 void Neq(const IR::Inst &);
 void Bif1(const IR::Inst &);
-
+void LoadDynamic(const IR::Inst &);
+void MulImd(const IR::Inst &);
+void Mult4(const IR::Inst &);
 #endif
 }
