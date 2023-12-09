@@ -125,7 +125,7 @@ struct MultiExp {
             auto t = elements[i]->genIR(bBlocks);
             auto res = std::make_unique<Temp>(Type::Int); // mix t.type & lastRes.type
             bBlocks.back()->addInst(Inst(
-                NodeTypeToIROp(ops[i]),
+                LexTypeToIROp(ops[i]),
                 std::make_unique<Temp>(*res),
                 std::move(lastRes),
                 std::move(t)

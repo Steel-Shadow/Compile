@@ -117,7 +117,6 @@ std::unique_ptr<EqExp> EqExp::parse() {
 
 void EqExp::genIR(IR::BasicBlocks &basicBlocks, IR::Label &trueBranch, IR::Label &falseBranch) const {
     auto t = MultiExp::genIR(basicBlocks);
-    // todo: which one?
     basicBlocks.back()->addInst(IR::Inst(IR::Op::Bif1,
                                          nullptr,
                                          std::move(t),

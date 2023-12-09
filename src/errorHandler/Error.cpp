@@ -23,9 +23,11 @@ void Error::raise(char code, int row) {
 void Error::raise(const std::string &mes) {
 #ifdef STDOUT_ERROR
     std::cout << "error: " << mes << " "
-              // << Lexer::curRow << "," << Lexer::column[0]
-              << "---------------------------------------"
-              << '\n';
-    // exit(-1);
+            << "---------------------------------------\n";
 #endif
+#ifdef FILEOUT_ERROR
+    errorFileStream << "error: " << mes << " "
+            << "---------------------------------------\n";
+#endif
+    // exit(-1);
 }

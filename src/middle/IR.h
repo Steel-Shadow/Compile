@@ -250,7 +250,7 @@ public:
     void addGlobVar(std::string name, GlobVar globVar);
 };
 
-Op NodeTypeToIROp(LexType n);
+Op LexTypeToIROp(LexType n);
 }
 
 template<>

@@ -304,7 +304,7 @@ std::string ConstVal::toString() const {
     return std::to_string(value);
 }
 
-Op IR::NodeTypeToIROp(LexType n) {
+Op IR::LexTypeToIROp(LexType n) {
     switch (n) {
         case LexType::PLUS:
             return Op::Add;
