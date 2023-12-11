@@ -5,6 +5,7 @@
 #include "AST/decl/Decl.h"
 #include "AST/func/Func.h"
 #include "backend/Register.h"
+#include "backend/Memory.h"
 #include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
@@ -51,58 +52,65 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
         symbol->type,
         symbol->symType);
 
-    auto res = std::make_unique<Temp>(symbol->type);
-
-    if (symbol->type == Type::IntPtr) {
-        auto addr = std::make_unique<Temp>(Type::Int);
-        bBlocks.back()->addInst(Inst(IR::Op::Load,
-                                     std::make_unique<Temp>(*addr),
-                                     std::move(var),
-                                     nullptr));
-        int constOffset;
-        std::unique_ptr<Temp> dynamicOffset;
-        bool getNonConstIndex = getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
-        if (getNonConstIndex) {
-            auto addrElem = std::make_unique<Temp>(Type::Int);
-            bBlocks.back()->addInst(Inst(IR::Op::Add,
-                                         std::make_unique<Temp>(*addrElem),
-                                         std::move(addr),
-                                         std::move(dynamicOffset)));
-            bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
-                                         std::make_unique<Temp>(*res),
-                                         std::move(addrElem),
-                                         nullptr));
-        } else {
-            bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
-                                         std::make_unique<Temp>(*res),
-                                         std::move(addr),
-                                         std::make_unique<ConstVal>(constOffset, Type::Int)));
-        }
-        return res;
+    // TODO: 给LVal分配寄存器s0-s7
+    auto varReg = MIPS::StackMemory::varToReg.find(*var);
+    if (varReg != MIPS::StackMemory::varToReg.end()) {
+        // var is mapped to a reg($a1-$a3 / $s0-$s7)
+        MIPS::Reg reg = varReg->second;
+        return std::make_unique<Temp>(reg, var->type);
     } else {
-        if (dims.empty()) {
+        auto res = std::make_unique<Temp>(symbol->type);
+        if (symbol->type == Type::IntPtr) {
+            auto addr = std::make_unique<Temp>(Type::Int);
             bBlocks.back()->addInst(Inst(IR::Op::Load,
-                                         std::make_unique<Temp>(*res),
+                                         std::make_unique<Temp>(*addr),
                                          std::move(var),
-                                         nullptr
-            ));
-        } else {
+                                         nullptr));
             int constOffset;
             std::unique_ptr<Temp> dynamicOffset;
             bool getNonConstIndex = getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
             if (getNonConstIndex) {
-                bBlocks.back()->addInst(Inst(IR::Op::LoadDynamic,
-                                             std::make_unique<Temp>(*res),
-                                             std::move(var),
+                auto addrElem = std::make_unique<Temp>(Type::Int);
+                bBlocks.back()->addInst(Inst(IR::Op::Add,
+                                             std::make_unique<Temp>(*addrElem),
+                                             std::move(addr),
                                              std::move(dynamicOffset)));
+                bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                             std::make_unique<Temp>(*res),
+                                             std::move(addrElem),
+                                             nullptr));
             } else {
+                bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                             std::make_unique<Temp>(*res),
+                                             std::move(addr),
+                                             std::make_unique<ConstVal>(constOffset, Type::Int)));
+            }
+            return res;
+        } else {
+            if (dims.empty()) {
                 bBlocks.back()->addInst(Inst(IR::Op::Load,
                                              std::make_unique<Temp>(*res),
                                              std::move(var),
-                                             std::make_unique<ConstVal>(constOffset, Type::Int)));
+                                             nullptr
+                ));
+            } else {
+                int constOffset;
+                std::unique_ptr<Temp> dynamicOffset;
+                bool getNonConstIndex = getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+                if (getNonConstIndex) {
+                    bBlocks.back()->addInst(Inst(IR::Op::LoadDynamic,
+                                                 std::make_unique<Temp>(*res),
+                                                 std::move(var),
+                                                 std::move(dynamicOffset)));
+                } else {
+                    bBlocks.back()->addInst(Inst(IR::Op::Load,
+                                                 std::make_unique<Temp>(*res),
+                                                 std::move(var),
+                                                 std::make_unique<ConstVal>(constOffset, Type::Int)));
+                }
             }
+            return res;
         }
-        return res;
     }
 }
 
@@ -451,7 +459,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
     bBlocks.back()->addInst(Inst(Op::InStack, nullptr, nullptr, nullptr));
 
     if (funcRParams) {
-        for (int i = static_cast<int>(funcRParams->params.size()) - 1; i >= 0; --i) {
+        for (int i = static_cast<int>(funcRParams->params.size()) - 1, paramIndex = 0; i >= 0; --i, ++paramIndex) {
             auto &rParam = funcRParams->params[i];
             auto name = rParam->getIdent();
 
@@ -463,7 +471,7 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
                 // load Var from memory to Temp
                 auto t = rParam->genIR(bBlocks);
                 bBlocks.back()->addInst(Inst(Op::PushParam,
-                                             nullptr,
+                                             std::make_unique<ConstVal>(paramIndex, Type::Void),
                                              std::move(t),
                                              nullptr));
             } else {
@@ -484,13 +492,13 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
                 if (getNonConstIndex) {
                     bBlocks.back()->addInst(Inst(
                         Op::PushAddressParam,
-                        nullptr,
+                        std::make_unique<ConstVal>(paramIndex, Type::Void),
                         std::move(var),
                         std::move(dynamicOffset)));
                 } else {
                     bBlocks.back()->addInst(Inst(
                         Op::PushAddressParam,
-                        nullptr,
+                        std::make_unique<ConstVal>(paramIndex, Type::Void),
                         std::move(var),
                         std::make_unique<ConstVal>(constOffset, Type::Int)));
                 }
@@ -506,9 +514,9 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
 
     if (funcSym->type == Type::Int) {
         auto temp = std::make_unique<Temp>(Type::Int);
-        bBlocks.back()->addInst(Inst(IR::Op::NewMove,
+        bBlocks.back()->addInst(Inst(IR::Op::TempMove,
                                      std::make_unique<Temp>(*temp),
-                                     std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int),
+                                     std::make_unique<Temp>(MIPS::Reg::v0, Type::Int),
                                      nullptr));
         return temp;
     } else {

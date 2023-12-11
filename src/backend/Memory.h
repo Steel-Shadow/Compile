@@ -5,6 +5,7 @@
 #ifndef STACKMEMORY_H
 #define STACKMEMORY_H
 
+#include "Register.h"
 #include "middle/IR.h"
 
 #include <stack>
@@ -33,9 +34,12 @@ namespace StackMemory {
 // clear when generating MIPS for a new Function
 extern std::unordered_map<IR::Var, int> varToOffset;
 
+// TODO: 变量映射到寄存器 $s0-$s7 $a1-$a3 需要保存现场！！
+extern std::unordered_map<IR::Var, Reg> varToReg;
+
 extern int curOffset;
 extern std::stack<int> offsetStack;
-}// namespace StackMemory
-}// namespace MIPS
+} // namespace StackMemory
+} // namespace MIPS
 
 #endif//STACKMEMORY_H

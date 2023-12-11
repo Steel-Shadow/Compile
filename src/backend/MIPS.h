@@ -37,7 +37,7 @@ void irToMips(const IR::Inst &inst);
 
 void optimize();
 
-void outputAll(const IR::Module &module);
+void genMIPS(const IR::Module &module);
 
 void output(const std::string &str, bool newLine = true);
 

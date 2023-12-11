@@ -12,6 +12,10 @@
 #include <memory>
 #include <vector>
 
+namespace MIPS {
+enum class Reg;
+}
+
 // Intermediate Representation
 // like the Parser, specific genIR method is distributed in respective AST node struct.
 // IR generation is the 2nd pass (1st pass builds the AST).
@@ -61,7 +65,7 @@ enum class Op {
     Mult4,
 
     // res[Temp] = arg1[Temp]
-    NewMove,
+    TempMove,
 
     // res[Var] = getint()
     GetInt,
@@ -117,10 +121,10 @@ struct Temp : public Element {
     int id;
     Type type;
 
-    // function return Temp
-    // id must be -2 -3
-    explicit Temp(int id, Type type);
     explicit Temp(Type type);
+
+    // function return Temp, id=-(int)reg
+    Temp(MIPS::Reg reg, Type type);
     Temp(Temp const &other);
 
     std::string toString() const override;
@@ -147,6 +151,15 @@ struct Str : public Element {
     std::string toString() const override;
 };
 
+// like llvm, Label and Temp share id allocator
+// nameAndId: Function has no id
+struct Label : public Element {
+    std::string nameAndId; // nameAndId of BasicBlock
+    explicit Label(std::string name, bool isFunc = false);
+
+    std::string toString() const override;
+};
+
 struct Inst {
     Op op;
     std::unique_ptr<Element> res;
@@ -162,15 +175,6 @@ struct Inst {
 
 private:
     static std::string opToStr(Op anOperator);
-};
-
-// like llvm, Label and Temp share id allocator
-// nameAndId: Function has no id
-struct Label : public Element {
-    std::string nameAndId; // nameAndId of BasicBlock
-    explicit Label(std::string name, bool isFunc = false);
-
-    std::string toString() const override;
 };
 
 struct BasicBlock {
@@ -207,7 +211,7 @@ public:
 
     const BasicBlocks &getBasicBlocks() const;
 
-    std::vector<Param> getParams() const;
+    const std::vector<Param> &getParams() const;
 };
 
 // backend CodeGen should not rely on SymTab

@@ -6,9 +6,13 @@
 
 #include "AST/decl/Decl.h"
 #include "backend/Instruction.h"
+#include "backend/Memory.h"
 #include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
+
+#include <utility>
+#include <utility>
 
 using namespace Parser;
 
@@ -481,8 +485,11 @@ void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
                                  nullptr,
                                  nullptr));
 
-    auto rValue = std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int);
+    auto rValue = std::make_unique<Temp>(MIPS::Reg::v0, Type::Int);
+    assignLVal(bBlocks, std::move(rValue));
+}
 
+void LValStmt::assignLVal(IR::BasicBlocks &bBlocks, std::unique_ptr<IR::Temp> rValue) const {
     auto [symbol,depth] = SymTab::findInGen(lVal->ident);
     auto var = std::make_unique<IR::Var>(
         lVal->ident,
@@ -492,25 +499,36 @@ void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
         symbol->type,
         symbol->symType);
 
-    if (lVal->dims.empty()) {
-        bBlocks.back()->addInst(Inst(IR::Op::Store,
-                                     std::move(rValue),
-                                     std::move(var),
-                                     nullptr));
+    auto varReg = MIPS::StackMemory::varToReg.find(*var);
+    if (varReg != MIPS::StackMemory::varToReg.end()) {
+        // TODO:check here var is map to a reg($a1-$a3 / $s0-$s7)
+        MIPS::Reg reg = varReg->second;
+        bBlocks.back()->addInst(IR::Inst(IR::Op::TempMove,
+                                         std::make_unique<IR::Temp>(reg, var->type),
+                                         std::move(rValue),
+                                         nullptr
+        ));
     } else {
-        int constOffset;
-        std::unique_ptr<Temp> dynamicOffset;
-        bool getNonConstIndex = lVal->getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
-        if (getNonConstIndex) {
-            bBlocks.back()->addInst(Inst(IR::Op::StoreDynamic,
-                                         std::move(rValue),
-                                         std::move(var),
-                                         std::move(dynamicOffset)));
+        if (lVal->dims.empty()) {
+            bBlocks.back()->addInst(IR::Inst(IR::Op::Store,
+                                             std::move(rValue),
+                                             std::move(var),
+                                             nullptr));
         } else {
-            bBlocks.back()->addInst(Inst(IR::Op::Store,
-                                         std::move(rValue),
-                                         std::move(var),
-                                         std::make_unique<ConstVal>(constOffset, Type::Int)));
+            int constOffset;
+            std::unique_ptr<IR::Temp> dynamicOffset;
+            bool getNonConstIndex = lVal->getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+            if (getNonConstIndex) {
+                bBlocks.back()->addInst(IR::Inst(IR::Op::StoreDynamic,
+                                                 std::move(rValue),
+                                                 std::move(var),
+                                                 std::move(dynamicOffset)));
+            } else {
+                bBlocks.back()->addInst(IR::Inst(IR::Op::Store,
+                                                 std::move(rValue),
+                                                 std::move(var),
+                                                 std::make_unique<IR::ConstVal>(constOffset, Type::Int)));
+            }
         }
     }
 }
@@ -529,36 +547,7 @@ void AssignStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
     auto rValue = exp->genIR(bBlocks);
 
-    auto [symbol,depth] = SymTab::findInGen(lVal->ident);
-    auto var = std::make_unique<IR::Var>(
-        lVal->ident,
-        depth,
-        symbol->cons,
-        symbol->dims,
-        symbol->type,
-        symbol->symType);
-
-    if (lVal->dims.empty()) {
-        bBlocks.back()->addInst(Inst(IR::Op::Store,
-                                     std::move(rValue),
-                                     std::move(var),
-                                     nullptr));
-    } else {
-        int constOffset;
-        std::unique_ptr<Temp> dynamicOffset;
-        bool getNonConstIndex = lVal->getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
-        if (getNonConstIndex) {
-            bBlocks.back()->addInst(Inst(IR::Op::StoreDynamic,
-                                         std::move(rValue),
-                                         std::move(var),
-                                         std::move(dynamicOffset)));
-        } else {
-            bBlocks.back()->addInst(Inst(IR::Op::Store,
-                                         std::move(rValue),
-                                         std::move(var),
-                                         std::make_unique<ConstVal>(constOffset, Type::Int)));
-        }
-    }
+    assignLVal(bBlocks, std::move(rValue));
 }
 
 std::unique_ptr<ExpStmt> ExpStmt::parse() {

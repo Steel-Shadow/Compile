@@ -4,6 +4,7 @@
 
 #include "Func.h"
 
+#include "backend/Memory.h"
 #include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
@@ -212,6 +213,15 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     Function::idAllocator = 0;
 
     SymTab::iterIn();
+
+    int paramIndex = 0;
+    for (auto param = params.crbegin(); param != params.crend(); ++param, ++paramIndex) {
+        auto &[ident, sym] = *param;
+        if (paramIndex < 3) {
+            auto reg = static_cast<MIPS::Reg>(paramIndex + static_cast<int>(MIPS::Reg::a1));
+            MIPS::StackMemory::varToReg.emplace(IR::Var(ident, 1, false, sym->dims, sym->type, sym->symType), reg);
+        }
+    }
 
     bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
     block->genIR(bBlocks);

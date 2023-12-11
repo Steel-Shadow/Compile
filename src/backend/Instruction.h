@@ -56,32 +56,32 @@ struct Instruction : public Assembly {
 };
 
 struct R_Inst : public Instruction {
-    Register rd;
-    Register rs;
-    Register rt;
+    Reg rd;
+    Reg rs;
+    Reg rt;
 
-    R_Inst(Op op, Register rd, Register rs, Register rt);
+    R_Inst(Op op, Reg rd, Reg rs, Reg rt);
 
     std::string toString() override;
 };
 
 struct I_imm_Inst : public Instruction {
-    Register rt;
-    Register rs;
+    Reg rt;
+    Reg rs;
     int immediate;
 
-    I_imm_Inst(Op op, Register rt, Register rs, int immediate);
+    I_imm_Inst(Op op, Reg rt, Reg rs, int immediate);
 
     std::string toString() override;
 };
 
 struct I_label_Inst : public Instruction {
-    Register rs;
-    Register rt;
+    Reg rs;
+    Reg rt;
     Label label;
     int offset;
 
-    I_label_Inst(Op op, Register rs, Register rt, Label label, int offset = 0);
+    I_label_Inst(Op op, Reg rs, Reg rt, Label label, int offset = 0);
 
     std::string toString() override;
 };
@@ -121,7 +121,7 @@ void PushParam(const IR::Inst &);
 void PushAddressParam(const IR::Inst &);
 void Ret(const IR::Inst &);
 void RetMain(const IR::Inst &);
-void NewMove(const IR::Inst &);
+void TempMove(const IR::Inst &);
 void Leq(const IR::Inst &);
 void Lss(const IR::Inst &);
 void Geq(const IR::Inst &);

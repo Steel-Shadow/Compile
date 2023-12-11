@@ -79,9 +79,6 @@ SymTab::SymTab(SymTab *prev) :
 }
 
 void SymTab::iterIn() {
-    /*static std::queue<SymTab *> iterIndex = global.dfs();
-    cur = iterIndex.front();
-    iterIndex.pop();*/
     cur = symTabs.front();
     symTabs.pop_front();
     SymTab::knownVars.emplace_back();
@@ -95,23 +92,3 @@ void SymTab::iterOut() {
 int SymTab::getDepth() const {
     return depth;
 }
-
-/*std::queue<SymTab *> SymTab::dfs() {
-    std::queue<SymTab *> res;
-
-    std::stack<SymTab *> stack;
-    stack.push(this);
-
-    while (!stack.empty()) {
-        SymTab *node = stack.top();
-        stack.pop();
-
-        res.push(node);
-
-        for (auto it = node->next.rbegin(); it != node->next.rend(); ++it) {
-            stack.push(it->get());
-        }
-    }
-
-    return res;
-}*/

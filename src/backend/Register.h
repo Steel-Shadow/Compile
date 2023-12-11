@@ -11,7 +11,7 @@
 
 namespace MIPS {
 // @formatter:off
-enum class Register {
+enum class Reg {
     zero,
 
     // used by assembler, I can use too, but must confirm that it don't conflict with pseudo MIPS
@@ -40,19 +40,19 @@ enum class Register {
 // at least 4 for correctness
 constexpr int MAX_TEMP_REGS = 8;
 
-extern std::map<int, Register> tempToRegs;
-extern std::queue<Register> freeTempRegs;
+extern std::map<int, Reg> tempToRegs;
+extern std::queue<Reg> freeTempRegs;
 
-Register newReg(const IR::Temp *temp);
+Reg newReg(const IR::Temp *temp);
 
-Register getReg(const IR::Temp *temp);
+Reg getReg(const IR::Temp *temp);
 
 // if freeTempRegs is empty (reg==$t8), we should store temp on stack
-void checkTempReg(const IR::Temp *temp, Register reg);
+void checkTempReg(const IR::Temp *temp, Reg reg);
 
 void clearTempRegs();
 
-std::string regToString(Register reg);
+std::string regToString(Reg reg);
 
 }
 

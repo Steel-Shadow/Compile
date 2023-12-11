@@ -12,7 +12,7 @@ using namespace MIPS;
 // use template to dynamically generate
 template<std::size_t... Indices>
 constexpr auto genCleanRegs(std::index_sequence<Indices...>) {
-    return std::queue<Register>{{static_cast<Register>(Indices + static_cast<size_t>(Register::t0))...}};
+    return std::queue<Reg>{{static_cast<Reg>(Indices + static_cast<size_t>(Reg::t0))...}};
 }
 
 template<std::size_t N>
@@ -20,37 +20,37 @@ constexpr auto cleanRegQueue() {
     return genCleanRegs<>(std::make_index_sequence<N>{});
 }
 
-std::map<int, Register> MIPS::tempToRegs;
-std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
+std::map<int, Reg> MIPS::tempToRegs;
+std::queue<Reg> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
 
-Register MIPS::newReg(const IR::Temp *temp) {
+Reg MIPS::newReg(const IR::Temp *temp) {
     if (temp->id < 0) {
-        return static_cast<Register>(-temp->id);
+        return static_cast<Reg>(-temp->id);
     } else if (freeTempRegs.empty()) {
-        return Register::t8;
+        return Reg::t8;
     } else {
-        Register r = freeTempRegs.front();
+        Reg r = freeTempRegs.front();
         freeTempRegs.pop();
         tempToRegs[temp->id] = r;
         return r;
     }
 }
 
-Register MIPS::getReg(const IR::Temp *temp) {
+Reg MIPS::getReg(const IR::Temp *temp) {
     if (temp->id < 0) {
-        return static_cast<Register>(-temp->id);
+        return static_cast<Reg>(-temp->id);
     } else {
         auto tempToReg = tempToRegs.find(temp->id);
         if (tempToReg == tempToRegs.end()) {
             // tempToReg not found, temp has been stored in memory
             assemblies.push_back(std::make_unique<I_imm_Inst>(
                     Op::lw,
-                    Register::t8,
-                    Register::sp,
+                    Reg::t8,
+                    Reg::sp,
                     -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
-            return Register::t8;
+            return Reg::t8;
         } else {
-            Register t = tempToReg->second;
+            Reg t = tempToReg->second;
             freeTempRegs.push(tempToReg->second);
             tempToRegs.erase(temp->id);
             return t;
@@ -58,73 +58,73 @@ Register MIPS::getReg(const IR::Temp *temp) {
     }
 }
 
-std::string MIPS::regToString(Register reg) {
+std::string MIPS::regToString(Reg reg) {
     switch (reg) {
-        case Register::zero:
+        case Reg::zero:
             return "$zero";
-        case Register::at:
+        case Reg::at:
             return "$at";
-        case Register::v0:
+        case Reg::v0:
             return "$v0";
-        case Register::v1:
+        case Reg::v1:
             return "$v1";
-        case Register::a0:
+        case Reg::a0:
             return "$a0";
-        case Register::a1:
+        case Reg::a1:
             return "$a1";
-        case Register::a2:
+        case Reg::a2:
             return "$a2";
-        case Register::a3:
+        case Reg::a3:
             return "$a3";
-        case Register::t0:
+        case Reg::t0:
             return "$t0";
-        case Register::t1:
+        case Reg::t1:
             return "$t1";
-        case Register::t2:
+        case Reg::t2:
             return "$t2";
-        case Register::t3:
+        case Reg::t3:
             return "$t3";
-        case Register::t4:
+        case Reg::t4:
             return "$t4";
-        case Register::t5:
+        case Reg::t5:
             return "$t5";
-        case Register::t6:
+        case Reg::t6:
             return "$t6";
-        case Register::t7:
+        case Reg::t7:
             return "$t7";
-        case Register::s0:
+        case Reg::s0:
             return "$s0";
-        case Register::s1:
+        case Reg::s1:
             return "$s1";
-        case Register::s2:
+        case Reg::s2:
             return "$s2";
-        case Register::s3:
+        case Reg::s3:
             return "$s3";
-        case Register::s4:
+        case Reg::s4:
             return "$s4";
-        case Register::s5:
+        case Reg::s5:
             return "$s5";
-        case Register::s6:
+        case Reg::s6:
             return "$s6";
-        case Register::s7:
+        case Reg::s7:
             return "$s7";
-        case Register::t8:
+        case Reg::t8:
             return "$t8";
-        case Register::t9:
+        case Reg::t9:
             return "$t9";
-        case Register::k0:
+        case Reg::k0:
             return "$k0";
-        case Register::k1:
+        case Reg::k1:
             return "$k1";
-        case Register::gp:
+        case Reg::gp:
             return "$gp";
-        case Register::sp:
+        case Reg::sp:
             return "$sp";
-        case Register::fp:
+        case Reg::fp:
             return "$fp";
-        case Register::ra:
+        case Reg::ra:
             return "$ra";
-        case Register::none:
+        case Reg::none:
             return "";
         default:
             return "unknown";
@@ -136,16 +136,16 @@ void MIPS::clearTempRegs() {
     freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
 }
 
-void MIPS::checkTempReg(const IR::Temp *temp, Register reg) {
-    if (reg == Register::t8) {
+void MIPS::checkTempReg(const IR::Temp *temp, Reg reg) {
+    if (reg == Reg::t8) {
         // if freeTempRegs is empty (reg==$t8),
         // we should store temp on stack
         auto var = IR::Var(temp->toString(), -1);
         StackMemory::curOffset += wordSize;
         StackMemory::varToOffset[var] = StackMemory::curOffset;
         assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw,
-                                                          Register::t8,
-                                                          Register::sp,
+                                                          Reg::t8,
+                                                          Reg::sp,
                                                           -StackMemory::curOffset));
     }
 }

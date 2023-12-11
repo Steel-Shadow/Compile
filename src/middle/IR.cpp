@@ -105,8 +105,8 @@ std::string Inst::opToStr(Op anOperator) {
             return "InStack";
         case Op::OutStack:
             return "OutStack";
-        case Op::NewMove:
-            return "NewMove";
+        case Op::TempMove:
+            return "TempMove";
         case Op::Leq:
             return "Leq";
         case Op::Lss:
@@ -229,7 +229,7 @@ const BasicBlocks &Function::getBasicBlocks() const {
     return basicBlocks;
 }
 
-std::vector<Param> Function::getParams() const {
+const std::vector<Param> &Function::getParams() const {
     return params;
 }
 
@@ -283,8 +283,8 @@ Temp::Temp(Type type) :
     id = Function::idAllocator++;
 }
 
-Temp::Temp(int id, Type type) :
-    id(id),
+Temp::Temp(MIPS::Reg reg, Type type):
+    id(-static_cast<int>(reg)),
     type(type) {}
 
 std::string Temp::toString() const {

@@ -1,7 +1,8 @@
 ## 数组开发进度
 
 数组检查维度没有开启错误处理？
-中间代码生成 PushParam 没有使用 a0-a3
+中间代码生成 PushParam 使用 a1-a3 用于寄存器传参
+a0 固定用于 syscall(RetMain PrintStr PrintInt)
 
 ## 数据类型系统
 

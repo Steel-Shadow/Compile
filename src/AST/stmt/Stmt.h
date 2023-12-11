@@ -49,6 +49,9 @@ struct LValStmt : public Stmt {
     std::unique_ptr<LVal> lVal;
 
     static std::unique_ptr<LValStmt> parse();
+
+    // assign to LVal in genIR
+    void assignLVal(IR::BasicBlocks &bBlocks, std::unique_ptr<IR::Temp> rValue) const;
 };
 
 // LVal '=' Exp ';'

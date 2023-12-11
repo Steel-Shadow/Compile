@@ -43,7 +43,7 @@ std::string Label::toString() {
     return nameAndId + ":";
 }
 
-void MIPS::outputAll(const IR::Module &module) {
+void MIPS::genMIPS(const IR::Module &module) {
     /*---- .data generate & output ----------------------*/
     output("#### MIPS ####");
     output(".data");
@@ -81,9 +81,13 @@ void MIPS::outputAll(const IR::Module &module) {
         // set function's parameters to varToOffset
         // stack memory map explain is in markdown and Memory.h
         int offset = 0;
-        for (auto &[ident, sym]: func->getParams()) {
-            StackMemory::varToOffset.emplace(IR::Var(ident, 1, false, sym->dims, sym->type), -offset);
-            offset += sizeOfType(sym->type);
+        int paramIndex = 0;
+        for (auto param = func->getParams().crbegin(); param != func->getParams().crend(); ++param, ++paramIndex) {
+            auto &[ident, sym] = *param;
+            if (paramIndex >= 3) {
+                StackMemory::varToOffset.emplace(IR::Var(ident, 1, false, sym->dims, sym->type, sym->symType), -offset);
+                offset += sizeOfType(sym->type);
+            }
         }
 
         for (auto &basicBlock: func->getBasicBlocks()) {
@@ -184,8 +188,8 @@ void MIPS::irToMips(const IR::Inst &inst) {
         case IR::Op::RetMain:
             RetMain(inst);
             break;
-        case IR::Op::NewMove:
-            NewMove(inst);
+        case IR::Op::TempMove:
+            TempMove(inst);
             break;
         case IR::Op::Leq:
             Leq(inst);

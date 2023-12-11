@@ -15,7 +15,7 @@ void compile(const std::string &inFile,
     auto compUnit = CompUnit::parse();
     auto module = compUnit->genIR();
     module->outputIR();
-    MIPS::outputAll(*module);
+    MIPS::genMIPS(*module);
 }
 
 int main(int argc, char *argv[]) {
