@@ -9,6 +9,8 @@
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
+#include <utility>
+
 using namespace Parser;
 
 // const array can't be param
@@ -210,6 +212,7 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
     auto function = std::make_unique<Function>(ident, funcType->getType(), params);
 
     BasicBlocks bBlocks;
+    bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
     Function::idAllocator = 0;
 
     SymTab::iterIn();
@@ -219,12 +222,21 @@ std::unique_ptr<IR::Function> FuncDef::genIR() {
         auto &[ident, sym] = *param;
         if (paramIndex < 3) {
             auto reg = static_cast<MIPS::Reg>(paramIndex + static_cast<int>(MIPS::Reg::a1));
-            MIPS::StackMemory::varToReg.emplace(IR::Var(ident, 1, false, sym->dims, sym->type, sym->symType), reg);
+            auto paramReg = std::make_unique<Temp>(reg, sym->type);
+            auto tempFromParam = std::make_unique<Temp>(sym->type);
+            tempFromParam->mapFromVar = true;
+
+            MIPS::StackMemory::varToTemp.emplace(IR::Var(ident, 1, false, sym->dims, sym->type, sym->symType), *tempFromParam);
+
+            bBlocks.back()->addInst(Inst(Op::TempMove,
+                                         std::move(tempFromParam),
+                                         std::move(paramReg),
+                                         nullptr));
         }
     }
 
-    bBlocks.emplace_back(std::make_unique<BasicBlock>(ident, true));
     block->genIR(bBlocks);
+    MIPS::StackMemory::varToTemp.clear();
 
     if (bBlocks.back()->instructions.empty() || bBlocks.back()->instructions.back().op != Op::Ret) {
         bBlocks.back()->addInst(Inst(Op::Ret,

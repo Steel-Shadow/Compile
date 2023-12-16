@@ -34,8 +34,9 @@ namespace StackMemory {
 // clear when generating MIPS for a new Function
 extern std::unordered_map<IR::Var, int> varToOffset;
 
-// TODO: 变量映射到寄存器 $s0-$s7 $a1-$a3 需要保存现场！！
-extern std::unordered_map<IR::Var, Reg> varToReg;
+// TODO: 变量映射到虚拟寄存器 $s0-$s7 $a1-$a3 需要保存现场！！
+// in FuncDef, param will be moved into a IR::Temp after it's used for the first time
+extern std::unordered_map<IR::Var, IR::Temp> varToTemp;
 
 extern int curOffset;
 extern std::stack<int> offsetStack;

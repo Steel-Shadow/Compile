@@ -10,8 +10,6 @@
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
 
-#include <iostream>
-
 using namespace Parser;
 
 std::unique_ptr<LVal> LVal::parse() {
@@ -53,11 +51,66 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
         symbol->symType);
 
     // TODO: 给LVal分配寄存器s0-s7
-    auto varReg = MIPS::StackMemory::varToReg.find(*var);
-    if (varReg != MIPS::StackMemory::varToReg.end()) {
+    auto varTemp = MIPS::StackMemory::varToTemp.find(*var);
+    if (varTemp != MIPS::StackMemory::varToTemp.end()) {
         // var is mapped to a reg($a1-$a3 / $s0-$s7)
-        MIPS::Reg reg = varReg->second;
-        return std::make_unique<Temp>(reg, var->type);
+        auto temp = std::make_unique<Temp>(varTemp->second);
+        temp->mapFromVar = true;
+
+        if (symbol->type == Type::IntPtr) {
+            // Func param is array
+            auto res = std::make_unique<Temp>(symbol->type);
+
+            int constOffset;
+            std::unique_ptr<Temp> dynamicOffset;
+            bool getNonConstIndex = getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+            if (getNonConstIndex) {
+                auto addrElem = std::make_unique<Temp>(Type::Int);
+                bBlocks.back()->addInst(Inst(IR::Op::Add,
+                                             std::make_unique<Temp>(*addrElem),
+                                             std::move(temp),
+                                             std::move(dynamicOffset)));
+                bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                             std::make_unique<Temp>(*res),
+                                             std::move(addrElem),
+                                             nullptr));
+            } else {
+                bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                             std::make_unique<Temp>(*res),
+                                             std::move(temp),
+                                             std::make_unique<ConstVal>(constOffset, Type::Int)));
+            }
+            return res;
+        } else {
+            if (!dims.empty()) {
+                Error::raise("LVal in varToTemp cannot have dims");
+            }
+            return temp;
+            /* else {
+                auto res = std::make_unique<Temp>(symbol->type);
+                int constOffset;
+                std::unique_ptr<Temp> dynamicOffset;
+                bool getNonConstIndex = getOffset(constOffset, dynamicOffset, bBlocks, symbol->dims);
+                if (getNonConstIndex) {
+                    auto addrElem = std::make_unique<Temp>(Type::Int);
+                    bBlocks.back()->addInst(Inst(IR::Op::Add,
+                                                 std::make_unique<Temp>(*addrElem),
+                                                 std::move(temp),
+                                                 std::move(dynamicOffset)));
+
+                    bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                                 std::make_unique<Temp>(*res),
+                                                 std::move(addrElem),
+                                                 nullptr));
+                } else {
+                    bBlocks.back()->addInst(Inst(IR::Op::LoadPtr,
+                                                 std::make_unique<Temp>(*res),
+                                                 std::move(temp),
+                                                 std::make_unique<ConstVal>(constOffset, Type::Int)));
+                }
+                return res;
+            }*/
+        }
     } else {
         auto res = std::make_unique<Temp>(symbol->type);
         if (symbol->type == Type::IntPtr) {

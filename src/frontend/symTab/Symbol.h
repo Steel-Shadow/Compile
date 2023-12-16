@@ -23,7 +23,7 @@ enum class SymType {
 enum class Type {
     Void,
     Int,
-    IntPtr,
+    IntPtr, // array param of Func
 };
 
 Type toType(LexType type);

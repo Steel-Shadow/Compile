@@ -7,7 +7,7 @@
 using namespace MIPS;
 
 std::unordered_map<IR::Var, int> StackMemory::varToOffset;
-std::unordered_map<IR::Var, Reg> StackMemory::varToReg;
+std::unordered_map<IR::Var, IR::Temp> StackMemory::varToTemp;
 
 int StackMemory::curOffset;
 std::stack<int> StackMemory::offsetStack;

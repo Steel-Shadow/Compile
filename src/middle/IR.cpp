@@ -347,9 +347,9 @@ std::string Str::toString() const {
     return "str_" + std::to_string(id);
 }
 
-bool IR::operator==(const Var &lhs, const Var &rhs) {
-    return lhs.name == rhs.name
-           && lhs.depth == rhs.depth;
+bool Var::operator==(const Var &other) const {
+    return name == other.name
+           && depth == other.depth;
 }
 
 std::size_t IR::hash_value(const Var &obj) {

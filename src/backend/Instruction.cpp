@@ -167,24 +167,35 @@ void MIPS::OutStack(const IR::Inst &) {
 
 void MIPS::Store(const IR::Inst &inst) {
     auto value = dynamic_cast<IR::Temp *>(inst.res.get());
-    auto var = dynamic_cast<IR::Var *>(inst.arg1.get());
 
-    // const index of array
-    int arrayOffset = 0;
-    if (inst.arg2) {
-        auto arg2 = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
-        arrayOffset = sizeOfType(var->type) * arg2->value;
-    }
-
-    if (var->depth == 0) {
-        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(value), Reg::none, Label(var->name), arrayOffset));
-    } else {
-        if (var->symType == SymType::Param && !var->dims.empty()) {
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Reg::t8, Reg::sp, -getStackOffset(var)));
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Reg::t8, arrayOffset));
-        } else {
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Reg::sp, -getStackOffset(var) + arrayOffset));
+    if (auto var = dynamic_cast<IR::Var *>(inst.arg1.get())) {
+        // const index of array
+        int arrayOffset = 0;
+        if (inst.arg2) {
+            auto arg2 = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
+            arrayOffset = sizeOfType(var->type) * arg2->value;
         }
+
+        if (var->depth == 0) {
+            assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(value), Reg::none, Label(var->name), arrayOffset));
+        } else {
+            if (var->symType == SymType::Param && !var->dims.empty()) {
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Reg::t8, Reg::sp, -getStackOffset(var)));
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Reg::t8, arrayOffset));
+            } else {
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Reg::sp, -getStackOffset(var) + arrayOffset));
+            }
+        }
+    } else {
+        auto addr = dynamic_cast<IR::Temp *>(inst.arg1.get());
+        int arrayOffset = 0;
+        if (inst.arg2) {
+            auto arg2 = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
+            arrayOffset = sizeOfType(value->type) * arg2->value;
+        }
+        // addr->mapFromVar = true;
+        auto addrReg = getReg(addr);
+        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), addrReg, arrayOffset));
     }
 }
 
@@ -206,6 +217,7 @@ void MIPS::StoreDynamic(const IR::Inst &inst) {
         }
     }
 }
+
 
 void MIPS::Add(const IR::Inst &inst) {
     auto res = dynamic_cast<IR::Temp *>(inst.res.get());

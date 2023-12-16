@@ -38,7 +38,8 @@ enum class Op {
     Alloca,
 
     // store res to arg1 with offset arg2
-    // *(&arg1[Var]+ arg2[ConstVal]) = res[Temp]
+    // 1. *(&arg1[Var]+ arg2[ConstVal]) = res[Temp]
+    // 2. *(arg1[Temp]+ arg2[ConstVal]) = res[Temp]
     Store,
 
     // store res to arg1 with offset arg2
@@ -109,7 +110,7 @@ struct Var : public Element {
     Var(std::string name, int depth, bool cons, const std::vector<int> &dims, Type type, SymType symType = SymType::Value);
     Var(std::string name, int depth);
 
-    friend bool operator==(const Var &lhs, const Var &rhs);
+    bool operator==(const Var &other) const;
     friend std::size_t hash_value(const Var &obj);
 
     std::string toString() const override;
@@ -120,6 +121,7 @@ struct Var : public Element {
 struct Temp : public Element {
     int id;
     Type type;
+    bool mapFromVar = false; // map IR::Var to IR::Temp
 
     explicit Temp(Type type);
 

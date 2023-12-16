@@ -96,6 +96,12 @@ void MIPS::genMIPS(const IR::Module &module) {
                 irToMips(inst);
             }
         }
+
+        for (auto tempReg = tempToRegs.begin(); tempReg != tempToRegs.end();) {
+            //TODO: 函数结束后，删除保留的 varToTemp
+            freeTempRegs.push(tempReg->second);
+            tempReg = tempToRegs.erase(tempReg);
+        }
     }
 
     /*----- .text optimize ---------------------*/

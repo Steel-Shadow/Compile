@@ -44,15 +44,17 @@ Reg MIPS::getReg(const IR::Temp *temp) {
         if (tempToReg == tempToRegs.end()) {
             // tempToReg not found, temp has been stored in memory
             assemblies.push_back(std::make_unique<I_imm_Inst>(
-                    Op::lw,
-                    Reg::t8,
-                    Reg::sp,
-                    -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
+                Op::lw,
+                Reg::t8,
+                Reg::sp,
+                -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
             return Reg::t8;
         } else {
             Reg t = tempToReg->second;
-            freeTempRegs.push(tempToReg->second);
-            tempToRegs.erase(temp->id);
+            if (!temp->mapFromVar) {
+                freeTempRegs.push(tempToReg->second);
+                tempToRegs.erase(temp->id);
+            }
             return t;
         }
     }
