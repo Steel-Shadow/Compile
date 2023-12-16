@@ -8,9 +8,11 @@
 
 #include "config.h"
 
+bool Error::hasError = false;
 std::ofstream Error::errorFileStream;
 
 void Error::raise(char code, int row) {
+    hasError = true;
 #ifdef STDOUT_ERROR
     std::cout << row << " " << code << '\n';
 #endif
@@ -21,6 +23,7 @@ void Error::raise(char code, int row) {
 
 // My error, which is not defined in course tasks.
 void Error::raise(const std::string &mes) {
+    hasError = true;
 #ifdef STDOUT_ERROR
     std::cout << "error: " << mes << " "
             << "---------------------------------------\n";

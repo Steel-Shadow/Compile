@@ -10,6 +10,8 @@
 
 class Error {
 public:
+    static bool hasError;
+
     static std::ofstream errorFileStream;
 
     static void raise(char code, int row = Lexer::curRow);

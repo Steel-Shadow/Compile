@@ -399,14 +399,22 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
 
     if (Lexer::curLexType != LexType::RPARENT) {
         n->funcRParams = FuncRParams::parse();
-        checkParams(n, row, funcSym); // SymTab error handle
     }
+
+    checkParams(n, row, funcSym); // SymTab error handle
 
     singleLex(LexType::RPARENT, row);
     return n;
 }
 
 void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym) {
+    if (n->funcRParams == nullptr) {
+        if (!funcSym->params.empty()) {
+            Error::raise('d', row);
+        }
+        return;
+    }
+
     auto &realParams = n->funcRParams->params;
     // check number of realParams
     if (realParams.size() != funcSym->params.size()) {

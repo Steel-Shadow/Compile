@@ -153,12 +153,12 @@ void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterOut();
 }
 
-bool BigForStmt::inFor;
+int BigForStmt::inForDepth = 0;
 
 std::unique_ptr<BigForStmt> BigForStmt::parse() {
     auto n = std::make_unique<BigForStmt>();
 
-    inFor = true;
+    inForDepth++;
 
     Lexer::next();
     singleLex(LexType::LPARENT);
@@ -182,7 +182,7 @@ std::unique_ptr<BigForStmt> BigForStmt::parse() {
 
     n->stmt = Stmt::parse();
 
-    inFor = false;
+    inForDepth--;
     SymTab::deepOut(); // ForStmt
     return n;
 }
@@ -270,7 +270,7 @@ void ForStmt::genIR(IR::BasicBlocks &basicBlocks) const {
 std::unique_ptr<BreakStmt> BreakStmt::parse() {
     int row = Lexer::curRow;
 
-    if (!BigForStmt::inFor) {
+    if (BigForStmt::inForDepth == 0) {
         Error::raise('m', row);
     }
 
@@ -290,7 +290,7 @@ void BreakStmt::genIR(IR::BasicBlocks &bBlocks) {
 std::unique_ptr<ContinueStmt> ContinueStmt::parse() {
     int row = Lexer::curRow;
 
-    if (!BigForStmt::inFor) {
+    if (BigForStmt::inForDepth == 0) {
         Error::raise('m', row);
     }
 

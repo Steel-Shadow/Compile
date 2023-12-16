@@ -134,7 +134,7 @@ struct BigForStmt : public Stmt {
     std::unique_ptr<Stmt> stmt;
 
     // for error handling
-    static bool inFor;
+    static int inForDepth;
 
     // stack of nested BigForStmt
     // used for break & continue
