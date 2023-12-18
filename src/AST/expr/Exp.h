@@ -5,6 +5,7 @@
 #ifndef COMPILER_EXP_H
 #define COMPILER_EXP_H
 
+#include "errorHandler/Error.h"
 #include "frontend/lexer/LexType.h"
 #include "frontend/symTab/Symbol.h"
 #include "middle/IR.h"
@@ -22,6 +23,7 @@ struct BaseUnaryExp {
     virtual int evaluate();
 
     virtual std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) = 0;
+    virtual Type getType() =0;
 };
 
 // PrimaryExp → '(' Exp ')' | LVal | Number
@@ -51,6 +53,8 @@ struct LVal : public PrimaryExp {
 
     // return whether getNonConstIndex in LVal's indexes
     bool getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset, IR::BasicBlocks &bBlocks, const std::vector<int> &symDims) const;
+
+    Type getType() override;
 };
 
 // UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
@@ -72,6 +76,8 @@ struct UnaryExp {
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const;
 
     LVal *getLVal() const;
+
+    Type getType() const;
 };
 
 // Ident '(' [FuncRParams] ')'
@@ -86,6 +92,8 @@ struct FuncCall : public BaseUnaryExp {
     static void checkParams(const std::unique_ptr<FuncCall> &n, int row, const Symbol *funcSym);
 
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+
+    Type getType() override;
 };
 
 struct PareExp : public PrimaryExp {
@@ -97,6 +105,7 @@ struct PareExp : public PrimaryExp {
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
 
     int evaluate() override;
+    Type getType() override;
 };
 
 // Number → IntConst
@@ -110,6 +119,8 @@ struct Number : public PrimaryExp {
     // load immediate number in a separate MIPS instruction
     // can be optimized into calculate instruction (backend)
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) override;
+
+    Type getType() override;
 };
 
 template<class T>
@@ -155,6 +166,18 @@ struct MultiExp {
         }
         return first->getRank();
     }
+
+    Type getType() {
+        Type type = first->getType();
+        for (int i = 0; i < elements.size(); i++) {
+            if (elements[i]->getType() != type) {
+                Error::raise("Not same Type in Exp");
+                return Type::Void;
+            }
+        }
+        return type;
+    }
+
 };
 
 // MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
@@ -225,6 +248,8 @@ struct Exp {
     std::string getIdent() const;
 
     std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) const;
+
+    Type getType() const;
 
     // FuncCall rParam is an array
     LVal *getLVal() const;

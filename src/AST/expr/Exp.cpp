@@ -39,6 +39,10 @@ std::unique_ptr<IR::Temp> Exp::genIR(IR::BasicBlocks &bBlocks) const {
     return addExp->genIR(bBlocks);
 }
 
+Type Exp::getType() const {
+    return addExp->getType();
+}
+
 LVal *Exp::getLVal() const {
     return addExp->getLVal();
 }

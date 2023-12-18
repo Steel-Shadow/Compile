@@ -31,6 +31,17 @@ int sizeOfType(Type type) {
     }
 }
 
+Type ptrToValue(Type type) {
+    switch (type) {
+        case Type::IntPtr:
+        case Type::Int:
+            return Type::Int;
+        default:
+            // Error::raise("Bad Type in toPtr");
+            return Type::Void;
+    }
+}
+
 Symbol::Symbol(bool cons, Type type, const std::vector<int> &dims, const std::vector<int> &initVal) :
     symType(SymType::Value),
     type(type),

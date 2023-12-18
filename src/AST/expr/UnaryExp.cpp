@@ -191,6 +191,10 @@ bool LVal::getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset,
     return getNonConstIndex;
 }
 
+Type LVal::getType() {
+    return SymTab::find(ident)->type;
+}
+
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
     std::unique_ptr<PrimaryExp> n;
     if (Lexer::curLexType == LexType::LPARENT) {
@@ -237,6 +241,10 @@ int PareExp::evaluate() {
     return exp->evaluate();
 }
 
+Type PareExp::getType() {
+    return exp->getType();
+}
+
 std::unique_ptr<Number> Number::parse() {
     auto n = std::make_unique<Number>();
 
@@ -264,6 +272,10 @@ std::unique_ptr<IR::Temp> Number::genIR(IR::BasicBlocks &bBlocks) {
                                  std::make_unique<ConstVal>(intConst, Type::Int),
                                  nullptr));
     return n;
+}
+
+Type Number::getType() {
+    return Type::Int;
 }
 
 std::unique_ptr<UnaryExp> UnaryExp::parse() {
@@ -384,6 +396,10 @@ LVal *UnaryExp::getLVal() const {
     return nullptr;
 }
 
+Type UnaryExp::getType() const {
+    return baseUnaryExp->getType();
+}
+
 std::unique_ptr<FuncCall> FuncCall::parse() {
     auto n = std::make_unique<FuncCall>();
 
@@ -401,7 +417,9 @@ std::unique_ptr<FuncCall> FuncCall::parse() {
         n->funcRParams = FuncRParams::parse();
     }
 
-    checkParams(n, row, funcSym); // SymTab error handle
+    if (funcSym) {
+        checkParams(n, row, funcSym); // SymTab error handle
+    }
 
     singleLex(LexType::RPARENT, row);
     return n;
@@ -427,9 +445,18 @@ void FuncCall::checkParams(const std::unique_ptr<FuncCall> &n, int row, const Sy
             size_t formalRank = funcSym->params[i].second->dims.size();
             size_t symRank;
 
-            auto lVal = rParam->getLVal();
-            size_t indexRank = lVal ? lVal->getRank() : 0;
-            std::string ident = lVal ? lVal->getIdent() : "";
+            size_t indexRank = 0;
+            std::string ident;
+            if (LVal *lVal = rParam->getLVal()) {
+                indexRank = lVal->getRank();
+                ident = lVal->getIdent();
+            }
+
+            // only consider value Type, no dimentions
+            if (ptrToValue(rParam->getType()) != ptrToValue(funcSym->params[i].second->type)) {
+                Error::raise('e', row);
+                continue;
+            }
 
             if (ident.empty()) {
                 // rParam is Exp (neither LVal nor FuncCall)
@@ -523,6 +550,10 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
         // reType == LexType::VOIDTK
         return nullptr;
     }
+}
+
+Type FuncCall::getType() {
+    return SymTab::find(ident)->type;
 }
 
 const std::string &FuncCall::getIdent() const {

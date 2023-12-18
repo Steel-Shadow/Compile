@@ -17,7 +17,7 @@
 #define STDOUT_ERROR
 // #define STDOUT_IR
 #define FILEOUT_IR
-#define STDOUT_MIPS
+// #define STDOUT_MIPS
 #endif
 
 

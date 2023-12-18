@@ -29,6 +29,7 @@ enum class Type {
 Type toType(LexType type);
 
 int sizeOfType(Type type);
+Type ptrToValue(Type type);
 
 // all information in a Symbol (also redundant info)
 // use SymType type to distinguish
