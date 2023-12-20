@@ -170,7 +170,9 @@ struct MultiExp {
     Type getType() {
         Type type = first->getType();
         for (int i = 0; i < elements.size(); i++) {
-            if (elements[i]->getType() != type) {
+            if (ptrToValue(elements[i]->getType()) != ptrToValue(type)) {
+                // Type check here is too simple
+                // func(t[2]+arr[0]);
                 Error::raise("Not same Type in Exp");
                 return Type::Void;
             }

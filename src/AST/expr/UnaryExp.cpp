@@ -192,7 +192,8 @@ bool LVal::getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset,
 }
 
 Type LVal::getType() {
-    return SymTab::find(ident)->type;
+    auto sym = SymTab::find(ident);
+    return sym ? sym->type : Type::Void;
 }
 
 std::unique_ptr<PrimaryExp> PrimaryExp::parse() {
