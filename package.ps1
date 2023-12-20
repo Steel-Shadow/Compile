@@ -40,4 +40,4 @@ else
 cd ..
 
 # windows Compress-Archive use \ as seperators for file, incompatible with linux
-7z a srcCode.zip src\ CMakeLists.txt package.ps1 | Out-Null
+7z a srcCode.zip src\ CMakeLists.txt package.ps1 config.json | Out-Null

@@ -76,6 +76,16 @@ std::string MIPS::opToString(Op e) {
             return "sll";
         case Op::bne:
             return "bne";
+        case Op::addiu:
+            return "addiu";
+        case Op::subiu:
+            return "subiu";
+        case Op::andi:
+            return "andi";
+        case Op::ori:
+            return "ori";
+        case Op::slti:
+            return "slti";
         default:
             Error::raise("unknown Op");
             return "unknown";

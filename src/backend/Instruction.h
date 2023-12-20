@@ -45,6 +45,12 @@ enum class Op {
     beqz,
     sll,
     bne,
+
+    addiu,
+    subiu,
+    andi,
+    ori,
+    slti,
 };
 
 std::string opToString(Op e);
