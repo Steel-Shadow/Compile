@@ -14,6 +14,8 @@ namespace MIPS {
 struct I_imm_Inst;
 struct R_Inst;
 
+extern int curDepth;
+
 constexpr int wordSize = 4;
 extern std::ofstream mipsFileStream;
 
@@ -41,7 +43,7 @@ void irToMips(const IR::Inst &inst);
 std::unique_ptr<I_imm_Inst> mergeLi_R(const I_imm_Inst &, const R_Inst &);
 void allMergeLi_R();
 
-void outputAll(const IR::Module &module);
+void genMIPS(const IR::Module &module);
 
 void output(const std::string &str, bool newLine = true);
 

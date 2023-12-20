@@ -15,6 +15,8 @@
 
 using namespace MIPS;
 
+int MIPS::curDepth = 1;
+
 std::ofstream MIPS::mipsFileStream;
 std::vector<std::unique_ptr<Assembly>> MIPS::assemblies;
 
@@ -43,7 +45,7 @@ std::string Label::toString() {
     return nameAndId + ":";
 }
 
-void MIPS::outputAll(const IR::Module &module) {
+void MIPS::genMIPS(const IR::Module &module) {
     /*---- .data generate & output ----------------------*/
     output("#### MIPS ####");
     output(".data");
@@ -73,9 +75,9 @@ void MIPS::outputAll(const IR::Module &module) {
 
     // other function
     for (auto &func: module.getFunctions()) {
-        clearTempRegs();
+        clearRegs();
         // Use part of tempRegs, but move stackOffset for MAX_TEMP_REGS.
-        StackMemory::curOffset = wordSize * (2 + MAX_TEMP_REGS);
+        StackMemory::curOffset = wordSize * (2 + MAX_TEMP_REGS + MAX_VAR_REGS);
         StackMemory::varToOffset.clear();
 
         // set function's parameters to varToOffset

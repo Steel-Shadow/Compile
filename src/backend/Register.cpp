@@ -11,17 +11,20 @@ using namespace MIPS;
 
 // use template to dynamically generate
 template<std::size_t... Indices>
-constexpr auto genCleanRegs(std::index_sequence<Indices...>) {
-    return std::queue<Register>{{static_cast<Register>(Indices + static_cast<size_t>(Register::t0))...}};
+constexpr auto genCleanRegs(std::index_sequence<Indices...>, bool tempElseVar) {
+    return std::queue<Register>{{static_cast<Register>(Indices + static_cast<size_t>(tempElseVar ? Register::t0 : Register::s0))...}};
 }
 
 template<std::size_t N>
-constexpr auto cleanRegQueue() {
-    return genCleanRegs<>(std::make_index_sequence<N>{});
+constexpr auto cleanRegQueue(bool tempElseVar) {
+    return genCleanRegs<>(std::make_index_sequence<N>{}, tempElseVar);
 }
 
 std::map<int, Register> MIPS::tempToRegs;
-std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
+std::queue<Register> MIPS::freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>(true);
+
+std::map<IR::Var, Register> MIPS::varToRegs;
+std::queue<Register> MIPS::freeVarRegs = cleanRegQueue<MAX_VAR_REGS>(false);
 
 Register MIPS::newReg(const IR::Temp *temp) {
     if (temp->id < 0) {
@@ -44,10 +47,10 @@ Register MIPS::getReg(const IR::Temp *temp) {
         if (tempToReg == tempToRegs.end()) {
             // tempToReg not found, temp has been stored in memory
             assemblies.push_back(std::make_unique<I_imm_Inst>(
-                    Op::lw,
-                    Register::t8,
-                    Register::sp,
-                    -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
+                Op::lw,
+                Register::t8,
+                Register::sp,
+                -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
             return Register::t8;
         } else {
             Register t = tempToReg->second;
@@ -131,9 +134,12 @@ std::string MIPS::regToString(Register reg) {
     }
 }
 
-void MIPS::clearTempRegs() {
+void MIPS::clearRegs() {
     tempToRegs.clear();
-    freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>();
+    freeTempRegs = cleanRegQueue<MAX_TEMP_REGS>(true);
+
+    varToRegs.clear();
+    freeVarRegs = cleanRegQueue<MAX_TEMP_REGS>(false);
 }
 
 void MIPS::checkTempReg(const IR::Temp *temp, Register reg) {

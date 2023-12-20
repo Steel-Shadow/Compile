@@ -21,8 +21,8 @@ int getStackOffset(const IR::Var *var);
 // 0 -> 4GB
 //                    $sp
 //                     ↓
-// t7  ... t1 t0 ra sp | p0(parameter) p1 ... pN-1 |
-// -10 ... -4 -3 -2 -1 | 0             1  ... N-1  |
+//   s7 ...  s1  s0 | t7  ... t1 t0 ra sp | p0(parameter) p1 ... pN-1 |
+//  -18 ... -12 -11 | -10 ... -4 -3 -2 -1 | 0             1  ... N-1  |
 // -------------
 // MAX_TEMP_REGS = 8
 //
@@ -35,7 +35,7 @@ extern std::unordered_map<IR::Var, int> varToOffset;
 
 extern int curOffset;
 extern std::stack<int> offsetStack;
-}// namespace StackMemory
-}// namespace MIPS
+} // namespace StackMemory
+} // namespace MIPS
 
 #endif//STACKMEMORY_H

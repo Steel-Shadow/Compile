@@ -16,7 +16,7 @@ void compile(const std::string &inFile,
     if (!Error::hasError) {
         auto module = compUnit->genIR();
         module->outputIR();
-        MIPS::outputAll(*module);
+        MIPS::genMIPS(*module);
     }
 }
 

@@ -167,12 +167,25 @@ std::string J_Inst::toString() {
 
 void MIPS::InStack(const IR::Inst &) {
     StackMemory::offsetStack.push(StackMemory::curOffset);
+    curDepth++;
 }
 
 
 void MIPS::OutStack(const IR::Inst &) {
     StackMemory::curOffset = StackMemory::offsetStack.top();
     StackMemory::offsetStack.pop();
+
+    for (auto varReg = varToRegs.begin(); varReg != varToRegs.end();) {
+        auto &[var,reg] = *varReg;
+        if (var.depth == curDepth) {
+            freeVarRegs.push(reg);
+            varReg = varToRegs.erase(varReg);
+        } else {
+            ++varReg;
+        }
+    }
+
+    curDepth--;
 }
 
 void MIPS::Store(const IR::Inst &inst) {
@@ -186,15 +199,20 @@ void MIPS::Store(const IR::Inst &inst) {
         arrayOffset = sizeOfType(var->type) * arg2->value;
     }
 
-    if (var->depth == 0) {
-        assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(value), Register::none, Label(var->name), arrayOffset));
-    } else {
-        if (var->symType == SymType::Param && !var->dims.empty()) {
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::t8, Register::sp, -getStackOffset(var)));
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Register::t8, arrayOffset));
+    auto varReg = varToRegs.find(*var);
+    if (varReg == varToRegs.end()) {
+        if (var->depth == 0) {
+            assemblies.push_back(std::make_unique<I_label_Inst>(Op::sw, getReg(value), Register::none, Label(var->name), arrayOffset));
         } else {
-            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Register::sp, -getStackOffset(var) + arrayOffset));
+            if (var->symType == SymType::Param && !var->dims.empty()) {
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, Register::t8, Register::sp, -getStackOffset(var)));
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Register::t8, arrayOffset));
+            } else {
+                assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw, getReg(value), Register::sp, -getStackOffset(var) + arrayOffset));
+            }
         }
+    } else {
+        assemblies.push_back(std::make_unique<R_Inst>(Op::move, varReg->second, getReg(value), Register::none));
     }
 }
 
@@ -358,27 +376,41 @@ void MIPS::Alloca(const IR::Inst &inst) {
 
     int byte = sizeOfType(var->type) * size->value;
 
-    StackMemory::curOffset += byte;
-    StackMemory::varToOffset[*var] = StackMemory::curOffset;
+    if (!freeVarRegs.empty() && size->value == 1) {
+        // try adding the var to the map
+        Register r = freeVarRegs.front();
+        freeVarRegs.pop();
+        varToRegs[*var] = r;
+    } else {
+        StackMemory::curOffset += byte;
+        StackMemory::varToOffset[*var] = StackMemory::curOffset;
+    }
 }
 
 void MIPS::Load(const IR::Inst &inst) {
     auto temp = dynamic_cast<IR::Temp *>(inst.res.get());
     auto var = dynamic_cast<IR::Var *>(inst.arg1.get());
 
-    // const index of array
-    int arrayOffset = 0;
-    if (inst.arg2) {
-        auto constOffset = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
-        arrayOffset = sizeOfType(var->type) * constOffset->value;
+    Register regRes = newReg(temp);
+
+    auto varReg = varToRegs.find(*var);
+    if (varReg == varToRegs.end()) {
+        // const index of array
+        int arrayOffset = 0;
+        if (inst.arg2) {
+            auto constOffset = dynamic_cast<IR::ConstVal *>(inst.arg2.get());
+            arrayOffset = sizeOfType(var->type) * constOffset->value;
+        }
+
+        if (var->depth == 0) {
+            assemblies.push_back(std::make_unique<I_label_Inst>(Op::lw, regRes, Register::none, Label(var->name), arrayOffset));
+        } else {
+            assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, regRes, Register::sp, -getStackOffset(var) + arrayOffset));
+        }
+    } else {
+        assemblies.push_back(std::make_unique<R_Inst>(Op::move, regRes, varReg->second, Register::none));
     }
 
-    Register regRes = newReg(temp);
-    if (var->depth == 0) {
-        assemblies.push_back(std::make_unique<I_label_Inst>(Op::lw, regRes, Register::none, Label(var->name), arrayOffset));
-    } else {
-        assemblies.push_back(std::make_unique<I_imm_Inst>(Op::lw, regRes, Register::sp, -getStackOffset(var) + arrayOffset));
-    }
     checkTempReg(temp, regRes);
 }
 
@@ -430,8 +462,25 @@ void MIPS::Call(const IR::Inst &inst) {
             Op::sw, reg, Register::sp, -StackMemory::curOffset));
     }
 
+    StackMemory::curOffset += wordSize * (MAX_TEMP_REGS - static_cast<int>(tempToRegs.size()));
+
+    for (auto &[var, reg]: varToRegs) {
+        StackMemory::curOffset += wordSize;
+        assemblies.push_back(std::make_unique<I_imm_Inst>(
+            Op::sw, reg, Register::sp, -StackMemory::curOffset));
+    }
+
     // jal to function body
     assemblies.push_back(std::make_unique<J_Inst>(Op::jal, func));
+
+    // restore varRegs
+    for (auto i = varToRegs.rbegin(); i != varToRegs.rend(); ++i) {
+        assemblies.push_back(std::make_unique<I_imm_Inst>(
+            Op::lw, i->second, Register::sp, -StackMemory::curOffset));
+        StackMemory::curOffset -= wordSize;
+    }
+
+    StackMemory::curOffset -= wordSize * (MAX_TEMP_REGS - static_cast<int>(tempToRegs.size()));
 
     // restore tempRegs
     for (auto i = tempToRegs.rbegin(); i != tempToRegs.rend(); ++i) {

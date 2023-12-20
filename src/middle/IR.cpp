@@ -270,6 +270,23 @@ Var::Var(std::string name, int depth) :
     depth(depth),
     cons(false), type(Type::Int) {}
 
+bool IR::operator==(const Var &lhs, const Var &rhs) {
+    return lhs.name == rhs.name
+           && lhs.depth == rhs.depth;
+}
+
+std::size_t IR::hash_value(const Var &obj) {
+    std::size_t seed = 0x2100EB1C;
+    seed ^= (seed << 6) + (seed >> 2) + 0x0CCF5A17 + std::hash<std::string>()(obj.name);
+    seed ^= (seed << 6) + (seed >> 2) + 0x6CBE80FE + static_cast<std::size_t>(obj.depth);
+    return seed;
+}
+
+bool Var::operator<(const Var &other) const {
+    // implement the comparison logic here
+    return name + std::to_string(depth) < other.name + std::to_string(other.depth);
+}
+
 std::string Var::toString() const {
     std::string s = name + "(" + std::to_string(depth) + ")";
     for (auto &i: dims) {
@@ -345,16 +362,4 @@ Str::Str() {
 
 std::string Str::toString() const {
     return "str_" + std::to_string(id);
-}
-
-bool IR::operator==(const Var &lhs, const Var &rhs) {
-    return lhs.name == rhs.name
-           && lhs.depth == rhs.depth;
-}
-
-std::size_t IR::hash_value(const Var &obj) {
-    std::size_t seed = 0x2100EB1C;
-    seed ^= (seed << 6) + (seed >> 2) + 0x0CCF5A17 + std::hash<std::string>()(obj.name);
-    seed ^= (seed << 6) + (seed >> 2) + 0x6CBE80FE + static_cast<std::size_t>(obj.depth);
-    return seed;
 }

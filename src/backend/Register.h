@@ -9,6 +9,8 @@
 #include <map>
 #include "middle/IR.h"
 
+#include <unordered_map>
+
 namespace MIPS {
 // @formatter:off
 enum class Register {
@@ -39,9 +41,13 @@ enum class Register {
 
 // at least 4 for correctness
 constexpr int MAX_TEMP_REGS = 8;
+constexpr int MAX_VAR_REGS = 8;
 
 extern std::map<int, Register> tempToRegs;
 extern std::queue<Register> freeTempRegs;
+
+extern std::map<IR::Var, Register> varToRegs;
+extern std::queue<Register> freeVarRegs;
 
 Register newReg(const IR::Temp *temp);
 
@@ -50,7 +56,7 @@ Register getReg(const IR::Temp *temp);
 // if freeTempRegs is empty (reg==$t8), we should store temp on stack
 void checkTempReg(const IR::Temp *temp, Register reg);
 
-void clearTempRegs();
+void clearRegs();
 
 std::string regToString(Register reg);
 

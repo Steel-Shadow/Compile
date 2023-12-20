@@ -108,6 +108,8 @@ struct Var : public Element {
     friend bool operator==(const Var &lhs, const Var &rhs);
     friend std::size_t hash_value(const Var &obj);
 
+    bool operator<(const Var &other) const;
+
     std::string toString() const override;
 };
 
