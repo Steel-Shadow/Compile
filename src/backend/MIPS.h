@@ -41,7 +41,11 @@ struct Label : public Assembly {
 void irToMips(const IR::Inst &inst);
 
 std::unique_ptr<I_imm_Inst> mergeLi_R(const I_imm_Inst &, const R_Inst &);
+
 void allMergeLi_R();
+bool allMergeMove_R_rs();
+bool allMergeMove_R_rt();
+bool allMergeR_Move();
 
 void genMIPS(const IR::Module &module);
 

@@ -30,7 +30,7 @@ Register MIPS::newReg(const IR::Temp *temp) {
     if (temp->id < 0) {
         return static_cast<Register>(-temp->id);
     } else if (freeTempRegs.empty()) {
-        return Register::t8;
+        return Register::fp;
     } else {
         Register r = freeTempRegs.front();
         freeTempRegs.pop();
@@ -48,10 +48,10 @@ Register MIPS::getReg(const IR::Temp *temp) {
             // tempToReg not found, temp has been stored in memory
             assemblies.push_back(std::make_unique<I_imm_Inst>(
                 Op::lw,
-                Register::t8,
+                Register::fp,
                 Register::sp,
                 -StackMemory::varToOffset[IR::Var(temp->toString(), -1)]));
-            return Register::t8;
+            return Register::fp;
         } else {
             Register t = tempToReg->second;
             freeTempRegs.push(tempToReg->second);
@@ -143,14 +143,14 @@ void MIPS::clearRegs() {
 }
 
 void MIPS::checkTempReg(const IR::Temp *temp, Register reg) {
-    if (reg == Register::t8) {
+    if (reg == Register::fp) {
         // if freeTempRegs is empty (reg==$t8),
         // we should store temp on stack
         auto var = IR::Var(temp->toString(), -1);
         StackMemory::curOffset += wordSize;
         StackMemory::varToOffset[var] = StackMemory::curOffset;
         assemblies.push_back(std::make_unique<I_imm_Inst>(Op::sw,
-                                                          Register::t8,
+                                                          Register::fp,
                                                           Register::sp,
                                                           -StackMemory::curOffset));
     }

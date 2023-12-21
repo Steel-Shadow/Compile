@@ -7,12 +7,12 @@ cd bin
 rm *.pdb, *.ilk
 .\Compiler.exe | Select-String -Pattern "error"
 
-mkdir output -f | Out-Null
+mkdir output -f > $null
 
 java -jar mars.jar nc mips.txt > output\marsOutput.txt
 
 Copy-Item -Path testfile.txt -Destination temp.c
-gcc temp.c -o temp.exe | Out-Null # 2>nul 隐藏错误信息
+gcc temp.c -o temp.exe 2> $null # 2>nul 隐藏错误信息
 
 .\temp.exe > output\gccOutput.txt
 rm temp.c, temp.exe
@@ -40,4 +40,4 @@ else
 cd ..
 
 # windows Compress-Archive use \ as seperators for file, incompatible with linux
-7z a srcCode.zip src\ CMakeLists.txt package.ps1 config.json | Out-Null
+7z a srcCode.zip src\ CMakeLists.txt package.ps1 config.json > $null

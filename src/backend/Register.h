@@ -29,17 +29,20 @@ enum class Register {
     t0, t1, t2, t3, t4, t5, t6, t7,
 
     s0, s1, s2, s3, s4, s5, s6, s7,
-
-    // if freeTempRegs is empty, use $t8 to store/load temp into/from stack
     t8, t9,
+
     k0, k1,
-    gp, sp, fp,
+    gp, sp,
+
+    // if freeTempRegs is empty, use $fp to store/load temp into/from stack
+    fp,
+
     ra,
     none,
 }; // @formatter:on
 
 
-// at least 4 for correctness
+// at least 5 for correctness
 constexpr int MAX_TEMP_REGS = 8;
 constexpr int MAX_VAR_REGS = 8;
 

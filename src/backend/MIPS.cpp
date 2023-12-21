@@ -97,6 +97,13 @@ void MIPS::genMIPS(const IR::Module &module) {
     }
 
     /*----- .text optimize ---------------------*/
+    // TODO: these two cause bugs!
+    // while (allMergeR_Move()) {}
+    // while (allMergeMove_R_rs()) {}
+
+
+    // good optimize here
+    while (allMergeMove_R_rt()) {}
     allMergeLi_R();
 
     /*----- .text output  ---------------------*/
@@ -154,6 +161,80 @@ void MIPS::allMergeLi_R() {
             }
         }
     }
+}
+
+// Load
+bool MIPS::allMergeMove_R_rs() {
+    bool flag = false;
+    for (auto assem1 = assemblies.begin(); assem1 != assemblies.end() - 1; ++assem1) {
+        auto assem2 = assem1 + 1;
+
+        auto inst1 = dynamic_cast<Instruction *>(assem1->get());
+        auto inst2 = dynamic_cast<Instruction *>(assem2->get());
+
+        if (inst1 && inst1->op == Op::move && inst2) {
+            auto move = dynamic_cast<R_Inst *>(inst1);
+
+            if (auto cal = dynamic_cast<R_Inst *>(inst2)) {
+                if (cal->rs == move->rd) {
+                    cal->rs = move->rs;
+                    assem1 = assemblies.erase(assem1);
+                    flag = true;
+                }
+            }
+        }
+    }
+
+    return flag;
+}
+
+bool MIPS::allMergeMove_R_rt() {
+    bool flag = false;
+    for (auto assem1 = assemblies.begin(); assem1 != assemblies.end() - 1; ++assem1) {
+        auto assem2 = assem1 + 1;
+
+        auto inst1 = dynamic_cast<Instruction *>(assem1->get());
+        auto inst2 = dynamic_cast<Instruction *>(assem2->get());
+
+        if (inst1 && inst1->op == Op::move && inst2) {
+            auto move = dynamic_cast<R_Inst *>(inst1);
+
+            if (auto cal = dynamic_cast<R_Inst *>(inst2)) {
+                if (cal->rt == move->rd) {
+                    cal->rt = move->rs;
+                    assem1 = assemblies.erase(assem1);
+                    flag = true;
+                }
+            }
+        }
+    }
+
+    return flag;
+}
+
+bool MIPS::allMergeR_Move() {
+    bool flag = false;
+    for (auto assem2 = assemblies.begin() + 1; assem2 != assemblies.end(); ++assem2) {
+        auto assem1 = assem2 - 1;
+
+        auto inst1 = dynamic_cast<Instruction *>(assem1->get());
+        auto inst2 = dynamic_cast<Instruction *>(assem2->get());
+
+        // inst2 && inst2->op == Op::move && ...
+        if (inst1) {
+            auto move = dynamic_cast<R_Inst *>(inst2);
+
+            if (auto cal = dynamic_cast<R_Inst *>(inst1)) {
+                if (cal->op != Op::move && cal->rd == move->rs) {
+                    cal->rd = move->rd;
+                    assem2 = assemblies.erase(assem2);
+                    flag = true;
+                }
+            }
+        }
+    }
+
+    return flag;
 }
 
 void MIPS::irToMips(const IR::Inst &inst) {
