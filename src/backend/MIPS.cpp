@@ -155,6 +155,12 @@ void MIPS::allMergeLi_R() {
             auto li = dynamic_cast<I_imm_Inst *>(inst1);
             auto r = dynamic_cast<R_Inst *>(inst2);
 
+            constexpr int MAX_16_BIT = (1 << 15) - 1;
+            constexpr int NEG_MIN_16_BIT = -(1 << 15);
+            if (li->immediate > MAX_16_BIT || li->immediate < NEG_MIN_16_BIT) {
+                continue;
+            }
+
             if (r && r->rt == li->rt && rOp_ImmOp(r->op) != Op::none) {
                 *assem2 = mergeLi_R(*li, *r);
                 assem1 = assemblies.erase(assem1);
