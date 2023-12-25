@@ -18,7 +18,7 @@ using namespace MIPS;
 int MIPS::curDepth = 1;
 
 std::ofstream MIPS::mipsFileStream;
-std::vector<std::unique_ptr<Assembly>> MIPS::assemblies;
+std::vector<std::unique_ptr<Assembly>> MIPS::assemblies; // maybe use List is faster in optimization
 
 void MIPS::output(const std::string &str, bool newLine) {
 #if defined(FILEOUT_MIPS)
@@ -100,11 +100,12 @@ void MIPS::genMIPS(const IR::Module &module) {
     // TODO: these two cause bugs!
     // while (allMergeR_Move()) {}
     // while (allMergeMove_R_rs()) {}
+    // while (allMergeLi_Move()) {}
 
 
     // good optimize here
     while (allMergeMove_R_rt()) {}
-    allMergeLi_R();
+    while (allMergeLi_R()) {}
 
     /*----- .text output  ---------------------*/
     for (auto &assem: assemblies) {
@@ -139,12 +140,13 @@ std::unique_ptr<I_imm_Inst> MIPS::mergeLi_R(const I_imm_Inst &li, const R_Inst &
     return std::make_unique<I_imm_Inst>(rOp_ImmOp(r.op), r.rd, r.rs, li.immediate);
 }
 
-void MIPS::allMergeLi_R() {
-    // merge immediate instructions
+// merge immediate instructions
+bool MIPS::allMergeLi_R() {
     // li   $t1 1
     // addu $t2 $t0 $t1
     // ------------------
     // addiu $t2 $t0 1
+    bool flag = false;
     for (auto assem1 = assemblies.begin(); assem1 != assemblies.end() - 1; ++assem1) {
         auto assem2 = assem1 + 1;
 
@@ -164,9 +166,33 @@ void MIPS::allMergeLi_R() {
             if (r && r->rt == li->rt && rOp_ImmOp(r->op) != Op::none) {
                 *assem2 = mergeLi_R(*li, *r);
                 assem1 = assemblies.erase(assem1);
+                flag = true;
             }
         }
     }
+    return flag;
+}
+
+bool MIPS::allMergeLi_Move() {
+    bool flag = false;
+    for (auto assem1 = assemblies.begin(); assem1 != assemblies.end() - 1; ++assem1) {
+        auto assem2 = assem1 + 1;
+
+        auto inst1 = dynamic_cast<Instruction *>(assem1->get());
+        auto inst2 = dynamic_cast<Instruction *>(assem2->get());
+
+        if (inst1 && inst1->op == Op::li && inst2 && inst2->op == Op::move) {
+            auto li = dynamic_cast<I_imm_Inst *>(inst1);
+            auto move = dynamic_cast<R_Inst *>(inst2);
+            if (li->rt == move->rs) {
+                li->rt = move->rd;
+                assemblies.erase(assem2);
+                flag = true;
+            }
+        }
+    }
+
+    return flag;
 }
 
 // Load
