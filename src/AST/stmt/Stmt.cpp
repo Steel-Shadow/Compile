@@ -129,7 +129,7 @@ std::unique_ptr<IfStmt> IfStmt::parse() {
 void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::InStack, nullptr, nullptr, nullptr));
+            IR::Op::InStack, nullptr, nullptr, nullptr));
 
     auto trueBranch = std::make_unique<IR::BasicBlock>("IfTrueBranch");
     auto falseBranch = std::make_unique<IR::BasicBlock>("IfFalseBranch");
@@ -149,7 +149,7 @@ void IfStmt::genIR(IR::BasicBlocks &bBlocks) {
     bBlocks.emplace_back(std::move(ifEnd));
 
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::OutStack, nullptr, nullptr, nullptr));
+            IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }
 
@@ -195,7 +195,7 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::InStack, nullptr, nullptr, nullptr));
+            IR::Op::InStack, nullptr, nullptr, nullptr));
     if (init) {
         init->genIR(bBlocks);
     }
@@ -237,7 +237,7 @@ void BigForStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     SymTab::iterOut();
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::OutStack, nullptr, nullptr, nullptr));
+            IR::Op::OutStack, nullptr, nullptr, nullptr));
 }
 
 std::unique_ptr<ForStmt> ForStmt::parse() {
@@ -483,14 +483,14 @@ void GetIntStmt::genIR(IR::BasicBlocks &bBlocks) {
 
     auto rValue = std::make_unique<Temp>(-static_cast<int>(MIPS::Register::v0), Type::Int);
 
-    auto [symbol,depth] = SymTab::findInGen(lVal->ident);
+    auto [symbol, depth] = SymTab::findInGen(lVal->ident);
     auto var = std::make_unique<IR::Var>(
-        lVal->ident,
-        depth,
-        symbol->cons,
-        symbol->dims,
-        symbol->type,
-        symbol->symType);
+            lVal->ident,
+            depth,
+            symbol->cons,
+            symbol->dims,
+            symbol->type,
+            symbol->symType);
 
     if (lVal->dims.empty()) {
         bBlocks.back()->addInst(Inst(IR::Op::Store,
@@ -529,14 +529,14 @@ void AssignStmt::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
     auto rValue = exp->genIR(bBlocks);
 
-    auto [symbol,depth] = SymTab::findInGen(lVal->ident);
+    auto [symbol, depth] = SymTab::findInGen(lVal->ident);
     auto var = std::make_unique<IR::Var>(
-        lVal->ident,
-        depth,
-        symbol->cons,
-        symbol->dims,
-        symbol->type,
-        symbol->symType);
+            lVal->ident,
+            depth,
+            symbol->cons,
+            symbol->dims,
+            symbol->type,
+            symbol->symType);
 
     if (lVal->dims.empty()) {
         bBlocks.back()->addInst(Inst(IR::Op::Store,
@@ -592,11 +592,11 @@ std::unique_ptr<BlockStmt> BlockStmt::parse() {
 void BlockStmt::genIR(IR::BasicBlocks &bBlocks) {
     SymTab::iterIn();
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::InStack, nullptr, nullptr, nullptr));
+            IR::Op::InStack, nullptr, nullptr, nullptr));
 
     block->genIR(bBlocks);
 
     bBlocks.back()->addInst(IR::Inst(
-        IR::Op::OutStack, nullptr, nullptr, nullptr));
+            IR::Op::OutStack, nullptr, nullptr, nullptr));
     SymTab::iterOut();
 }

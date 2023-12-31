@@ -39,8 +39,8 @@ std::unique_ptr<FuncDef> FuncDef::parse() {
     n->block = Block::parse();
 
     if (!Stmt::retVoid) {
-        if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
+        if (n->block->getBlockItems().empty()
+            || !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -68,8 +68,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
     n->block = Block::parse();
 
     if (!Stmt::retVoid) {
-        if (n->block->getBlockItems().empty() ||
-            !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
+        if (n->block->getBlockItems().empty() || !dynamic_cast<ReturnStmt *>(n->block->getBlockItems().back().get())) {
             // In fact, we should check "return;"
             // But it's not included in our work.
             Error::raise('g', Block::lastRow);
@@ -84,7 +83,7 @@ std::unique_ptr<MainFuncDef> MainFuncDef::parse() {
 std::unique_ptr<IR::Function> MainFuncDef::genIR() const {
     using namespace IR;
     auto main = std::make_unique<Function>(
-        "main", Type::Int, std::vector<Param>());
+            "main", Type::Int, std::vector<Param>());
 
     BasicBlocks bBlocks;
     bBlocks.emplace_back(std::make_unique<BasicBlock>("main", true));

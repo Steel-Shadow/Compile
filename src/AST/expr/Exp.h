@@ -10,6 +10,7 @@
 #include "frontend/symTab/Symbol.h"
 #include "middle/IR.h"
 
+
 #include <memory>
 #include <vector>
 
@@ -23,7 +24,7 @@ struct BaseUnaryExp {
     virtual int evaluate();
 
     virtual std::unique_ptr<IR::Temp> genIR(IR::BasicBlocks &bBlocks) = 0;
-    virtual Type getType() =0;
+    virtual Type getType() = 0;
 };
 
 // PrimaryExp → '(' Exp ')' | LVal | Number
@@ -136,11 +137,10 @@ struct MultiExp {
             auto t = elements[i]->genIR(bBlocks);
             auto res = std::make_unique<Temp>(Type::Int); // mix t.type & lastRes.type
             bBlocks.back()->addInst(Inst(
-                LexTypeToIROp(ops[i]),
-                std::make_unique<Temp>(*res),
-                std::move(lastRes),
-                std::move(t)
-            ));
+                    LexTypeToIROp(ops[i]),
+                    std::make_unique<Temp>(*res),
+                    std::move(lastRes),
+                    std::move(t)));
             lastRes = std::move(res);
         }
         return lastRes;
@@ -179,7 +179,6 @@ struct MultiExp {
         }
         return type;
     }
-
 };
 
 // MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp

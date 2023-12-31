@@ -5,8 +5,8 @@
 #ifndef COMPILER_DEF_H
 #define COMPILER_DEF_H
 
-#include "InitVal.h"
 #include "AST/expr/Exp.h"
+#include "InitVal.h"
 
 #include <memory>
 #include <string>

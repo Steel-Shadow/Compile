@@ -34,8 +34,7 @@ std::pair<Symbol *, int> SymTab::findInGen(const std::string &ident) {
          p != nullptr && knownVars_i != knownVars.crend();
          p = p->prev, ++knownVars_i) {
         auto it = p->symbols.find(ident);
-        if (it != p->symbols.end() &&
-            (it->second.symType == SymType::Param || knownVars_i->find({ident, p->depth}) != knownVars_i->end())) {
+        if (it != p->symbols.end() && (it->second.symType == SymType::Param || knownVars_i->find({ident, p->depth}) != knownVars_i->end())) {
             return {&it->second, p->depth};
         }
     }

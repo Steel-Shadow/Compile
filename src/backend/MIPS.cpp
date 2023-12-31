@@ -7,9 +7,10 @@
 #include <utility>
 
 #include "config.h"
+#include "errorHandler/Error.h"
 #include "Instruction.h"
 #include "Memory.h"
-#include "errorHandler/Error.h"
+
 
 #include <string>
 

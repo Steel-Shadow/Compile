@@ -7,10 +7,11 @@
 #include <string>
 #include <utility>
 
-#include "Register.h"
-#include "Memory.h"
-#include "frontend/symTab/SymTab.h"
 #include "errorHandler/Error.h"
+#include "frontend/symTab/SymTab.h"
+#include "Memory.h"
+#include "Register.h"
+
 
 #include <string>
 
@@ -176,7 +177,7 @@ void MIPS::OutStack(const IR::Inst &) {
     StackMemory::offsetStack.pop();
 
     for (auto varReg = varToRegs.begin(); varReg != varToRegs.end();) {
-        auto &[var,reg] = *varReg;
+        auto &[var, reg] = *varReg;
         if (var.depth == curDepth) {
             freeVarRegs.push(reg);
             varReg = varToRegs.erase(varReg);
@@ -459,7 +460,7 @@ void MIPS::Call(const IR::Inst &inst) {
     for (auto &[tempId, reg]: tempToRegs) {
         StackMemory::curOffset += wordSize;
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-            Op::sw, reg, Register::sp, -StackMemory::curOffset));
+                Op::sw, reg, Register::sp, -StackMemory::curOffset));
     }
 
     StackMemory::curOffset += wordSize * (MAX_TEMP_REGS - static_cast<int>(tempToRegs.size()));
@@ -467,7 +468,7 @@ void MIPS::Call(const IR::Inst &inst) {
     for (auto &[var, reg]: varToRegs) {
         StackMemory::curOffset += wordSize;
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-            Op::sw, reg, Register::sp, -StackMemory::curOffset));
+                Op::sw, reg, Register::sp, -StackMemory::curOffset));
     }
 
     // jal to function body
@@ -476,7 +477,7 @@ void MIPS::Call(const IR::Inst &inst) {
     // restore varRegs
     for (auto i = varToRegs.rbegin(); i != varToRegs.rend(); ++i) {
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-            Op::lw, i->second, Register::sp, -StackMemory::curOffset));
+                Op::lw, i->second, Register::sp, -StackMemory::curOffset));
         StackMemory::curOffset -= wordSize;
     }
 
@@ -485,7 +486,7 @@ void MIPS::Call(const IR::Inst &inst) {
     // restore tempRegs
     for (auto i = tempToRegs.rbegin(); i != tempToRegs.rend(); ++i) {
         assemblies.push_back(std::make_unique<I_imm_Inst>(
-            Op::lw, i->second, Register::sp, -StackMemory::curOffset));
+                Op::lw, i->second, Register::sp, -StackMemory::curOffset));
         StackMemory::curOffset -= wordSize;
     }
 

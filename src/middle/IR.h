@@ -49,8 +49,19 @@ enum class Op {
     LoadDynamic,
 
     // res[Temp] = arg1[Temp] op arg2[Temp]
-    Add, Sub, Mul, Div, Mod,
-    And, Or, Leq, Lss, Geq, Gre, Eql, Neq,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    And,
+    Or,
+    Leq,
+    Lss,
+    Geq,
+    Gre,
+    Eql,
+    Neq,
 
     LoadImd,
     MulImd,
@@ -73,9 +84,12 @@ enum class Op {
     // no condition jump to arg1[Label]
     Br,
     // if arg1[Temp]==0, jump to arg2[Label]
-    Bif0, Bif1,
+    Bif0,
+    Bif1,
 
-    Call, Ret, RetMain,
+    Call,
+    Ret,
+    RetMain,
 
     // arg1: value
     // arg2: nullptr
@@ -253,7 +267,7 @@ public:
 };
 
 Op LexTypeToIROp(LexType n);
-}
+} // namespace IR
 
 template<>
 struct std::hash<IR::Var> {

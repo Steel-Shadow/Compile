@@ -14,6 +14,6 @@ namespace Parser {
 void singleLex(LexType type, int row = Lexer::curRow);
 
 void output(AST type);
-}
+} // namespace Parser
 
 #endif

@@ -4,11 +4,12 @@
 #ifndef COMPILER_STMT_H
 #define COMPILER_STMT_H
 
-#include <memory>
-#include <vector>
-#include <string>
-#include <stack>
 #include "middle/IR.h"
+#include <memory>
+#include <stack>
+#include <string>
+#include <vector>
+
 
 struct Cond;
 

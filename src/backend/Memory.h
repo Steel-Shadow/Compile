@@ -39,4 +39,4 @@ extern std::stack<int> offsetStack;
 } // namespace StackMemory
 } // namespace MIPS
 
-#endif//STACKMEMORY_H
+#endif //STACKMEMORY_H

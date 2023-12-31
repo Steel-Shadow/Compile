@@ -5,8 +5,9 @@
 #ifndef COMPILER_DECL_H
 #define COMPILER_DECL_H
 
-#include "Def.h"
 #include "AST/stmt/Stmt.h"
+#include "Def.h"
+
 
 #include <memory>
 #include <vector>

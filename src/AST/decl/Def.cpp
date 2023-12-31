@@ -4,9 +4,10 @@
 #include "Def.h"
 
 #include "Decl.h"
+#include "errorHandler/Error.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
-#include "errorHandler/Error.h"
+
 
 using namespace Parser;
 
@@ -65,21 +66,19 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
     using namespace IR;
 
     auto var = std::make_unique<Var>(
-        ident,
-        SymTab::cur->getDepth(),
-        cons,
-        SymTab::find(ident)->dims,
-        type
-    );
+            ident,
+            SymTab::cur->getDepth(),
+            cons,
+            SymTab::find(ident)->dims,
+            type);
     auto pVar = var.get();
 
     auto size = std::make_unique<ConstVal>(getArraySize(), Type::Int);
     bBlocks.back()->addInst(Inst(
-        Op::Alloca,
-        nullptr,
-        std::move(var),
-        std::move(size)
-    ));
+            Op::Alloca,
+            nullptr,
+            std::move(var),
+            std::move(size)));
 
     SymTab::knownVars.back().emplace(ident, SymTab::cur->getDepth());
 
@@ -90,11 +89,10 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
             auto value = p->exp->genIR(bBlocks);
 
             bBlocks.back()->addInst(Inst(
-                Op::Store,
-                std::move(value),
-                std::make_unique<Var>(*pVar),
-                nullptr
-            ));
+                    Op::Store,
+                    std::move(value),
+                    std::make_unique<Var>(*pVar),
+                    nullptr));
         } else {
             // array init
             auto array = dynamic_cast<ArrayInitVal *>(initVal.get());
@@ -103,11 +101,10 @@ void Def::genIR(IR::BasicBlocks &bBlocks, Type type) const {
             for (auto &expInit: array->getFlatten()) {
                 auto value = expInit->exp->genIR(bBlocks);
                 bBlocks.back()->addInst(Inst(
-                    Op::Store,
-                    std::move(value),
-                    std::make_unique<Var>(*pVar),
-                    std::make_unique<ConstVal>(index++, Type::Int)
-                ));
+                        Op::Store,
+                        std::move(value),
+                        std::make_unique<Var>(*pVar),
+                        std::make_unique<ConstVal>(index++, Type::Int)));
             }
         }
     }

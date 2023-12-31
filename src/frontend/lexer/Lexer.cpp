@@ -112,7 +112,8 @@ Word Lexer::next() {
         q5:
             while (nextChar() != '*') {}
             do {
-                if (c == '*') {} else if (c == '/') {
+                if (c == '*') {
+                } else if (c == '/') {
                     break; // q7
                 } else {
                     goto q5;
@@ -215,15 +216,14 @@ void output() {
         lastLexType = Lexer::curLexType;
         lastToken = Lexer::curToken;
     } else {
-        if (!(lastLexType == LexType::LEX_EMPTY ||
-              lastLexType == LexType::LEX_END)) {
+        if (!(lastLexType == LexType::LEX_EMPTY || lastLexType == LexType::LEX_END)) {
 #ifdef STDOUT_LEXER
             std::cout << toString(lastLexType) << " " << lastToken
                       << '\n';
 #endif
 #ifdef FILEOUT_LEXER
             Lexer::outFileStream << toString(lastLexType) << " " << lastToken
-                    << '\n';
+                                 << '\n';
 #endif
         }
 

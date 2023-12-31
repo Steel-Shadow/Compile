@@ -5,8 +5,9 @@
 #ifndef COMPILER_COMPUNIT_H
 #define COMPILER_COMPUNIT_H
 
-#include <vector>
 #include <memory>
+#include <vector>
+
 
 #include "decl/Decl.h"
 #include "func/Func.h"

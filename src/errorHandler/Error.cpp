@@ -26,11 +26,11 @@ void Error::raise(const std::string &mes) {
     hasError = true;
 #ifdef STDOUT_ERROR
     std::cout << "error: " << mes << " "
-            << "---------------------------------------\n";
+              << "---------------------------------------\n";
 #endif
 #ifdef FILEOUT_ERROR
     errorFileStream << "error: " << mes << " "
-            << "---------------------------------------\n";
+                    << "---------------------------------------\n";
 #endif
     // exit(-1);
 }

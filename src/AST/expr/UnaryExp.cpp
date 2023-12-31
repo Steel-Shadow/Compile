@@ -1,13 +1,14 @@
 //
 // Created by Steel_Shadow on 2023/10/12.
 //
-#include "Exp.h"
 #include "AST/decl/Decl.h"
 #include "AST/func/Func.h"
 #include "backend/Register.h"
 #include "errorHandler/Error.h"
+#include "Exp.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/symTab/SymTab.h"
+
 
 #include <iostream>
 
@@ -44,12 +45,12 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
     using namespace IR;
     auto [symbol, depth] = SymTab::findInGen(ident);
     auto var = std::make_unique<IR::Var>(
-        ident,
-        depth,
-        symbol->cons,
-        symbol->dims,
-        symbol->type,
-        symbol->symType);
+            ident,
+            depth,
+            symbol->cons,
+            symbol->dims,
+            symbol->type,
+            symbol->symType);
 
     auto res = std::make_unique<Temp>(symbol->type);
 
@@ -84,8 +85,7 @@ std::unique_ptr<IR::Temp> LVal::genIR(IR::BasicBlocks &bBlocks) {
             bBlocks.back()->addInst(Inst(IR::Op::Load,
                                          std::make_unique<Temp>(*res),
                                          std::move(var),
-                                         nullptr
-            ));
+                                         nullptr));
         } else {
             int constOffset;
             std::unique_ptr<Temp> dynamicOffset;
@@ -152,11 +152,10 @@ bool LVal::getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset,
             if (dynamicOffset == nullptr) {
                 dynamicOffset = std::make_unique<IR::Temp>(Type::Int);
                 bBlocks.back()->addInst(IR::Inst(
-                    IR::Op::LoadImd,
-                    std::make_unique<IR::Temp>(*dynamicOffset),
-                    std::make_unique<IR::ConstVal>(constOffset, Type::Int),
-                    nullptr
-                ));
+                        IR::Op::LoadImd,
+                        std::make_unique<IR::Temp>(*dynamicOffset),
+                        std::make_unique<IR::ConstVal>(constOffset, Type::Int),
+                        nullptr));
             }
             auto dynamicIndexTimesProduct = std::make_unique<IR::Temp>(Type::Int);
 
@@ -164,20 +163,19 @@ bool LVal::getOffset(int &constOffset, std::unique_ptr<IR::Temp> &dynamicOffset,
                 dynamicIndexTimesProduct = std::move(dynamicIndex);
             } else {
                 bBlocks.back()->addInst(IR::Inst(
-                    IR::Op::MulImd,
-                    std::make_unique<IR::Temp>(*dynamicIndexTimesProduct),
-                    std::move(dynamicIndex),
-                    std::make_unique<IR::ConstVal>(product, Type::Int)));
+                        IR::Op::MulImd,
+                        std::make_unique<IR::Temp>(*dynamicIndexTimesProduct),
+                        std::move(dynamicIndex),
+                        std::make_unique<IR::ConstVal>(product, Type::Int)));
             }
 
             auto res = std::make_unique<IR::Temp>(Type::Int);
             bBlocks.back()->addInst(IR::Inst(
-                IR::Op::Add,
-                std::make_unique<IR::Temp>(*res),
-                std::move(dynamicOffset),
-                std::move(dynamicIndexTimesProduct)));
+                    IR::Op::Add,
+                    std::make_unique<IR::Temp>(*res),
+                    std::move(dynamicOffset),
+                    std::move(dynamicIndexTimesProduct)));
             dynamicOffset = std::move(res);
-
         }
     }
 
@@ -369,20 +367,18 @@ std::unique_ptr<IR::Temp> UnaryExp::genIR(IR::BasicBlocks &bBlocks) const {
         if (op == LexType::MINU) {
             auto negRes = std::make_unique<Temp>(res->type);
             bBlocks.back()->addInst(Inst(
-                Op::Neg,
-                std::make_unique<Temp>(*negRes),
-                std::move(res),
-                nullptr
-            ));
+                    Op::Neg,
+                    std::make_unique<Temp>(*negRes),
+                    std::move(res),
+                    nullptr));
             res = std::move(negRes);
         } else if (op == LexType::NOT) {
             auto notRes = std::make_unique<Temp>(res->type);
             bBlocks.back()->addInst(Inst(
-                Op::Not,
-                std::make_unique<Temp>(*notRes),
-                std::move(res),
-                nullptr
-            ));
+                    Op::Not,
+                    std::make_unique<Temp>(*notRes),
+                    std::move(res),
+                    nullptr));
             res = std::move(notRes);
         }
     }
@@ -505,30 +501,30 @@ std::unique_ptr<IR::Temp> FuncCall::genIR(IR::BasicBlocks &bBlocks) {
             } else {
                 // array (pass param by address)
                 auto var = std::make_unique<Var>(
-                    name,
-                    SymTab::findDepth(name),
-                    symbol->cons,
-                    symbol->dims,
-                    symbol->type,
-                    symbol->symType);
+                        name,
+                        SymTab::findDepth(name),
+                        symbol->cons,
+                        symbol->dims,
+                        symbol->type,
+                        symbol->symType);
 
                 int constOffset;
                 std::unique_ptr<Temp> dynamicOffset;
                 bool getNonConstIndex = rParam->getLVal()->getOffset(
-                    constOffset, dynamicOffset, bBlocks, symbol->dims);
+                        constOffset, dynamicOffset, bBlocks, symbol->dims);
 
                 if (getNonConstIndex) {
                     bBlocks.back()->addInst(Inst(
-                        Op::PushAddressParam,
-                        nullptr,
-                        std::move(var),
-                        std::move(dynamicOffset)));
+                            Op::PushAddressParam,
+                            nullptr,
+                            std::move(var),
+                            std::move(dynamicOffset)));
                 } else {
                     bBlocks.back()->addInst(Inst(
-                        Op::PushAddressParam,
-                        nullptr,
-                        std::move(var),
-                        std::make_unique<ConstVal>(constOffset, Type::Int)));
+                            Op::PushAddressParam,
+                            nullptr,
+                            std::move(var),
+                            std::make_unique<ConstVal>(constOffset, Type::Int)));
                 }
             }
         }

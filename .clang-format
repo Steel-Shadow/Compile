@@ -1,9 +1,7 @@
 # Generated from CLion C/C++ Code Style settings
 BasedOnStyle: LLVM
 AlignTrailingComments: false
-SortIncludes: CaseInsensitive
 AccessModifierOffset: -4
-AlignAfterOpenBracket: BlockIndent
 AlignConsecutiveAssignments: None
 AlignOperands: Align
 AllowAllArgumentsOnNextLine: false
@@ -31,13 +29,14 @@ BraceWrapping:
   IndentBraces: false
   SplitEmptyFunction: false
   SplitEmptyRecord: true
-BreakBeforeBinaryOperators: None
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: BeforeColon
 ColumnLimit: 0
 CompactNamespaces: false
 ContinuationIndentWidth: 8
+IncludeBlocks: Preserve
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 4
@@ -48,6 +47,7 @@ ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
 PointerAlignment: Right
 ReflowComments: false
+SortIncludes: CaseInsensitive
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false

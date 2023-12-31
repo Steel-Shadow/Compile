@@ -5,8 +5,9 @@
 #ifndef COMPILER_ERROR_H
 #define COMPILER_ERROR_H
 
-#include <string>
 #include "frontend/lexer/Lexer.h"
+#include <string>
+
 
 class Error {
 public:

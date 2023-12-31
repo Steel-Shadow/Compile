@@ -8,8 +8,9 @@
 #include <memory>
 #include <vector>
 
-#include "frontend/lexer/LexType.h"
 #include "AST/decl/Decl.h"
+#include "frontend/lexer/LexType.h"
+
 
 // FuncType → 'void' | 'int'
 struct FuncType {

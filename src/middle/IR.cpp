@@ -5,8 +5,9 @@
 #include <iostream>
 #include <utility>
 
-#include "errorHandler/Error.h"
 #include "config.h"
+#include "errorHandler/Error.h"
+
 
 using namespace IR;
 
@@ -24,7 +25,8 @@ Inst::Inst(Op op,
            std::unique_ptr<Element> res,
            std::unique_ptr<Element> arg1,
            std::unique_ptr<Element> arg2) :
-    op(op), res(std::move(res)),
+    op(op),
+    res(std::move(res)),
     arg1(std::move(arg1)),
     arg2(std::move(arg2)) {}
 
@@ -43,10 +45,10 @@ void Inst::outputIR() const {
 
 #if defined(FILEOUT_IR)
     IRFileStream << opToStr(op) << '\t'
-            << (res ? res->toString() : "_") << '\t'
-            << (arg1 ? arg1->toString() : "_") << '\t'
-            << (arg2 ? arg2->toString() : "_") << '\t'
-            << '\n';
+                 << (res ? res->toString() : "_") << '\t'
+                 << (arg1 ? arg1->toString() : "_") << '\t'
+                 << (arg2 ? arg2->toString() : "_") << '\t'
+                 << '\n';
 #endif
 }
 
@@ -142,8 +144,7 @@ Label::Label(std::string name, bool isFunc) {
     if (isFunc) {
         this->nameAndId = std::move(name);
     } else {
-        this->nameAndId = std::move(name) + "_" +
-                          std::to_string(idAllocator++);
+        this->nameAndId = std::move(name) + "_" + std::to_string(idAllocator++);
     }
 }
 
@@ -152,9 +153,9 @@ std::string Label::toString() const {
 }
 
 GlobVar::GlobVar(
-    bool cons,
-    std::vector<int> dims,
-    std::vector<int> initVal) :
+        bool cons,
+        std::vector<int> dims,
+        std::vector<int> initVal) :
     cons(cons),
     dims(std::move(dims)),
     initVal(std::move(initVal)) {}

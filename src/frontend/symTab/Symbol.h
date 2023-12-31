@@ -5,8 +5,9 @@
 #ifndef COMPILER_SYMBOL_H
 #define COMPILER_SYMBOL_H
 
-#include <vector>
 #include "frontend/lexer/LexType.h"
+#include <vector>
+
 
 struct Symbol;
 

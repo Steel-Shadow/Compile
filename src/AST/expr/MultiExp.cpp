@@ -25,8 +25,7 @@ std::unique_ptr<MulExp> MulExp::parse() {
     n->first = UnaryExp::parse();
     output(AST::MulExp);
 
-    while (Lexer::curLexType == LexType::MULT || Lexer::curLexType == LexType::DIV ||
-           Lexer::curLexType == LexType::MOD) {
+    while (Lexer::curLexType == LexType::MULT || Lexer::curLexType == LexType::DIV || Lexer::curLexType == LexType::MOD) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(UnaryExp::parse());
@@ -88,8 +87,7 @@ std::unique_ptr<RelExp> RelExp::parse() {
     n->first = AddExp::parse();
     output(AST::RelExp);
 
-    while (Lexer::curLexType == LexType::LSS || Lexer::curLexType == LexType::GRE ||
-           Lexer::curLexType == LexType::LEQ || Lexer::curLexType == LexType::GEQ) {
+    while (Lexer::curLexType == LexType::LSS || Lexer::curLexType == LexType::GRE || Lexer::curLexType == LexType::LEQ || Lexer::curLexType == LexType::GEQ) {
         n->ops.push_back(Lexer::curLexType);
         Lexer::next();
         n->elements.push_back(AddExp::parse());

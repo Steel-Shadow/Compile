@@ -54,5 +54,5 @@ void genMIPS(const IR::Module &module);
 
 void output(const std::string &str, bool newLine = true);
 
-}
+} // namespace MIPS
 #endif
